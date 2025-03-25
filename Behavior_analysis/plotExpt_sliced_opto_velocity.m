@@ -7,7 +7,7 @@
 % INPUTS:
 %   exptData - processed data, can contain ephys, fictrac, and/or output
 %   exptMeta - processed ephys meta
-%   savepath - where to save the files to
+%   savepath - where to save the files to on the Wilson lab server
 %
 %
 % OUTPUTS:
