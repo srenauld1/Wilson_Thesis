@@ -1,4 +1,16 @@
+
 function exptData = detect_local_peaks(exptData, varargin)
+    % Finds peaks in exptData.absolute_circular_diff to determine when a
+    % bar jump occured 
+    %
+    % Parameters:
+    %   exptData: structure containing exptData.absolute_circular_diff (heading in radians)
+    %             from function compute_absolute_circular_diff
+    % Returns:
+    %   exptData: modified structure with exptData.jump_detected added.
+    %   this is a matrix of 0s and 1s indicating when a bar jump occured
+
+
     % Parse inputs
     p = inputParser;
     addRequired(p, 'ts');
