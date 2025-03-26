@@ -19,6 +19,7 @@
 %   rightTurn - boolean for whether to extract right turns (false = left)
 %
 % OUTPUTS:
+%   yaw_information - struct holding all other variables
 %   yawVelPeakTimes - vector of times corresponding to yaw
 %       velocity peaks (that meet cond criteria), length n
 %   boutStartTimes - vector of times corresponding to start of bouts,
@@ -35,9 +36,8 @@
 % UPDATED:
 %   7/17/23- HHY
 %   8/23/23 - HHY - update comments
-%
-function [yawVelPeakTimes, boutStartTimes, boutEndTimes, ...
-    yawVelPeakInd, boutStartInd, boutEndInd] = ...
+%   3/26/25 SMR added struct to output
+function yaw_information = ...
     findYawVelPeaksFT(fictracSmo, minYawThresh, turnDur, moveNotMove, ...
     rightTurn)
 
@@ -204,4 +204,13 @@ function [yawVelPeakTimes, boutStartTimes, boutEndTimes, ...
     yawVelPeakTimes = fictracSmo.t(pkInds);
     boutStartTimes = fictracSmo.t(pkInds);
     boutEndTimes = fictracSmo.t(pkInds);
+
+    % Create a struct to hold the output information
+    yaw_information = struct();
+    yaw_information.yawVelPeakTimes = yawVelPeakTimes;
+    yaw_information.boutStartTimes = boutStartTimes;
+    yaw_information.boutEndTimes = boutEndTimes;
+    yaw_information.yawVelPeakInd = yawVelPeakInd;
+    yaw_information.boutStartInd = boutStartInd;
+    yaw_information.boutEndInd = boutEndInd;
 end
