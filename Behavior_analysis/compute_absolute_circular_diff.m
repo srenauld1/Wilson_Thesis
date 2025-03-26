@@ -2,18 +2,18 @@ function exptData = compute_absolute_circular_diff(exptData)
     % Computes absolute circular differences in ts.vis.yaw
     %
     % Parameters:
-    %   exptData: structure containing exptData.g4displayXPos (heading in degrees)
+    %   ts: structure containing ts.vis.yaw (heading in radians)
     %
     % Returns:
-    %   exptData: modified structure with exptData.absolute_circular_diff added
+    %   ts: modified structure with ts.vis.absolute_circular_diff added
     
     % Check if heading field exists
     if ~isfield(exptData, 'g4displayXPos')
         error('Field g4displayXPos not found in data structure.');
     end
     
-    % Get heading data in radians
-    heading = deg2rad(exptData.g4displayXPos);
+    % Get heading data
+    heading = exptData.g4displayXPos;
     
     % Check if row or column vector and handle accordingly
     if isrow(heading)
