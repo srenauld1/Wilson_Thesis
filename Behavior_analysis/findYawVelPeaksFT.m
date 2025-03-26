@@ -202,8 +202,8 @@ function yaw_information = ...
 
     % outputs, times
     yawVelPeakTimes = fictracSmo.t(pkInds);
-    boutStartTimes = fictracSmo.t(pkInds);
-    boutEndTimes = fictracSmo.t(pkInds);
+    boutStartTimes = fictracSmo.t(pkStartInd);
+    boutEndTimes = fictracSmo.t(pkEndInd);
 
     % Create a struct to hold the output information
     yaw_information = struct();

@@ -137,13 +137,13 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         end
 
         average_fwd = mean(opto_averages_fwd);
-        disp(["OPTO ON FWD AVE:", num2str(average_fwd)])
+        %disp(["OPTO ON FWD AVE:", num2str(average_fwd)])
         average_rot = mean(opto_averages_rot);
-        disp(["OPTO ON ROT AVE:", num2str(average_rot)])
+        %disp(["OPTO ON ROT AVE:", num2str(average_rot)])
         average_fwd_no = mean(no_averages_fwd);
-        disp(["OPTO OFF FWD AVE:", num2str(average_fwd_no)])
+        %disp(["OPTO OFF FWD AVE:", num2str(average_fwd_no)])
         average_rot_no = mean(no_averages_rot);
-        disp(["OPTO OFF ROT AVE:", num2str(average_rot_no)])
+        %disp(["OPTO OFF ROT AVE:", num2str(average_rot_no)])
 
         % Ensure all "optoon" segments are the same length by trimming to the shortest segment
         min_length = min(cellfun(@length, fwdvelocity_segments_optoon_extra));
@@ -239,7 +239,7 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
             end
             pre_speed_rot = mean(rotspeed_segments_optoon_trimmed{i}((pre_opto_points-100):pre_opto_points));
             if pre_speed <3
-                disp("Still")
+                %disp("Still")
                 still_pre_opto{end+1} = fwdvelocity_segments_optoon_extra{i};
                 ave_still{end+1} = fwdvelocity_segments_optoon_trimmed{i};
                 still_pre_opto_rot{end+1} = rotspeed_segments_optoon_extra{i};
@@ -250,7 +250,7 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
                 ave_moving{end+1} = fwdvelocity_segments_optoon_trimmed{i};
                 moving_pre_opto_rot{end+1} = rotspeed_segments_optoon_extra{i};
                 ave_moving_rot{end+1} = rotspeed_segments_optoon_trimmed{i};
-                disp("moving")
+                %disp("moving")
             end
         end
 
