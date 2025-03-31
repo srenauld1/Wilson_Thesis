@@ -73,12 +73,15 @@ disp(['Save path: ', savepath]);
 [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
 
 %% find turns
-yaw_information_right = findYawVelPeaksFT(exptData, 30, [0.2,3], exptData.motion, 1);
-yaw_information_left = findYawVelPeaksFT(exptData, 30, [0.2,3], exptData.motion, 0);
+yaw_information_right = findYawVelPeaksFT(exptData, 100, [0.2,3], exptData.motion, 1);
+yaw_information_left = findYawVelPeaksFT(exptData, 100, [0.2,3], exptData.motion, 0);
 
 %% now here i will have a function to extract saccades
 [exptData, saccade_right,saccade_left] = find_saccades(exptData, yaw_information_right,yaw_information_left);
 
-%% then maybe plot rasters here?
+%% then maybe plot rasters here
+plot_raster(exptData,saccade_left,saccade_right, savepath)
+
+%% plot flat path opto vs. saccades
 
 

@@ -1,4 +1,4 @@
-%% This script is an amalgamation of all of the behavior data processing scripts:
+%% This script is an amalgamation of all of the calcium data processing scripts:
 
 % This first function re-orients the G4 panels to the true front (rather
 % than where the panels decide is 0) 0 is in front of the fly
@@ -16,15 +16,16 @@
 close all
 clear all
 
-%% define initial variables
-minVel = 3; % minimum total velocity to be count as moving
+%% initialize variables
+neck = 0;
+ves041 = 0;
 
-%% load in exptData and exptMeta
+%% load in ts
 % Define the base folder path
-baseFolder = '/Volumes/Neurobio/wilsonlab/Sophia/behavior/'; % Change this to the desired directory
+baseFolder = '/Users/sophiarenauld/stacks/'; % Change this to the desired directory
 
 % Prompt the user to select a file from the base folder
-[fileName, pathName] = uigetfile('*.mat', 'Select Processed Behavior Data', baseFolder);
+[fileName, pathName] = uigetfile('ts.mat', 'Select Processed Imaging and Behavior Data', baseFolder);
 
 % Check if the user clicked "Cancel"
 if isequal(fileName, 0)
@@ -42,18 +43,18 @@ end
 % We do this by removing everything after the last forward slash.
 [base_path, ~, ~] = fileparts(fullFilePath);  % This gives us the path without the filename.
 
-% Extract the stimulus number from the file name.
-% Assuming the last part contains the stim part (e.g. "stim2"), we split by spaces:
-parts = strsplit(fullFilePath, ' ');
-
-% Get the last element that contains 'stimX' (stimulus info)
-stim_part = parts{end-1};  % This gets 'stim2' or similar
-stim_number = extractAfter(stim_part, 'stim');  % Extract the number, giving us '2'
-% get the trial number and letter
-trial_part = parts{1};
-trial_num = extractAfter(trial_part, "trial");
+if contains(base_path, 'neck')
+    neck = 1;  % Set neck to 1 if "neck" is found
+else
+    neck = 0;  % Set neck to 0 if "neck" is not found
+end
+if contains(base_path, 'ves041')
+    ves041 = 1;  % Set neck to 1 if "neck" is found
+else
+    ves041 = 0;  % Set neck to 0 if "neck" is not found
+end
 % Define the directory for the stimulus
-stim_directory = fullfile(base_path, ['trial', trial_num,'stim', stim_number]);
+stim_directory = fullfile(base_path, 'smr_analysis');
 
 % Create the directory if it doesn't exist
 if ~exist(stim_directory, 'dir')
@@ -66,19 +67,11 @@ savepath = stim_directory;
 % Display the save path
 disp(['Save path: ', savepath]);
 
-%% process experimental data
-[exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel);
+%% process experimental data - ves041
+if ves041
+    plotting_ves041(ts, savepath)
+end
 
-%% plot velocity data split up by opto chunks
-[exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
 
-%% find turns
-yaw_information_right = findYawVelPeaksFT(exptData, 30, [0.2,3], exptData.motion, 1);
-yaw_information_left = findYawVelPeaksFT(exptData, 30, [0.2,3], exptData.motion, 0);
-
-%% now here i will have a function to extract saccades
-[exptData, saccade_right,saccade_left] = find_saccades(exptData, yaw_information_right,yaw_information_left);
-
-%% then maybe plot rasters here?
 
 
