@@ -109,20 +109,6 @@ function yaw_information = ...
 
     initSizeStart = length(pkStartInd);
 
-    % remove any peaks whose edges fall within dropInd
-    % [pkStartInd, startNotRmvInd] = setdiff(pkStartInd, fictracSmo.dropInd, ...
-    %     'stable');
-    % startRmvInd = setxor(1:initSizeStart, startNotRmvInd);
-    % pkInds(startRmvInd) = [];
-    % pkEndInd(startRmvInd) = [];
-
-    % initSizeEnd = length(pkEndInd);
-    % [pkEndInd, endNotRmvInd] = setdiff(pkEndInd, fictracSmo.dropInd, ...
-    %     'stable');
-    % endRmvInd = setxor(1:initSizeEnd, endNotRmvInd);
-    % pkInds(endRmvInd) = [];
-    % pkStartInd(endRmvInd) = [];
-
 
 
 

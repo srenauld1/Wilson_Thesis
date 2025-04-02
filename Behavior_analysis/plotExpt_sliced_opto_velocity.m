@@ -38,14 +38,14 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
     %% chop up by opto blocks
     if checkOpto
         % Find the change points in the opto signal
-        change_points = [1; find(diff(exptData.optoStim) ~= 0) + 1; length(opto)];
+        change_points = [1, find(diff(exptData.optoStim) ~= 0) + 1, length(exptData.optoStim)];
         % Initialize cell arrays to store segments of velocity
         velocity_segments_optoon = {};  % Velocity when opto is 1
         velocity_segments_optooff = {};  % Velocity when opto is 0
         % now take care off immediate on off for 10 sec stim windows
         if sum(opto)==36000
             % Assuming your array is called change_points
-            keep_idx = false(size(change_points));
+            keep_idx = false(size(change_points,2));
             for i = 1:4:length(change_points)
                 if i+1 <= length(change_points)
                     keep_idx(i) = true;    % Keep first number
@@ -161,14 +161,14 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         end
         
         % Convert to a matrix for calculating the average
-        velocity_matrix_optoon = cell2mat(reshape(fwdvelocity_segments_optoon_trimmed, 1, []));
-        average_velocity_optoon = mean(velocity_matrix_optoon, 2);
+        velocity_matrix_optoon = cell2mat(reshape(fwdvelocity_segments_optoon_trimmed, length(fwdvelocity_segments_optoon_trimmed), []));
+        average_velocity_optoon = mean(velocity_matrix_optoon, 1);
         
         % Ensure all "optoon" segments are the same length by trimming to
         
         % Convert to a matrix for calculating the average
-        speed_matrix_optoon = cell2mat(reshape(rotspeed_segments_optoon_trimmed, 1, []));
-        average_speed_optoon = mean(speed_matrix_optoon, 2);
+        speed_matrix_optoon = cell2mat(reshape(rotspeed_segments_optoon_trimmed, length(rotspeed_segments_optoon_trimmed), []));
+        average_speed_optoon = mean(speed_matrix_optoon, 1);
 
         % Plot the "optoon" segments with pre-opto points and vertical lines
         figure;
@@ -255,19 +255,20 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         end
 
         % take average fwd
-                % Convert to a matrix for calculating the average
-        moving = cell2mat(reshape(ave_moving, 1, []));
-        moving_ave = mean(moving, 2);
-                % Convert to a matrix for calculating the average
-        still = cell2mat(reshape(ave_still, 1, []));
-        still_ave = mean(still, 2);
+        % Convert to a matrix for calculating the average
+        speed_matrix_optoon = cell2mat(reshape(rotspeed_segments_optoon_trimmed, length(rotspeed_segments_optoon_trimmed), []));  
+        moving = cell2mat(reshape(ave_moving, length(ave_moving), []));
+        moving_ave = mean(moving, 1);
+        % Convert to a matrix for calculating the average
+        still = cell2mat(reshape(ave_still, length(ave_still), []));
+        still_ave = mean(still, 1);
         % take average rot
                 % Convert to a matrix for calculating the average
-        moving_rot = cell2mat(reshape(ave_moving_rot, 1, []));
-        moving_ave_rot = mean(moving_rot, 2);
+        moving_rot = cell2mat(reshape(ave_moving_rot, length(ave_moving_rot), []));
+        moving_ave_rot = mean(moving_rot, 1);
                 % Convert to a matrix for calculating the average
-        still_rot = cell2mat(reshape(ave_still_rot, 1, []));
-        still_ave_rot = mean(still_rot, 2);
+        still_rot = cell2mat(reshape(ave_still_rot, length(ave_still_rot), []));
+        still_ave_rot = mean(still_rot, 1);
 
 
         %% plot this rotation

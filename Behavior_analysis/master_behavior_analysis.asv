@@ -18,7 +18,6 @@ clear all
 
 %% define initial variables
 minVel = 3; % minimum total velocity to be count as moving
-forvel_cutoff = 1;
 
 %% load in exptData and exptMeta
 % Define the base folder path
@@ -74,11 +73,11 @@ disp(['Save path: ', savepath]);
 [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
 
 %% find turns
-yaw_information_right = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.motion, 1);
-yaw_information_left = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.motion, 0);
+yaw_information_right = findYawVelPeaksFT(exptData, 100, [0.2,1], exptData.motion, 1);
+yaw_information_left = findYawVelPeaksFT(exptData, 100, [0.2,1], exptData.motion, 0);
 
 %% now here i will have a function to extract saccades
-[exptData, saccade_both] = find_saccades(exptData, yaw_information_right,yaw_information_left, forvel_cutoff);
+[exptData, saccade_both] = find_saccades(exptData, yaw_information_right,yaw_information_left);
 
 %% flat path
 plot_flatpath_saccades(exptData, 1, savepath)

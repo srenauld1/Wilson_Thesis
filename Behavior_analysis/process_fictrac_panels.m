@@ -117,5 +117,19 @@ function [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel
     %% overly smooth rotational velocity
     exptData.smoothedangularVelocity = smoothdata(exptData.angularVelocity, 'gaussian',500);
 
+    %% flip everything to be rows
+    % Initialize a new structure for the flipped data
+    flippedStruct = struct();
+    
+    % Get the field names of the original structure
+    fieldNames = fieldnames(exptData);
+    
+    % Loop through each field and transpose the data
+    for i = 1:length(fieldNames)
+        field = fieldNames{i};              % Get the current field name
+        flippedStruct.(field) = exptData.(field)';  % Transpose the data to a row vector
+    end
+    exptData = flippedStruct;
+
 
 end

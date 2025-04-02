@@ -1,15 +1,18 @@
-function plot_raster(exptData,saccade_left,saccade_right, savepath)
+function plot_raster(exptData,saccade_both, savepath)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
 %% determine whether stim is 5s or 0.5s
-if sum(exptData.optoStim) == 1200000
-    num_trials = 72;
-    trial_duration = 10;
-elseif sum(exptData.optoStim)== 79920
+if sum(exptData.optoStim) == 319968
     num_trials = 48;
     trial_duration = 15;
-end
+elseif sum(exptData.optoStim)== 31968
+    num_trials = 48;
+    trial_duration = 15;
+else
+    num_trials = 48;
+    trial_duration = 15;
+
 %% downsample data for plotting
 newSampRate = 60; 
 currentSampRate =length(exptData.t)/max(exptData.t);

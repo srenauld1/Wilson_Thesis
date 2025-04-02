@@ -1,4 +1,4 @@
-function [exptData, saccade_right,saccade_left] = find_saccades(exptData, yaw_information_right,yaw_information_left)
+function [exptData, saccade_both] = find_saccades(exptData, yaw_information_right,yaw_information_left, forvel_cutoff)
 % 
 %
 % INPUTS:
@@ -15,7 +15,7 @@ yaw = exptData.angularVelocity;
 
 % Initialize an array to hold the differences
 numPairs = min(length(yaw_information_left.boutStartInd), length(yaw_information_left.yawVelPeakInd));  % To avoid index out of bounds
-velocityDifferences_left = zeros(numPairs, 1);  % Preallocate for efficiency
+velocityDifferences_left = zeros(1, numPairs);  % Preallocate for efficiency
 
 % Calculate the velocity difference between the start and peak indices
 for i = 1:numPairs
@@ -39,8 +39,8 @@ end
 thresholded_velocities_left = zeros(size(velocityDifferences_left));  % Initialize an array of zeros
 
 % Apply the thresholding
-thresholded_velocities_left(velocityDifferences_left >= -1) = 0;  % Set to 0 if >= -1
-thresholded_velocities_left(velocityDifferences_left < -1) = 1;   % Set to 1 if < -1
+thresholded_velocities_left(velocityDifferences_left >= -forvel_cutoff) = 0;  % Set to 0 if >= -1
+thresholded_velocities_left(velocityDifferences_left < -forvel_cutoff) = 1;   % Set to 1 if < -1
 
 % Initialize a new structure to hold the filtered yaw information
 saccade_left = struct();
@@ -82,8 +82,8 @@ end
 thresholded_velocities_right = zeros(size(velocityDifferences_right));  % Initialize an array of zeros
 
 % Apply the thresholding
-thresholded_velocities_right(velocityDifferences_right >= -1) = 0;  % Set to 0 if >= -1
-thresholded_velocities_right(velocityDifferences_right < -1) = 1;   % Set to 1 if < -1
+thresholded_velocities_right(velocityDifferences_right >= -forvel_cutoff) = 0;  % Set to 0 if >= -cutoff
+thresholded_velocities_right(velocityDifferences_right < -forvel_cutoff) = 1;   % Set to 1 if < -cutoff
 
 % Initialize a new structure to hold the filtered yaw information
 saccade_right = struct();
@@ -96,33 +96,30 @@ saccade_right.yawVelPeakInd = yaw_information_right.yawVelPeakInd(thresholded_ve
 saccade_right.boutStartInd = yaw_information_right.boutStartInd(thresholded_velocities_right == 1);
 saccade_right.boutEndInd = yaw_information_right.boutEndInd(thresholded_velocities_right == 1);
 
+%% merge left and right
+saccade_both = struct();
+saccade_both.yawVelPeakTimes = [saccade_left.yawVelPeakTimes, saccade_right.yawVelPeakTimes];
+saccade_both.boutStartTimes = [saccade_left.boutStartTimes, saccade_right.boutStartTimes];
+saccade_both.boutEndTimes = [saccade_left.boutEndTimes, saccade_right.boutEndTimes];
+saccade_both.yawVelPeakInd = [saccade_left.yawVelPeakInd, saccade_right.yawVelPeakInd];
+saccade_both.boutStartInd = [saccade_left.boutStartInd, saccade_right.boutStartInd];
+saccade_both.boutEndInd = [saccade_left.boutEndInd, saccade_right.boutEndInd];
+
 %% add to expt data
 
 % Initialize the saccading array with zeros
-numEntries = size(exptData.t, 1);  % The total number of observations you want to evaluate
-exptData.saccading = zeros(numEntries, 1);  % Initialize as non-saccading
+numEntries = max(size(exptData.t, 2), size(exptData.t, 1));  % The total number of observations you want to evaluate
+exptData.saccading = zeros(1, numEntries);  % Initialize as non-saccading
 
-% Loop through each entry for left saccades
-for i = 1:length(saccade_left.boutStartInd)
-    bout_start = saccade_left.boutStartInd(i);
-    bout_end = saccade_left.boutEndInd(i);
+% Loop through each entry for saccades
+for i = 1:length(saccade_both.boutStartInd)
+    bout_start = saccade_both.boutStartInd(i);
+    bout_end = saccade_both.boutEndInd(i);
 
     % Set saccading to 1 for any index in between start and end
     if bout_start <= numEntries && bout_end <= numEntries
         exptData.saccading(bout_start:bout_end) = 1;  % Mark saccading for left
     end
 end
-
-% Loop through each entry for right saccades
-for i = 1:length(saccade_right.boutStartInd)
-    bout_start = saccade_right.boutStartInd(i);
-    bout_end = saccade_right.boutEndInd(i);
-
-    % Set saccading to 1 for any index in between start and end
-    if bout_start <= numEntries && bout_end <= numEntries
-        exptData.saccading(bout_start:bout_end) = 1;  % Mark saccading for right
-    end
-end
-
 
 end
