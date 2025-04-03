@@ -2,11 +2,6 @@
 %% function
 function plotting_ves041(ts, savepath)
 
-arguments
-    ts;
-    savepath string = "/Users/sophiarenauld/stacks/20250304-4_ves041-1_fly1_clbarjumps_1";  % Default value
-end
-
 close all
 
 % reformat image data
@@ -59,30 +54,6 @@ title('Forward velocity and DFF');
 % Optional: Add legend
 legend('Forward Velocity', 'dff');
 save_plot_with_title_as_filename('Fwd vel', 'dff', savepath);
-
-%% Plot the dff and fwd CONTROL
-% Plot the dff and fwd
-% figure;
-% yyaxis left;
-% plot(fwd, '-b');  % Plot first time series in blue
-% ylabel('forward velocity');  % Label for the left y-axis
-% 
-% % Set the y-axis limits for the left axis to [-5, 10]
-% ylim([-5 10]);
-% 
-% % Plot the second time series on the right y-axis
-% yyaxis right;
-% plot(ts.resp.control.moex_0_0_0.rawf_f_dff008000_n, '-r');  % Plot second time series in red
-% ylabel('dff');  % Label for the right y-axis
-% 
-% % Add title and x-axis label
-% xlabel('Time');
-% title('Forward velocity and dff - control');
-% 
-% % Optional: Add legend
-% legend('Forward velocity', 'dff - control');
-% save_plot_with_title_as_filename('Fwd vel', 'control dff', savepath);
-
 
 %% plot dff and yaw
 figure;
