@@ -1,4 +1,4 @@
-function [ts, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(ts, savepath, window, minVel,highThres,lowThres)
+function [daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(daq, savepath, window, minVel,highThres,lowThres)
 % Performs index by index assignment into menotaxing category based on
 % calculated rho value assigned to that index. Rho is calculated over a
 % window of set length centered on the index including only data points
@@ -28,16 +28,16 @@ function [ts, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMeno
 Meno_chunks = {}; 
 not_Meno_chunks = {};
 
-total_mov_mm = abs(ts.ball.forvel) + abs(ts.ball.sidevel) + abs(ts.ball.yawvel);        
+total_mov_mm = abs(daq.bfv) + abs(daq.bsv) + abs(daq.byv);        
 no0vel_idx = find(total_mov_mm >= minVel); 
 
 
 count = 1; 
 
 % find jump idxes 
-ts = compute_absolute_circular_diff_2p(ts);
-ts = detect_local_peaks_2p(ts);
-jump_idx = ts.vis.jump_detected;
+daq = compute_absolute_circular_diff_2p(daq);
+daq = detect_local_peaks_2p(daq);
+jump_idx = daq.jump_detected;
 
 % calculate & assign rho value to each datapoint
 mean_headingVectors = [];
@@ -50,9 +50,31 @@ else
 end
 
 keep_idx = intersect(noJump_idx, no0vel_idx);
-newSampRate = length(ts.t)/max(ts.t);
+newSampRate = length(daq.t)/max(daq.t);
 
-ts_rm = remove_timepoints(ts, keep_idx);
+ts_rm = daq;
+% Get the field names of the structure
+fieldNames = fieldnames(daq);
+
+% Loop through each field to check for emptiness, character arrays, and nested structs
+for i = 1:length(fieldNames)
+    field = fieldNames{i};  % Current field name
+    fieldValue = daq.(field);  % Get the value of the current field
+    
+    % Check if the field is empty or if it's a character array or a nested struct
+    if isempty(fieldValue) || ...
+       (ischar(fieldValue)) || ... % For empty character arrays
+       isstruct(fieldValue) || ... % For empty nested structs
+       iscell(fieldValue)
+        ts_rm = rmfield(ts_rm, field);  % Remove the field if the conditions are met
+    else
+        if ~(contains(field, 'supp'))
+            ts_rm.(field) = daq.(field)(:,keep_idx);
+        end
+    end
+
+end
+
 window = window * newSampRate; 
 if window > length(keep_idx)
     window = length(keep_idx); 
@@ -60,7 +82,7 @@ end
 window = round(window);
 
 
-total_points = length(ts_rm.vis.yaw);
+total_points = length(ts_rm.vy);
 mean_headingVectors = nan(2, total_points);
 idx_windows = cell(total_points, 1);
 count = 1;
@@ -72,7 +94,7 @@ for i = 1:total_points
     window_end = min(total_points, i + half_window);
     
     % Get angles for this window
-    angles_flyFor = ts_rm.vis.yaw(window_start:window_end);
+    angles_flyFor = ts_rm.vy(window_start:window_end);
     
     % Calculate mean vector
     x = cos(angles_flyFor);
@@ -143,12 +165,12 @@ end
 
 % Create 2D path trajectory meno = red not meno = black
 
-notNan_idx = find(~isnan(ts_rm.vis.yaw) & ~isnan(ts_rm.ball.forvel) & ~isnan(ts_rm.ball.sidevel));
-yawAngPos = rad2deg(ts_rm.vis.yaw(notNan_idx));
-fwdAngVel = ts_rm.ball.forvel;
-slideAngVel = ts_rm.ball.sidevel(notNan_idx);
+notNan_idx = find(~isnan(ts_rm.vy) & ~isnan(ts_rm.bfv) & ~isnan(ts_rm.bsv));
+yawAngPos = rad2deg(ts_rm.vy(notNan_idx));
+fwdAngVel = ts_rm.bfv;
+slideAngVel = ts_rm.bsv(notNan_idx);
 triggerIdx = triggerIdx(notNan_idx); 
-transition = zeros(size(ts_rm.ball.sidevel));
+transition = zeros(size(ts_rm.bsv));
 
 % N = keep_idx';
 % V = find(transitions == 1);
@@ -196,14 +218,14 @@ timeStart = time(1);
 timeEnd = max(time); 
 nRho = rho(triggerIdx == 0); 
 
-mAngle = -ts_rm.vis.yaw(triggerIdx ==1);
+mAngle = -ts_rm.vy(triggerIdx ==1);
 mRho = rho(triggerIdx == 1); 
 
 figure(77);clf;
 set(gcf,'color','w','renderer','painters')
 h(1) =  subplot(2,1,1);
 hold on
-a = plot(ts.t, ts.vis.yaw,'k');
+a = plot(daq.t, daq.vy,'k');
 b = plot(MenoTime(MenoTime > timeStart & MenoTime < timeEnd),mAngle(MenoTime > timeStart & MenoTime < timeEnd),'r');
 try
     b.XData(abs(diff(b.XData)) > 20) = nan;
@@ -234,18 +256,18 @@ save_plot_with_title_as_filename('rho', 'heading', savepath);
 
 % plot the 2D path trajectory
 figure(88);clf;
-patch('XData',ts_rm.flypos.x(triggerIdx == 0),'YData',ts_rm.flypos.y(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+patch('XData',ts_rm.px(triggerIdx == 0),'YData',ts_rm.py(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
 hold on
-patch('XData',ts_rm.flypos.x(triggerIdx == 1),'YData',ts_rm.flypos.y(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-patch('XData',ts_rm.flypos.x(1),'YData',ts_rm.flypos.y(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
-patch('XData',ts_rm.flypos.x(transition == 1),'YData',ts_rm.flypos.y(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
+patch('XData',ts_rm.px(triggerIdx == 1),'YData',ts_rm.py(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+patch('XData',ts_rm.px(1),'YData',ts_rm.py(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
+patch('XData',ts_rm.px(transition == 1),'YData',ts_rm.py(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
 set(gcf,'color','w');
 xlabel('mm')
-xlim([min(min(ts_rm.flypos.x),min(ts_rm.flypos.y)),max(max(ts_rm.flypos.x),max(ts_rm.flypos.y))])
-ylim([min(min(ts_rm.flypos.x),min(ts_rm.flypos.y)),max(max(ts_rm.flypos.x),max(ts_rm.flypos.y))])
+xlim([min(min(ts_rm.px),min(ts_rm.py)),max(max(ts_rm.px),max(ts_rm.py))])
+ylim([min(min(ts_rm.px),min(ts_rm.py)),max(max(ts_rm.px),max(ts_rm.py))])
 % Add the jump detected points
-patch('XData', ts.flypos.x(ts.vis.jump_detected == 1), ...
-      'YData', ts.flypos.y(ts.vis.jump_detected == 1), ...
+patch('XData', daq.px(daq.jump_detected == 1), ...
+      'YData', daq.py(daq.jump_detected == 1), ...
       'EdgeColor', 'bl', ...
       'FaceColor', 'none', ...
       'LineStyle', 'none', ...
@@ -254,26 +276,26 @@ patch('XData', ts.flypos.x(ts.vis.jump_detected == 1), ...
 title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
 save_plot_with_title_as_filename('menotaxis', 'path', savepath);
 
-% plot the 2D path trajectory - ball
-figure(89);clf;
-patch('XData',ts_rm.flypos.x_ball(triggerIdx == 0),'YData',ts_rm.flypos.y_ball(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-hold on
-patch('XData',ts_rm.flypos.x_ball(triggerIdx == 1),'YData',ts_rm.flypos.y_ball(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-patch('XData',ts_rm.flypos.x_ball(1),'YData',ts_rm.flypos.y_ball(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
-patch('XData',ts_rm.flypos.x_ball(transition == 1),'YData',ts_rm.flypos.y_ball(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
-set(gcf,'color','w');
-xlabel('mm')
-xlim([min(min(ts_rm.flypos.x_ball),min(ts_rm.flypos.y_ball)),max(max(ts_rm.flypos.x_ball),max(ts_rm.flypos.y_ball))])
-ylim([min(min(ts_rm.flypos.x_ball),min(ts_rm.flypos.y_ball)),max(max(ts_rm.flypos.x_ball),max(ts_rm.flypos.y_ball))])
-% Add the jump detected points
-patch('XData', ts.flypos.x_ball(ts.vis.jump_detected == 1), ...
-      'YData', ts.flypos.y_ball(ts.vis.jump_detected == 1), ...
-      'EdgeColor', 'bl', ...
-      'FaceColor', 'none', ...
-      'LineStyle', 'none', ...
-      'Marker', '.', ...
-      'MarkerSize', 10);
-title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
-save_plot_with_title_as_filename('menotaxis_ball', 'path', savepath);
+% % plot the 2D path trajectory - ball
+% figure(89);clf;
+% patch('XData',ts_rm.px_ball(triggerIdx == 0),'YData',ts_rm.py_ball(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+% hold on
+% patch('XData',ts_rm.px_ball(triggerIdx == 1),'YData',ts_rm.py_ball(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+% patch('XData',ts_rm.px_ball(1),'YData',ts_rm.py_ball(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
+% patch('XData',ts_rm.px_ball(transition == 1),'YData',ts_rm.py_ball(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
+% set(gcf,'color','w');
+% xlabel('mm')
+% xlim([min(min(ts_rm.px_ball),min(ts_rm.py_ball)),max(max(ts_rm.px_ball),max(ts_rm.py_ball))])
+% ylim([min(min(ts_rm.px_ball),min(ts_rm.py_ball)),max(max(ts_rm.px_ball),max(ts_rm.py_ball))])
+% % Add the jump detected points
+% patch('XData', daq.px(daq.jump_detected == 1), ...
+%       'YData', daq.py(daq.jump_detected == 1), ...
+%       'EdgeColor', 'bl', ...
+%       'FaceColor', 'none', ...
+%       'LineStyle', 'none', ...
+%       'Marker', '.', ...
+%       'MarkerSize', 10);
+% title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
+% save_plot_with_title_as_filename('menotaxis_ball', 'path', savepath);
 
 end

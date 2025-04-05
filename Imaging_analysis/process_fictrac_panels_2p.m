@@ -26,20 +26,20 @@
 % Original: 3/19/2025 - SMR
 
 
-function [ts] = process_fictrac_panels_2p(ts, minVel, jump)
+function [daq] = process_fictrac_panels_2p(daq, minVel, jump)
     
     if jump
         %% detect jumps
-        ts = compute_absolute_circular_diff_2p(ts);
-        ts = detect_local_peaks_2p(ts);
+        daq = compute_absolute_circular_diff_2p(daq);
+        daq = detect_local_peaks_2p(daq);
     
         %% add in jump buffer for later calculations
         % Define the padding size on each side
-        one_indices = find(ts.vis.jump_detected == 1);
-        jump_idx = ts.vis.jump_detected;
+        one_indices = find(daq.jump_detected == 1);
+        jump_idx = daq.jump_detected;
     
         % calculate trial duration
-        duration = length(ts.t)/ts.t(end);
+        duration = length(daq.t)/daq.t(end);
         
         % Define the padding size on each side
         buffer_before_and_after_jump = 2;
@@ -49,36 +49,74 @@ function [ts] = process_fictrac_panels_2p(ts, minVel, jump)
         for i = 1:length(one_indices)
             idx = one_indices(i);
             start_idx = max(1, idx - padding);
-            end_idx = min(length(ts.vis.jump_detected), idx + padding);
+            end_idx = min(length(daq.jump_detected), idx + padding);
             jump_idx(start_idx:end_idx) = 1;
         end
     
-        ts.vis.omit_jump_blocks = jump_idx;
+        daq.omit_jump_blocks = jump_idx;
     end
 
-    %% create moving not moving binary
+    %% remove anything that is empty
+    % Get the field names of the structure
+    fieldNames = fieldnames(daq);
+    
+    % Loop through each field to check for emptiness
+    for i = 1:length(fieldNames)
+        field = fieldNames{i};  % Current field name
+        
+        % Check if the current field is empty
+        if isempty(daq.(field))
+            daq = rmfield(daq, field);  % Remove the field if it's empty
+        end
+    end
+
+    %% create moving not moving binary for downsampled data
     % calculate total speed
-    total_speed = abs(ts.ball.forvel) +abs(ts.ball.yaw) + abs(ts.ball.sidevel);
-    ts.ball.totalspeed = total_speed;
-    ids_fly_moving = find(ts.ball.totalspeed >= minVel);
+    total_speed = abs(daq.bfv) +abs(daq.byv) + abs(daq.bsv);
+    daq.totalspeed = total_speed;
+    ids_fly_moving = find(daq.totalspeed >= minVel);
 
     % Create a column for moving/not moving
-    ts.motion.moving_not = zeros(size(ts.ball.totalspeed));  % Initialize with zeros
+    daq.motion.moving_not = zeros(size(daq.totalspeed));  % Initialize with zeros
     
-    ts.motion.moving_not(ids_fly_moving) = 1;  % Set to 1 where the conditions are met
+    daq.motion.moving_not(ids_fly_moving) = 1;  % Set to 1 where the conditions are met
     
     % Find indices where the fly is not moving (where movement_state is 0)
-    ftNotMoveInd = find(ts.motion.moving_not == 0);
+    ftNotMoveInd = find(daq.motion.moving_not == 0);
     
-    ts.motion.ftNotMoveInd = ftNotMoveInd;
+    daq.motion.ftNotMoveInd = ftNotMoveInd;
 
     %% turn yaw into degrees
-    ts.ball.yawdeg = rad2deg(ts.ball.yawvel);
+    daq.byv_deg = rad2deg(daq.byv);
     
     
     %% overly smooth rotational velocity
-    ts.smoothedangularVelocity = smoothdata(ts.ball.yawdeg, 'gaussian',10);
-    ts.smoothedfwdVelocity = smoothdata(ts.ball.forvel, 'gaussian',10);
+    daq.smoothedangularVelocity = smoothdata(daq.byv_deg, 'gaussian',30);
+    daq.smoothedfwdVelocity = smoothdata(daq.bfv, 'gaussian',30);
+
+    %% create moving not moving binary for 60Hz data
+    % calculate total speed
+    total_speed = abs(daq.bfv_supp) +abs(daq.byv_supp) + abs(daq.bsv_supp);
+    daq.totalspeed_supp = total_speed;
+    ids_fly_moving = find(daq.totalspeed_supp >= minVel);
+
+    % Create a column for moving/not moving
+    daq.motion_supp.moving_not = zeros(size(daq.totalspeed_supp));  % Initialize with zeros
+    
+    daq.motion_supp.moving_not(ids_fly_moving) = 1;  % Set to 1 where the conditions are met
+    
+    % Find indices where the fly is not moving (where movement_state is 0)
+    ftNotMoveInd = find(daq.motion_supp.moving_not == 0);
+    
+    daq.motion_supp.ftNotMoveInd = ftNotMoveInd;
+
+    %% turn yaw into degrees
+    daq.byv_deg_supp = rad2deg(daq.byv_supp);
+    
+    
+    %% overly smooth rotational velocity
+    daq.smoothedangularVelocity_supp = smoothdata(daq.byv_deg_supp, 'gaussian',100);
+    daq.smoothedfwdVelocity_supp = smoothdata(daq.bfv_supp, 'gaussian',100);
 
 
 end

@@ -1,6 +1,6 @@
 
 %% function
-function plotting_ves041(daq, ts, jump, savepath)
+function plotting_an4(daq, ts, jump, savepath)
 
 close all
 
@@ -331,6 +331,6 @@ title("Rotation Speed colored")
 
 save_plot_with_title_as_filename('x_rot', 'y_rot', savepath);
 
-end
 
+end
 

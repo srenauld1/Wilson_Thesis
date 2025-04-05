@@ -17,6 +17,7 @@
 %           be included
 %   moveNotMove - pData output struct
 %   rightTurn - boolean for whether to extract right turns (false = left)
+%   upsample - boolean for whether imaging rate (0) or 60Hz fictrac (1)
 %
 % OUTPUTS:
 %   yaw_information - struct holding all other variables
@@ -39,7 +40,7 @@
 %   3/26/25 SMR added struct to output
 function yaw_information = ...
     findYawVelPeaksFT(fictracSmo, minYawThresh, turnDur, moveNotMove, ...
-    rightTurn)
+    rightTurn, upsample)
 
     % compensate for bias in fly's yaw and slide velocities
 %     fictracSmo.yawAngVel = fictracSmo.yawAngVel - fictracSmo.angVelBias;
@@ -47,9 +48,21 @@ function yaw_information = ...
 
     % check if we're extracting right or left turns
     if (rightTurn)
-        angVelSmoS = fictracSmo.smoothedangularVelocity;
+        if (upsample)
+            angVelSmoS = fictracSmo.smoothedangularVelocity_supp;
+            time = fictracSmo.t_supp;
+        else
+            angVelSmoS = fictracSmo.smoothedangularVelocity;
+            time = fictracSmo.t;
+        end
     else
-        angVelSmoS = -1 * fictracSmo.smoothedangularVelocity;
+        if (upsample)
+            angVelSmoS = -1 * fictracSmo.smoothedangularVelocity_supp;
+            time = fictracSmo.t_supp;
+        else
+            angVelSmoS = -1 * fictracSmo.smoothedangularVelocity;
+            time = fictracSmo.t;
+        end
     end
         
     % find all yaw velocity peaks, no conditioning yet
@@ -63,7 +76,7 @@ function yaw_information = ...
     %pkInds = setdiff(pkInds, fictracSmo.dropInd, 'stable');
 
     % convert pkInds to logical (for fictrac indices)
-    pkLog = false(size(fictracSmo.smoothedangularVelocity));
+    pkLog = false(size(angVelSmoS));
     pkLog(pkInds) = true;
 
     % peaks have to be greater than minYawThresh
@@ -164,8 +177,8 @@ function yaw_information = ...
 
     for i = 1:length(pkInds)
 
-        thisBoutStartT = fictracSmo.t(pkStartInd(i));
-        thisBoutEndT = fictracSmo.t(pkEndInd(i));
+        thisBoutStartT = time(pkStartInd(i));
+        thisBoutEndT = time(pkEndInd(i));
 
         thisBoutDur = thisBoutEndT - thisBoutStartT;
 
@@ -187,9 +200,9 @@ function yaw_information = ...
     boutEndInd = pkEndInd;
 
     % outputs, times
-    yawVelPeakTimes = fictracSmo.t(pkInds);
-    boutStartTimes = fictracSmo.t(pkStartInd);
-    boutEndTimes = fictracSmo.t(pkEndInd);
+    yawVelPeakTimes = time(pkInds);
+    boutStartTimes = time(pkStartInd);
+    boutEndTimes = time(pkEndInd);
 
     % Create a struct to hold the output information
     yaw_information = struct();

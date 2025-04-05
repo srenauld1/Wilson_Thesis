@@ -19,7 +19,6 @@ clear all
 %% initialize variables
 neck = 0;
 ves041 = 0;
-an4 = 0;
 jump = 0;
 
 %% load in daq and ts
@@ -62,11 +61,6 @@ if contains(base_path, 'jump')
 else
     jump = 0;  % Set neck to 0 if "neck" is not found
 end
-if contains(base_path, 'an4')
-    an4 = 1;  % Set neck to 1 if "neck" is found
-else
-    an4 = 0;  % Set neck to 0 if "neck" is not found
-end
 % Define the directory for the stimulus
 stim_directory = fullfile(base_path, 'smr_analysis');
 
@@ -98,7 +92,7 @@ yaw_information_left_supp = findYawVelPeaksFT(daq, 50, [0.2,1], daq.motion_supp,
 %% plot basic variables
 if ves041
     %% basic velocity and dff plotting
-    plotting_ves041(daq,ts, jump, savepath)
+    plotting_ves041(daq,ts, savepath)
     %% plot flat path with saccades
     plot_flatpath_saccades(daq, jump,savepath);
     %%% plot heatmap of forward acceleration and rs and dff
@@ -112,13 +106,9 @@ if ves041
 
 end
 
+
 if neck
     plotting_neck(daq, savepath)
-end
-
-if an4
-    plotting_an4(daq, ts, jump, savepath)
-    lm_velocity(daq, ts, savepath)
 end
 
 

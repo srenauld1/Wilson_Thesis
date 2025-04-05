@@ -1,14 +1,49 @@
-function [ts, saccade_both] = find_saccades_2p(ts, yaw_information_right,yaw_information_left,forvel_cutoff)
+function [daq, saccade_both] = find_saccades_2p(daq, yaw_information_right,yaw_information_left,forvel_cutoff, upsample)
 % 
+%   This function takes in information on turning (from findYawPeaksFT.m)
+%   and returns only those turns that qualify as saccades. this means that
+%   the forward velocity at the peak of the turn is less than the forward
+%   velocity at the beginning of the turn (less by forvel_cutoff)
+%
 %
 % INPUTS:
+%   daq - struct with kinematic data (both imaging frame rate and 60hz)
+%   yaw_information_right - struct from findYawVelPeaksFT.m for extracting
+%       all right turns in a trial
+%   yaw_information_left - struct from findYawVelPeaksFT.m for extracting
+%       all left turns in a trial
+%   forvel_cutoff - velocity value set in mater_imaging_analysis to
+%       determine the amount slow down required to be a saccade (1 is a good
+%       start)
+%   upsample - boolean for whether imaging rate (0) or 60Hz fictrac (1)
 %
 % OUTPUTS:
+%   daq - returns kinematic data with structs added (?)
+%   saccade_both - a struct containing information from yaw_information
+%   left and right for only turns defined as saccades
+%
+%
+% LAST UPDATED
+%   3/25 - SMR CREATED
 %
 
+
 % initialize kinematic data
-forward = ts.smoothedfwdVelocity;
-yaw = ts.ball.yawdeg;
+if (upsample)
+    forward = daq.smoothedfwdVelocity_supp;
+    yaw = daq.byv_deg_supp;
+    time = daq.t_supp;
+    % Initialize the saccading array with zeros
+    numEntries = size(time,2);  % The total number of observations you want to evaluate
+    daq.saccading_supp = zeros(1, numEntries);  % Initialize as non-saccading
+else
+    forward = daq.smoothedfwdVelocity;
+    yaw = daq.byv_deg;
+    time = daq.t;
+    % Initialize the saccading array with zeros
+    numEntries = size(time,2);  % The total number of observations you want to evaluate
+    daq.saccading = zeros(1, numEntries);  % Initialize as non-saccading
+end
 
 
 %% left saccades
@@ -107,10 +142,6 @@ saccade_both.boutEndInd = [saccade_left.boutEndInd, saccade_right.boutEndInd];
 
 %% add to expt data
 
-% Initialize the saccading array with zeros
-numEntries = size(ts.t,2);  % The total number of observations you want to evaluate
-ts.saccading = zeros(1, numEntries);  % Initialize as non-saccading
-
 % Loop through each entry for saccades
 for i = 1:length(saccade_both.boutStartInd)
     bout_start = saccade_both.boutStartInd(i);
@@ -118,7 +149,11 @@ for i = 1:length(saccade_both.boutStartInd)
 
     % Set saccading to 1 for any index in between start and end
     if bout_start <= numEntries && bout_end <= numEntries
-        ts.saccading(1, bout_start:bout_end) = 1;  % Mark saccading for left
+        if (upsample)
+            daq.saccading_supp(1, bout_start:bout_end) = 1;  % Mark saccading for left
+        else
+            daq.saccading(1, bout_start:bout_end) = 1;  % Mark saccading for left
+        end
     end
 end
 

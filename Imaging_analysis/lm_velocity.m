@@ -1,19 +1,14 @@
-function lm_velocity(ts, savepath)
+function lm_velocity(daq, ts, savepath)
 
-arguments
-    ts;
-    savepath string = "/Users/sophiarenauld/stacks/20241121-7_fly2_clbar1";  % Default value
-end
 
 close all
 
 %% def variables
-forward_velocity = ts.ball.forvel; 
-rot_velocity = ts.ball.yawvel;
-side_velocity = ts.ball.sidevel;
+forward_velocity = daq.bfv; 
+rot_velocity = daq.byv;
+side_velocity = daq.bsv;
 rot_speed = abs(rot_velocity);
-%dff = ts.resp.i1.imf_f_dff005000_n;
-dff = ts.resp.i2{1};
+dff = ts{1};
 % Identify outliers using the default method (usually interquartile range)
 outliers1 = isoutlier(forward_velocity, 'mean', 'ThresholdFactor', 4);
 outliers2 = isoutlier(rot_velocity, 'mean', 'ThresholdFactor', 4);
@@ -26,7 +21,7 @@ full_dff = cleaned_dff;
 cleaned_rot = rot_speed(~outliers);
 cleaned_side = side_velocity(~outliers);
 cleaned_rot_vel = rot_velocity(~outliers);
-ttime = ts.t(~outliers);
+ttime = daq.t(~outliers);
 forward_speed = abs(cleaned_forward_velocity);
 
 cleaned_forward_velocity = smooth(cleaned_forward_velocity);
@@ -36,20 +31,7 @@ forward_speed = abs(cleaned_forward_velocity);
 
 % Display the number of outliers removed
 disp(['Number of outliers removed: ', num2str(sum(outliers))]);
-% 
-% % Optional: Plot original vs. cleaned data
-% figure;
-% subplot(2, 1, 1);
-% plot(forward_velocity, 'b.-');
-% title('Original Forward Velocity');
-% ylabel('Velocity');
-% xlabel('Index');
-% 
-% subplot(2, 1, 2);
-% plot(cleaned_forward_velocity, 'g.-');
-% title('Cleaned Forward Velocity (Outliers Removed)');
-% ylabel('Velocity');
-% xlabel('Index');
+
 
 %% Remove stop start transitions
 % Set flag to exclude start/stop transitions using transition window settings
@@ -65,7 +47,7 @@ if ex_startstop
     % Loop over each trial
     for trial = 1:nTrials
         % Calculate run index using Schmitt Trigger
-        runIdx = schmittTrigger(forward_speed(:, trial), 0.1, 0.1);
+        runIdx = schmittTrigger(forward_speed(:, trial), 5, 5);
         %runIdx2 = schmittTrigger(cleaned_rot(:, trial), 0.1, 0.1);
         %runIdx = runIdx1 | runIdx2;
         % Identify start and stop transitions in runIdx for the current trial
