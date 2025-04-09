@@ -1,4 +1,4 @@
-function plot_dff_saccades(ts, saccade_both);
+function plot_dff_saccades(daq, ts, saccade_both, savepath, turn);
     % merge left and right
     % Predefined parameters
     pre_saccade_time = 2;  % Time window (seconds) before the saccade
@@ -6,6 +6,8 @@ function plot_dff_saccades(ts, saccade_both);
     
     figure;
     hold on;
+    dff = ts;
+    time=daq.t_supp;
     
     % Loop over each bout to extract dF/F traces
     for i = 1:length(saccade_both.boutStartInd)
@@ -14,13 +16,13 @@ function plot_dff_saccades(ts, saccade_both);
         end_time = saccade_both.boutEndTimes(i);
         
         % Get the corresponding indices in the time vector for the full window
-        start_idx = find(ts.t >= (start_time - pre_saccade_time), 1, 'first');  % Start index
-        end_idx = find(ts.t >= (end_time + post_saccade_time), 1, 'first');      % End index
+        start_idx = find(time >= (start_time - pre_saccade_time), 1, 'first');  % Start index
+        end_idx = find(time >= (end_time + post_saccade_time), 1, 'first');      % End index
     
         % Ensure that the indices are valid and within bounds
         if ~isempty(start_idx) && ~isempty(end_idx) && end_idx > start_idx
             % Extract the dF/F trace and corresponding time window
-            dff_trace = ts.resp.i2{1}(start_idx:end_idx);
+            dff_trace =dff(start_idx:end_idx);
     
             % Normalize to range [0, 1]
             dff_min = min(dff_trace);  % Calculate the minimum value
@@ -35,7 +37,7 @@ function plot_dff_saccades(ts, saccade_both);
             
     
             all_traces{i} = normalized_dff_trace; % Extract dF/F trace
-            time_window = ts.t(start_idx:end_idx) - start_time;    % Time window relative to saccade start
+            time_window = time(start_idx:end_idx) - start_time;    % Time window relative to saccade start
     
         
             % Plot the aligned dF/F trace
@@ -56,7 +58,7 @@ function plot_dff_saccades(ts, saccade_both);
     % Sum the valid traces for averaging
     for i = 1:length(all_traces)
         if ~isempty(all_traces{i}) && length(all_traces{i}) >= min_length
-            average_trace = average_trace + all_traces{i}(1:min_length);  % Sum only the first min_length elements
+            average_trace = average_trace + all_traces{i}(1:min_length);  % Sum only the first min_length elemendaq
             num_valid_traces = num_valid_traces + 1;  % Count valid traces
         end
     end
@@ -74,12 +76,17 @@ function plot_dff_saccades(ts, saccade_both);
     % Plot the average line
     plot(average_time, average_trace, 'LineWidth', 2);  % Plot average as a dashed line
     
-    % Final plot adjustments to show the full range around saccades
+    % Final plot adjustmendaq to show the full range around saccades
     xlabel('Time relative to Saccade Start (s)');
     ylabel('dF/F');
     title('Aligned dF/F Traces Around Saccades');
     grid on;
-    xlim([-pre_saccade_time, 3]);  % x-limits to cover the pre and post saccade times
+    xlim([-pre_saccade_time, 3]);  % x-limidaq to cover the pre and post saccade times
     hold off;
+    if turn
+        save_plot_with_title_as_filename('turns', 'dff_split', savepath)
+    else
+        save_plot_with_title_as_filename('saccade', 'dff_split', savepath)
+    end
 
 end

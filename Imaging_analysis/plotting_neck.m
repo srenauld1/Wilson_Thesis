@@ -1,11 +1,11 @@
-function ts = plotting_neck(ts, savepath)
+function ts = plotting_neck(daq, ts, savepath)
 
 %% all 3 on one plot
-time = ts.t;                  % Time points
-dff = ts.resp.i2{1,1};           % Example dFF data
-fwd = ts.ball.forvel; % Example forward velocity data
-rot = ts.ball.yawvel; % Example rotational velocity data
-side = ts.ball.sidevel;
+time = daq.t;                  % Time points
+dff = ts;           % Example dFF data
+fwd = daq.bfv; % Example forward velocity data
+rot = daq.byv; % Example rotational velocity data
+side = daq.bsv;
 
 % Subplot 1: dFF
 numRows = size(dff, 1);
@@ -13,7 +13,7 @@ numRows = size(dff, 1);
 normalized_data = zeros(size(dff));
 
 % Normalize each row
-for i = 1:5 %size(dff, 1)  % Iterate through each row
+for i = 1:size(dff, 1)  % Iterate through each row
     row_min = min(dff(i, :));  % Minimum value of the current row
     row_max = max(dff(i, :));  % Maximum value of the current row
 

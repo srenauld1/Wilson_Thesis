@@ -1,18 +1,18 @@
 %% a function for plotting the flat path with detected saccades
 
-function plot_flatpath_saccades(ts, jump, savepath)
+function plot_flatpath_saccades(daq, jump, savepath, upsampled_x_data, upsampled_y_data, turn)
 
-if isfield(ts, 'optoStim')
+if isfield(daq, 'optoStim')
     % downsample
     downsampled_exptData = struct();
-    fields = fieldnames(ts);
+    fields = fieldnames(daq);
     for i = 1:length(fields)
         field = fields{i};
     
         % Check if the field is numeric
-        if isnumeric(ts.(field))
+        if isnumeric(daq.(field))
             % Perform downsampling by taking every 100th element
-            downsampled_exptData.(field) = ts.(field)(1:100:end);
+            downsampled_exptData.(field) = daq.(field)(1:50:end);
         end
     end
     opto=1;
@@ -22,8 +22,13 @@ if isfield(ts, 'optoStim')
     saccading = downsampled_exptData.saccading;
 else
     opto=0;
-    x = ts.flypos.x_ball;  % x-coordinates
-    y = ts.flypos.y_ball;  % y-coordinates
+    x = upsampled_x_data; %daq.px  ;  % x-coordinates
+    y = upsampled_y_data; %daq.py;  % y-coordinates
+    if turn
+        saccading=daq.turning_supp;
+    else
+        saccading = daq.saccading_supp;
+    end
 end
 
 % Create a figure for plotting
@@ -37,6 +42,7 @@ hOptoonly = [];
 hSaccading_opto =[];
 hJump = [];       % For storing jump graphic handles
 
+total=0;
 % Plot all segments
 for i = 1:length(x)-1
     if opto  % If the current index is part of a saccade
@@ -58,8 +64,9 @@ for i = 1:length(x)-1
             end
         end
     else
-        if ts.saccading(i)
+        if saccading(i)
             hSaccading = plot(x(i:i+1), y(i:i+1), 'r', 'LineWidth', 2);  % Red for saccading
+            total = total+1;
         else
             % Plot non-saccading segments in blue
             hNormal = plot(x(i:i+1), y(i:i+1), 'b', 'LineWidth', 1);  % Blue for non-saccading
@@ -74,10 +81,10 @@ hEnd = plot(x(end), y(end), 'y.', 'MarkerSize', 25);  % End point (yellow dot)
 % If jump is detected, plot the corresponding markers
 if jump
     if opto
-        jump_indices = find(ts.jump_detected == 1);  % Find indices where jump detected is 1
-        hJump = plot(ts.x(jump_indices), ts.y(jump_indices), 'kx', 'MarkerSize', 10);  % Black 'X' markers for jumps
+        jump_indices = find(daq.jump_detected == 1);  % Find indices where jump detected is 1
+        hJump = plot(daq.x(jump_indices), daq.y(jump_indices), 'kx', 'MarkerSize', 10);  % Black 'X' markers for jumps
     else
-        jump_indices = find(ts.vis.jump_detected == 1);  % Find indices where jump detected is 1
+        jump_indices = find(daq.vis.jump_detected == 1);  % Find indices where jump detected is 1
         hJump = plot(x(jump_indices), y(jump_indices), 'kx', 'MarkerSize', 10);  % Black 'X' markers for jumps
     end
 end

@@ -82,16 +82,59 @@ savepath = stim_directory;
 disp(['Save path: ', savepath]);
 
 %% process and pick out jumps
-minVel = 3;
-forvel_cutoff = 1;
+minVel = 2;
+forvel_cutoff = 0.5;
 daq = process_fictrac_panels_2p(daq, minVel, jump);
 
 %% find turns
-yaw_information_right = findYawVelPeaksFT(daq, 50, [0.2,1], daq.motion, 1,0);
-yaw_information_left = findYawVelPeaksFT(daq, 50, [0.2,1], daq.motion, 0, 0);
-yaw_information_right_supp = findYawVelPeaksFT(daq, 50, [0.2,1], daq.motion_supp, 1, 1);
-yaw_information_left_supp = findYawVelPeaksFT(daq, 50, [0.2,1], daq.motion_supp, 0, 1);
+yaw_information_right = findYawVelPeaksFT(daq, 20, [0.2,1], daq.motion, 1,0);
+yaw_information_left = findYawVelPeaksFT(daq, 20, [0.2,1], daq.motion, 0, 0);
+yaw_information_right_supp = findYawVelPeaksFT(daq, 20, [0.2,3], daq.motion_supp, 1, 1);
+yaw_information_left_supp = findYawVelPeaksFT(daq, 20, [0.2,3], daq.motion_supp, 0, 1);
 
+%% merge turn data for assessing algorythm
+yaw_both = struct();
+yaw_both.yawVelPeakTimes = [yaw_information_left.yawVelPeakTimes, yaw_information_right.yawVelPeakTimes];
+yaw_both.boutStartTimes = [yaw_information_left.boutStartTimes, yaw_information_right.boutStartTimes];
+yaw_both.boutEndTimes = [yaw_information_left.boutEndTimes, yaw_information_right.boutEndTimes];
+yaw_both.yawVelPeakInd = [yaw_information_left.yawVelPeakInd, yaw_information_right.yawVelPeakInd];
+yaw_both.boutStartInd = [yaw_information_left.boutStartInd, yaw_information_right.boutStartInd];
+yaw_both.boutEndInd = [yaw_information_left.boutEndInd, yaw_information_right.boutEndInd];
+
+%% add to expt data
+daq.turning = zeros(1, length(daq.smoothedangularVelocity));
+% Loop through each entry for saccades
+for i = 1:length(yaw_both.boutStartInd)
+    bout_start = yaw_both.boutStartInd(i);
+    bout_end = yaw_both.boutEndInd(i);
+
+    % Set saccading to 1 for any index in between start and end
+    if bout_start <= length(daq.smoothedangularVelocity) && bout_end <= length(daq.smoothedangularVelocity)
+        daq.turning(1, bout_start:bout_end) = 1;  % Mark saccading for left
+    end
+end
+
+%% merge turn data for assessing algorythm
+yaw_both_supp = struct();
+yaw_both_supp.yawVelPeakTimes = [yaw_information_left_supp.yawVelPeakTimes, yaw_information_right_supp.yawVelPeakTimes];
+yaw_both_supp.boutStartTimes = [yaw_information_left_supp.boutStartTimes, yaw_information_right_supp.boutStartTimes];
+yaw_both_supp.boutEndTimes = [yaw_information_left_supp.boutEndTimes, yaw_information_right_supp.boutEndTimes];
+yaw_both_supp.yawVelPeakInd = [yaw_information_left_supp.yawVelPeakInd, yaw_information_right_supp.yawVelPeakInd];
+yaw_both_supp.boutStartInd = [yaw_information_left_supp.boutStartInd, yaw_information_right_supp.boutStartInd];
+yaw_both_supp.boutEndInd = [yaw_information_left_supp.boutEndInd, yaw_information_right_supp.boutEndInd];
+
+%% add to expt data
+daq.turning_supp = zeros(1, length(daq.smoothedangularVelocity_supp));
+% Loop through each entry for saccades
+for i = 1:length(yaw_both_supp.boutStartInd)
+    bout_start = yaw_both_supp.boutStartInd(i);
+    bout_end = yaw_both_supp.boutEndInd(i);
+
+    % Set saccading to 1 for any index in between start and end
+    if bout_start <= length(daq.smoothedangularVelocity_supp) && bout_end <= length(daq.smoothedangularVelocity_supp)
+        daq.turning_supp(1, bout_start:bout_end) = 1;  % Mark saccading for left  % Mark saccading for left
+    end
+end
 %% now here i will have a function to extract saccades
 [daq, saccade_both] = find_saccades_2p(daq, yaw_information_right,yaw_information_left, forvel_cutoff, 0);
 [daq, saccade_both_supp] = find_saccades_2p(daq, yaw_information_right_supp,yaw_information_left_supp, forvel_cutoff, 1);
@@ -99,21 +142,101 @@ yaw_information_left_supp = findYawVelPeaksFT(daq, 50, [0.2,1], daq.motion_supp,
 if ves041
     %% basic velocity and dff plotting
     plotting_ves041(daq,ts, jump, savepath)
-    %% plot flat path with saccades
-    plot_flatpath_saccades(daq, jump,savepath);
-    %%% plot heatmap of forward acceleration and rs and dff
-    % ts.ball.foraccel = diff(ts.ball.forvel);
-    % ts.ball.yawvel_adjusted = ts.ball.yawdeg(1:end-1); 
-    % ts.ball.sidevel_adjusted = ts.ball.sidevel(1:end-1);
-    % ts.ball.dffvel_adjusted = ts.resp.i2{1}(1:end-1); 
-    % binnedData = dff_v_velocityHeat(ts.ball.foraccel,abs(ts.ball.yawvel_adjusted),abs(ts.ball.sidevel_adjusted),ts.ball.dffvel_adjusted,1);
-    %% plot dff split up by saccades 
-    plot_dff_saccades(daq, saccade_both)
+    %% test turns - rotational velocity
+    % Create a figure for plotting
+    figure;
+    hold on;
+    
+    plot(daq.t_supp, daq.smoothedangularVelocity_supp)
+    
+    % Logical indices for turning states
+    turning_indices_on = daq.turning_supp == 1;  % Where turning_supp is 1
+    turning_indices_off = daq.turning_supp == 0;  % Where turning_supp is 0
+    saccading_indices_on = daq.saccading_supp == 1;  % Where turning_supp is 1
+    saccading_indices_off = daq.saccading_supp == 0;  % Where turning_supp is 0
+    
+    % Extract the data for turning on and off
+    time_on = daq.t_supp(turning_indices_on);  % Time values where turning_supp is 1
+    angular_velocity_on = daq.smoothedangularVelocity_supp(turning_indices_on);  % Corresponding angular velocity values
+    for_velocity_on = daq.smoothedfwdVelocity_supp(turning_indices_on);  % Corresponding angular velocity values
+    
+    
+    time_on_saccade = daq.t_supp(saccading_indices_on);  % Time values where turning_supp is 1
+    angular_velocity_saccade = daq.smoothedangularVelocity_supp(saccading_indices_on);  % Corresponding angular velocity values
+    for_velocity_saccade = daq.smoothedfwdVelocity_supp(saccading_indices_on);
+    
+    % Plot angular velocity when turning_supp is 1 (green dots)
+    scatter(time_on, angular_velocity_on, 10, 'g', 'filled', 'DisplayName', 'Non saccade turn');  % Green dots
+    
+    
+    % Plot angular velocity when saccading_supp is 1 (red dots)
+    scatter(time_on_saccade, angular_velocity_saccade, 10, 'r', 'filled', 'DisplayName', 'Saccade');  % Red dots
+    
+    % Add labels and title
+    xlabel('Time (s)');
+    ylabel('Smoothed Angular Velocity');
+    title('Smoothed Angular Velocity During Turning States (Dots)');
+    grid on;
+    
+    % Add a legend to distinguish between states
+    legend('show', 'Location', 'Best');  % Displays the legends based on 'DisplayName'
+    
+    hold off;
+    save_plot_with_title_as_filename('rv', 'turns_v_saccades', savepath)
+    
+    %% test turns - forward
+    figure
+    hold on
+    
+    plot(daq.t_supp, daq.smoothedfwdVelocity_supp)
+    % Plot angular velocity when turning_supp is 1 (green dots)
+    scatter(time_on, for_velocity_on, 10, 'g', 'filled', 'DisplayName', 'Turning On');  % Green dots
+    
+    
+    % Plot angular velocity when saccading_supp is 1 (red dots)
+    scatter(time_on_saccade, for_velocity_saccade, 10, 'r', 'filled', 'DisplayName', 'Turning Off');  % Red dots
+    
+    % Add labels and title
+    xlabel('Time (s)');
+    ylabel('Smoothed Angular Velocity');
+    title('Smoothed Forward Velocity During Turning States (Dots)');
+    grid on;
+    
+    % Add a legend to distinguish between states
+    legend('show', 'Location', 'Best');  % Displays the legends based on 'DisplayName'
+    
+    hold off;
+    save_plot_with_title_as_filename('fwdv', 'turns_vs_saccades', savepath)
+    
+    
+    %% upsample for dff with turning / saccades
+    % Assume ts{1,1} and daq.bfv are defined
+    ts_data = ts{1,1};                       % Your original data (1x2000)
+    target_length = length(daq.bfv_supp);        % Length of target data (1x18000)
+    
+    % Create a time vector for original data
+    original_length = length(ts_data);
+    original_time = daq.t; % Example normalization to unit length (you can adjust based on actual time)
+    
+    % Create a time vector for the target length
+    target_time = daq.t_supp;   % Corresponding time for target data
+    
+    % Upsample ts_data using interpolation
+    upsampled_ts_data = interp1(original_time, ts_data, target_time, 'linear'); % Linear interpolation
+    upsampled_x_data = interp1(original_time, daq.px, target_time, 'linear'); % Linear interpolation
+    upsampled_y_data = interp1(original_time, daq.py, target_time, 'linear'); % Linear interpolation
+    %% plot data for both all turns and saccades
+    plot_dff_saccades(daq, upsampled_ts_data, yaw_both_supp, savepath, 1)
+    plot_dff_saccades(daq, upsampled_ts_data, saccade_both_supp, savepath, 0)
+    
+    plot_flatpath_saccades(daq, jump, savepath, upsampled_x_data, upsampled_y_data, 1);
+    plot_flatpath_saccades(daq, jump, savepath, upsampled_x_data, upsampled_y_data, 0);
+
 
 end
 
 if neck
-    plotting_neck(daq, savepath)
+    plotting_neck(daq, ts, savepath)
 end
 
 if an4
@@ -123,5 +246,13 @@ end
 
 
 %% PILOT ZONE
-
-
+    %% plot flat path with saccades
+    %plot_flatpath_saccades(daq, jump,savepath);
+    %%% plot heatmap of forward acceleration and rs and dff
+    % ts.ball.foraccel = diff(ts.ball.forvel);
+    % ts.ball.yawvel_adjusted = ts.ball.yawdeg(1:end-1); 
+    % ts.ball.sidevel_adjusted = ts.ball.sidevel(1:end-1);
+    % ts.ball.dffvel_adjusted = ts.resp.i2{1}(1:end-1); 
+    % binnedData = dff_v_velocityHeat(ts.ball.foraccel,abs(ts.ball.yawvel_adjusted),abs(ts.ball.sidevel_adjusted),ts.ball.dffvel_adjusted,1);
+    %% plot dff split up by saccades 
+    %plot_dff_saccades(daq, ts, saccade_both)
