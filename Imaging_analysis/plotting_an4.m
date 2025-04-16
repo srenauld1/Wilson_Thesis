@@ -226,7 +226,7 @@ speed = abs(yaw);
 % Identify outliers using the default method (usually interquartile range)
 outliers1 = isoutlier(fwd, 'mean', 'ThresholdFactor', 6);
 outliers2 = isoutlier(speed, 'mean', 'ThresholdFactor', 6);
-outliers = outliers1 | outliers2 | not_moving;
+outliers = outliers1 | outliers2;
 
 % Remove outliers from forward_velocity
 cleaned_forward_velocity = fwd(~outliers);
@@ -235,38 +235,6 @@ cleaned_dff = dff(~outliers);
 cleaned_xpos = daq.px(~outliers);
 cleaned_ypos = daq.py(~outliers);
 
-%% flat path colored by dff
-figure
-hold on
-
-dffclean_norm = round((cleaned_dff-min(cleaned_dff))/(max(cleaned_dff)-min(cleaned_dff))*(length(cmap)-1)) +1;
-for i = 1:length(cleaned_xpos)-1
-    plot(cleaned_xpos(i:i+1), cleaned_ypos(i:i+1), 'Color', cmap(dffclean_norm(i), :), 'LineWidth', 2)
-end
-
-
-
-% Create colorbar with actual DFF values
-c = colorbar;
-caxis([1 100])  % Set colorbar limits to match normalized range
-yticks = get(c, 'YTick');  % Get current tick positions
-% Convert normalized values back to actual DFF values
-actual_values = yticks/100 * (max(dff)-min(dff)) + min(dff);
-% Format tick labels to 3 decimal places
-ylabel(c, 'DFF')
-set(c, 'YTickLabel', arrayfun(@(x) sprintf('%.3f', x), actual_values, 'UniformOutput', false))
-
-hold on
-%Add jump points
-if jump
-    plot(daq.px(logical(daq.jump_detected)), ...
-         daq.py(logical(daq.jump_detected)), ...
-         'm.', 'MarkerSize', 15)  % Adjust color and size as needed
-end
-plot(daq.px(1), daq.py(1), 'r.', 'MarkerSize', 20)  % Start point
-
-title("DFF colored, cue flat path, total vel >3")
-save_plot_with_title_as_filename('x_ball_color_moving', 'y_ball_color_moving', savepath);
 %% flat path colored by fwd vel
 cmap=jet(100);
 fwd_norm = round((cleaned_forward_velocity-min(cleaned_forward_velocity))/(max(cleaned_forward_velocity)-min(cleaned_forward_velocity))*(length(cmap)-1)) +1;

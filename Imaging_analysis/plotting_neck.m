@@ -2,13 +2,13 @@ function ts = plotting_neck(daq, ts, savepath)
 
 %% all 3 on one plot
 time = daq.t;                  % Time points
-dff = ts;           % Example dFF data
+dff = ts{1,1};           % Example dFF data
 fwd = daq.bfv; % Example forward velocity data
 rot = daq.byv; % Example rotational velocity data
 side = daq.bsv;
 
 % Subplot 1: dFF
-numRows = size(dff, 1);
+numRows = size(dff, 2);
 % Initialize a matrix to hold the normalized values
 normalized_data = zeros(size(dff));
 

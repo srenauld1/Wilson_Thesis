@@ -24,10 +24,10 @@ cleaned_rot_vel = rot_velocity(~outliers);
 ttime = daq.t(~outliers);
 forward_speed = abs(cleaned_forward_velocity);
 
-cleaned_forward_velocity = smooth(cleaned_forward_velocity);
-cleaned_rot = smooth(cleaned_rot);
-forward_speed = abs(cleaned_forward_velocity);
-
+r2_rotation_nofilter = fitlm(abs(cleaned_rot_vel), cleaned_dff);
+r2_forward_nofilter = fitlm(forward_speed, cleaned_dff);
+r2_rotation_nofilter
+r2_forward_nofilter
 
 % Display the number of outliers removed
 disp(['Number of outliers removed: ', num2str(sum(outliers))]);
@@ -44,10 +44,11 @@ if ex_startstop
     % Convert post-start and pre-stop windows to indices based on time array
     postStartIdx = fetchTimeIdx(ttime, postStartWin);
     preStopIdx = fetchTimeIdx(ttime, preStopWin);
+    total_speed = abs(cleaned_side) +abs(cleaned_rot)+abs(forward_speed);
     % Loop over each trial
     for trial = 1:nTrials
         % Calculate run index using Schmitt Trigger
-        runIdx = schmittTrigger(forward_speed(:, trial), 5, 5);
+        runIdx = schmittTrigger(total_speed(trial, :), 1, 1);
         %runIdx2 = schmittTrigger(cleaned_rot(:, trial), 0.1, 0.1);
         %runIdx = runIdx1 | runIdx2;
         % Identify start and stop transitions in runIdx for the current trial
@@ -59,142 +60,22 @@ if ex_startstop
             tStart = startTrans(st); % Start index
             tEnd = min(size(cleaned_dff, 2), tStart + postStartIdx); % End index, within bounds
             cleaned_dff(tStart:tEnd) = nan; % Set post-start window to NaN in cell activity data
+            forward_speed(tStart:tEnd) = nan;
         end
         % Loop over each stop transition to set pre-stop period as NaN
         for sp = 1:length(stopTrans)
             tStop = stopTrans(sp); % Stop index
             tStart = max(1, tStop - preStopIdx); % Start index, within bounds
             cleaned_dff(tStart:tStop) = nan; % Set pre-stop window to NaN in cell activity data
+            forward_speed(tStart:tStop) = nan;
         end
         % Set cellactivity to NaN where runIdx is 0 (not running)
         cleaned_dff(runIdx == 0) = nan;
+        forward_speed(runIdx == 0) = nan;
     end
 end
 
 
-%% scatterplot colored by rv
-% Example data (replace with your actual data)
-forward_velocity = cleaned_forward_velocity;  % Forward velocity data (x-axis)
-dff = cleaned_dff;  % dff data (y-axis)
-rotational_velocity = cleaned_rot_vel;  % Rotational velocity data (color coding)
-
-
-
-% Define the bin edges for rotational velocity
-rotational_bins = [-3 -2 -1 0 1 2 3];
-
-% Bin the rotational velocity data
-[~, rotational_bin_idx] = histc(rotational_velocity, rotational_bins);
-
-% Initialize a cell array to store dff values and forward velocity for each rotational velocity bin
-binned_forward_velocity = cell(length(rotational_bins)-1, 1);
-binned_dff = cell(length(rotational_bins)-1, 1);
-
-% Separate forward velocity and dff into bins based on rotational velocity
-for j = 1:length(rotational_bins)-1
-    % Find the indices where rotational velocity falls into the current bin
-    bin_indices = rotational_bin_idx == j;
-    
-    % Store forward velocity and dff for the current bin
-    binned_forward_velocity{j} = forward_velocity(bin_indices);
-    binned_dff{j} = dff(bin_indices);
-end
-
-% Plot the points for each rotational velocity bin using scatter
-figure;
-hold on;
-colors = lines(length(rotational_bins)-1);  % Get distinct colors for each bin
-for j = 1:length(rotational_bins)-1
-    scatter(binned_forward_velocity{j}, binned_dff{j}, 50, 'MarkerEdgeColor', colors(j, :), 'MarkerFaceColor', colors(j, :));
-end
-
-% Plot average lines for each bin
-for i = 1:length(rotational_bins)-1
-    % Find the indices of points within the current rotational velocity bin
-    bin_indices = find(rotational_velocity >= rotational_bins(i) & rotational_velocity < rotational_bins(i+1));
-    
-    % Check if there are enough points in the bin
-    if ~isempty(bin_indices)
-        % Get the forward velocity and dff values for the current bin
-        fwd_vel_bin = forward_velocity(bin_indices);
-        dff_bin = dff(bin_indices);
-        
-        % Sort the forward velocity and dff for better plotting
-        [fwd_vel_sorted, sort_idx] = sort(fwd_vel_bin);
-        dff_sorted = dff_bin(sort_idx);
-        
-        % Compute a moving average (optional) to smooth the curve, or just plot the raw sorted data
-        window_size = 5;  % You can adjust this size
-        smoothed_dff = movmean(dff_sorted, window_size);  % Smoothing dff
-        
-        % Plot the average relationship for this bin
-        plot(fwd_vel_sorted, smoothed_dff, 'LineWidth', 2, 'Color', colors(i, :), ...
-            'DisplayName', sprintf('RotVel: [%d, %d] deg/s', rotational_bins(i), rotational_bins(i+1)));
-    end
-end
-
-% Customize plot
-xlabel('Forward Velocity (mm/s)');
-ylabel('dff');
-title('dff vs Forward Velocity for Different Binned Rotational Velocities');
-legend(arrayfun(@(x,y) sprintf('%.1f to %.1f mm/s', x, y), rotational_bins(1:end-1), rotational_bins(2:end), 'UniformOutput', false));
-grid on;
-hold off;
-
-save_plot_with_title_as_filename('scatter', 'average', savepath);
-
-%% line colored by rv, binned forward and rv
-
-% Define the bin edges for forward and rotational velocity
-forward_bins = [-3 -1 0 1 3 5 7 9]; %[-4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9 9.5, 10];%
-rotational_bins = [-3 -2 -1 0 1 2 3];
-tabulate(rotational_bin_idx)
-
-% Bin the forward velocity data
-[~, forward_bin_idx] = histc(forward_velocity, forward_bins);
-
-% Bin the rotational velocity data
-[~, rotational_bin_idx] = histc(rotational_velocity, rotational_bins);
-
-% Initialize arrays to store binned dff values
-binned_dff = NaN(length(forward_bins)-1, length(rotational_bins)-1);
-
-% Calculate the mean dff for each combination of forward and rotational bins
-for i = 1:length(forward_bins)-1
-    for j = 1:length(rotational_bins)-1
-        % Find the indices where both forward and rotational velocities fall into the current bins
-        bin_indices = forward_bin_idx == i & rotational_bin_idx == j;
-        
-        % Compute the mean dff for the current bin
-        if any(bin_indices)
-            binned_dff(i, j) = mean(dff(bin_indices));
-        end
-    end
-end
-
-% Plot the lines for each rotational bin
-figure;
-hold on;
-colors = lines(length(rotational_bins)-1);  % Get distinct colors for each bin
-for j = 1:length(rotational_bins)-1
-    plot(forward_bins(1:end-1) + diff(forward_bins)/2, binned_dff(:, j), 'LineWidth', 2, 'Color', colors(j, :));
-end
-
-% Customize plot
-xlabel('Forward Velocity (binned)');
-ylabel('Mean dff');
-title('dff vs Binned Forward Velocity for Different Binned Rotational Velocities');
-legend(arrayfun(@(x,y) sprintf('%.1f to %.1f mm/s', x, y), rotational_bins(1:end-1), rotational_bins(2:end), 'UniformOutput', false));
-grid on;
-hold off;
-
-%save_plot_with_title_as_filename('binned fwd', 'dff_rv', savepath);
-
-%% heatmap
-
-dff_v_velocityHeat(cleaned_forward_velocity,cleaned_rot_vel,cleaned_side,cleaned_dff,1);
-heatmap_save = fullfile(savepath, "heatmap");
-%savefig(gcf, heatmap_save)
 
 
 
@@ -244,14 +125,13 @@ save_plot_with_title_as_filename('r2_rot vel', 'dff', savepath);
 %% both
 
 % Combine predictors into a table
-data_table = table(forward_speed, cleaned_rot, cleaned_dff', ...
+data_table = table(forward_speed, cleaned_rot, cleaned_dff, ...
     'VariableNames', {'ForwardVelocity', 'RotationalVelocity', 'dFF'});
 
 % Create a linear model to predict dff from forward and rotational velocity
 lm = fitlm(data_table);
 
-% Display the linear model summary
-lm
+
 
 % Extract and display the R^2 value
 r2 = lm.Rsquared.Ordinary;  % Ordinary R^2
@@ -271,14 +151,6 @@ xlabel('Rotational Velocity');
 ylabel('dF/F');
 title('dFF vs Rotational Velocity');
 
-% Optional: Plot predicted vs. actual dFF
-% figure;
-% predicted_dff = predict(lm, predictors);
-% scatter(cleaned_dff, predicted_dff, 'k.');
-% xlabel('Actual dF/F');
-% ylabel('Predicted dF/F');
-% title(['Predicted vs. Actual dF/F: R^2 = ', num2str(r2)]);
-% grid on;
 
 %% cross correlations
 % Specify the maximum lag
@@ -366,5 +238,128 @@ save_plot_with_title_as_filename('crosscorr', 'velocities', savepath);
 % disp(lm_rot_fwd_shift);
 % 
 % 
+% % %% scatterplot colored by rv
+% % Example data (replace with your actual data)
+% forward_velocity = cleaned_forward_velocity;  % Forward velocity data (x-axis)
+% dff = cleaned_dff;  % dff data (y-axis)
+% rotational_velocity = cleaned_rot_vel;  % Rotational velocity data (color coding)
 % 
 % 
+% 
+% % Define the bin edges for rotational velocity
+% rotational_bins = [-3 -2 -1 0 1 2 3];
+% 
+% % Bin the rotational velocity data
+% [~, rotational_bin_idx] = histc(rotational_velocity, rotational_bins);
+% 
+% % Initialize a cell array to store dff values and forward velocity for each rotational velocity bin
+% binned_forward_velocity = cell(length(rotational_bins)-1, 1);
+% binned_dff = cell(length(rotational_bins)-1, 1);
+% 
+% % Separate forward velocity and dff into bins based on rotational velocity
+% for j = 1:length(rotational_bins)-1
+%     % Find the indices where rotational velocity falls into the current bin
+%     bin_indices = rotational_bin_idx == j;
+% 
+%     % Store forward velocity and dff for the current bin
+%     binned_forward_velocity{j} = forward_velocity(bin_indices);
+%     binned_dff{j} = dff(bin_indices);
+% end
+% 
+% % Plot the points for each rotational velocity bin using scatter
+% figure;
+% hold on;
+% colors = lines(length(rotational_bins)-1);  % Get distinct colors for each bin
+% for j = 1:length(rotational_bins)-1
+%     scatter(binned_forward_velocity{j}, binned_dff{j}, 50, 'MarkerEdgeColor', colors(j, :), 'MarkerFaceColor', colors(j, :));
+% end
+% 
+% % Plot average lines for each bin
+% for i = 1:length(rotational_bins)-1
+%     % Find the indices of points within the current rotational velocity bin
+%     bin_indices = find(rotational_velocity >= rotational_bins(i) & rotational_velocity < rotational_bins(i+1));
+% 
+%     % Check if there are enough points in the bin
+%     if ~isempty(bin_indices)
+%         % Get the forward velocity and dff values for the current bin
+%         fwd_vel_bin = forward_velocity(bin_indices);
+%         dff_bin = dff(bin_indices);
+% 
+%         % Sort the forward velocity and dff for better plotting
+%         [fwd_vel_sorted, sort_idx] = sort(fwd_vel_bin);
+%         dff_sorted = dff_bin(sort_idx);
+% 
+%         % Compute a moving average (optional) to smooth the curve, or just plot the raw sorted data
+%         window_size = 5;  % You can adjust this size
+%         smoothed_dff = movmean(dff_sorted, window_size);  % Smoothing dff
+% 
+%         % Plot the average relationship for this bin
+%         plot(fwd_vel_sorted, smoothed_dff, 'LineWidth', 2, 'Color', colors(i, :), ...
+%             'DisplayName', sprintf('RotVel: [%d, %d] deg/s', rotational_bins(i), rotational_bins(i+1)));
+%     end
+% end
+% 
+% % Customize plot
+% xlabel('Forward Velocity (mm/s)');
+% ylabel('dff');
+% title('dff vs Forward Velocity for Different Binned Rotational Velocities');
+% legend(arrayfun(@(x,y) sprintf('%.1f to %.1f mm/s', x, y), rotational_bins(1:end-1), rotational_bins(2:end), 'UniformOutput', false));
+% grid on;
+% hold off;
+% 
+% save_plot_with_title_as_filename('scatter', 'average', savepath);
+% 
+% %% line colored by rv, binned forward and rv
+% 
+% % Define the bin edges for forward and rotational velocity
+% forward_bins = [-3 -1 0 1 3 5 7 9]; %[-4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9 9.5, 10];%
+% rotational_bins = [-3 -2 -1 0 1 2 3];
+% tabulate(rotational_bin_idx)
+% 
+% % Bin the forward velocity data
+% [~, forward_bin_idx] = histc(forward_velocity, forward_bins);
+% 
+% % Bin the rotational velocity data
+% [~, rotational_bin_idx] = histc(rotational_velocity, rotational_bins);
+% 
+% % Initialize arrays to store binned dff values
+% binned_dff = NaN(length(forward_bins)-1, length(rotational_bins)-1);
+% 
+% % Calculate the mean dff for each combination of forward and rotational bins
+% for i = 1:length(forward_bins)-1
+%     for j = 1:length(rotational_bins)-1
+%         % Find the indices where both forward and rotational velocities fall into the current bins
+%         bin_indices = forward_bin_idx == i & rotational_bin_idx == j;
+% 
+%         % Compute the mean dff for the current bin
+%         if any(bin_indices)
+%             binned_dff(i, j) = mean(dff(bin_indices));
+%         end
+%     end
+% end
+% 
+% % Plot the lines for each rotational bin
+% figure;
+% hold on;
+% colors = lines(length(rotational_bins)-1);  % Get distinct colors for each bin
+% for j = 1:length(rotational_bins)-1
+%     plot(forward_bins(1:end-1) + diff(forward_bins)/2, binned_dff(:, j), 'LineWidth', 2, 'Color', colors(j, :));
+% end
+% 
+% % Customize plot
+% xlabel('Forward Velocity (binned)');
+% ylabel('Mean dff');
+% title('dff vs Binned Forward Velocity for Different Binned Rotational Velocities');
+% legend(arrayfun(@(x,y) sprintf('%.1f to %.1f mm/s', x, y), rotational_bins(1:end-1), rotational_bins(2:end), 'UniformOutput', false));
+% grid on;
+% hold off;
+
+%save_plot_with_title_as_filename('binned fwd', 'dff_rv', savepath);
+
+%% heatmap
+
+%dff_v_velocityHeat(cleaned_forward_velocity,cleaned_rot_vel,cleaned_side,cleaned_dff,1);
+%heatmap_save = fullfile(savepath, "heatmap");
+%savefig(gcf, heatmap_save)
+
+end
