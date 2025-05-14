@@ -229,8 +229,8 @@ if ves041
     plot_dff_saccades(daq, upsampled_ts_data, yaw_both_supp, savepath, 1)
     plot_dff_saccades(daq, upsampled_ts_data, saccade_both_supp, savepath, 0)
     
-    plot_flatpath_saccades(daq, jump, savepath, upsampled_x_data, upsampled_y_data, 1);
-    plot_flatpath_saccades(daq, jump, savepath, upsampled_x_data, upsampled_y_data, 0);
+    plot_flatpath_saccades(daq, jump, savepath, daq.px_supp, daq.py_supp, 1);
+    plot_flatpath_saccades(daq, jump, savepath, daq.px_supp, daq.py_supp, 0);
 
 
 end
