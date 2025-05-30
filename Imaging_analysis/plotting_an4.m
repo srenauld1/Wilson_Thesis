@@ -5,7 +5,7 @@ function plotting_an4(daq, ts, jump, savepath)
 close all
 
 
-[daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(daq, savepath, 10, 2,0.88,0.88);
+%[daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(daq, savepath, 10, 2,0.88,0.88);
 %% smooth fictrac
 fwd = daq.bfv;
 yaw = daq.byv;
