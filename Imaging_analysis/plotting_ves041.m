@@ -162,6 +162,7 @@ save_plot_with_title_as_filename('x', 'y', savepath);
 %% flat path colored by dff
 cmap=jet(100);
 dff_norm = round((dff-min(dff))/(max(dff)-min(dff))*(length(cmap)-1)) +1;
+t_norm = round((daq.t-min(daq.t))/(max(daq.t)-min(daq.t))*(length(cmap)-1)) +1;
 figure
 hold on
 for i = 1:length(daq.px)-1
@@ -226,7 +227,7 @@ speed = abs(yaw);
 % Identify outliers using the default method (usually interquartile range)
 outliers1 = isoutlier(fwd, 'mean', 'ThresholdFactor', 6);
 outliers2 = isoutlier(speed, 'mean', 'ThresholdFactor', 6);
-outliers = outliers1 | outliers2 | not_moving;
+outliers = outliers1 | outliers2 ;
 
 % Remove outliers from forward_velocity
 cleaned_forward_velocity = fwd(~outliers);

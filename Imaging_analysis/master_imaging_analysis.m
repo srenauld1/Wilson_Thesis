@@ -21,6 +21,7 @@ neck = 0;
 ves041 = 0;
 an4 = 0;
 jump = 0;
+lplc4=0;
 
 %% load in daq and ts
 % Define the base folder path
@@ -63,6 +64,10 @@ else
     jump = 0;  % Set neck to 0 if "neck" is not found
 end
 if contains(base_path, 'an4')
+    an4 = 1;  % Set neck to 1 if "neck" is found
+elseif contains(base_path, 'LPLC4')
+    an4 = 1;  % Set neck to 1 if "neck" is found
+elseif contains(base_path, 'cmllp01')
     an4 = 1;  % Set neck to 1 if "neck" is found
 else
     an4 = 0;  % Set neck to 0 if "neck" is not found
@@ -229,8 +234,8 @@ if ves041
     plot_dff_saccades(daq, upsampled_ts_data, yaw_both_supp, savepath, 1)
     plot_dff_saccades(daq, upsampled_ts_data, saccade_both_supp, savepath, 0)
     
-    plot_flatpath_saccades(daq, jump, savepath, upsampled_x_data, upsampled_y_data, 1);
-    plot_flatpath_saccades(daq, jump, savepath, upsampled_x_data, upsampled_y_data, 0);
+    plot_flatpath_saccades(daq, jump, savepath, daq.px_supp, daq.py_supp, 1);
+    plot_flatpath_saccades(daq, jump, savepath, daq.px_supp, daq.py_supp, 0);
 
 
 end
@@ -242,6 +247,29 @@ end
 if an4
     plotting_an4(daq, ts, jump, savepath)
     lm_velocity(daq, ts, savepath)
+    %% Plot the dff and pattern
+    % Plot the dff and fwd
+    figure;
+    yyaxis left;
+    plot(daq.t_supp, daq.vy_supp, '-b');
+    ylabel('pattern');  % Label for the left y-axis
+    
+    
+    % Plot the second time series on the right y-axis
+    yyaxis right;
+    plot(daq.t, ts{1}(1,:), '-r');  % Plot second time series in red
+    ylabel('dff');  % Label for the right y-axis
+    
+    % Add title and x-axis label
+    xlabel('Time');
+    title('Pattern and DFF');
+    
+    % Optional: Add legend
+    legend('Pattern', 'dff');
+    save_plot_with_title_as_filename('Pattern', 'dff', savepath);
+end
+if openloop
+    %openloop_gratings_process(daq, ts, savepath)
 end
 
 
