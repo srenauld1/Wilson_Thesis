@@ -1,6 +1,7 @@
 %% This script is an amalgamation of all of the behavior data processing scripts:
 
-% This first function re-orients the G4 panels to the true front (rather
+% This first function re-orients the G4 panel
+% s to the true front (rather
 % than where the panels decide is 0) 0 is in front of the fly
 % This function also downsamples time, opto, and the panels such that they
 % have the same length as the fictrac variables
