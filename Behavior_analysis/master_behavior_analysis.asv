@@ -71,10 +71,10 @@ disp(['Save path: ', savepath]);
 [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel);
 
 %% plot velocity data split up by opto chunks
-[exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
+[exptData,  exptMeta, fwdvelocity_segments_optoon_extra, rotspeed_segments_optoon_extra_endremoved] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
 
 %% determine turn direction
-[exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed] = turn_directions(exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed);
+
 
 %% find turns
 yaw_information_right = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.motion, 1, 0);
