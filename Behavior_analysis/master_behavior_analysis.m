@@ -84,10 +84,10 @@ yaw_information_left = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.moti
 [exptData, saccade_both] = find_saccades(exptData, yaw_information_right,yaw_information_left, forvel_cutoff);
 
 %% flat path
-plot_flatpath_saccades(exptData, 1, savepath)
+%plot_flatpath_saccades(exptData, 1, savepath)
 
 %% then maybe plot rasters here
-plot_raster(exptData,saccade_both, savepath)
+%plot_raster(exptData,saccade_both, savepath)
 
 %% plot flat path opto vs. saccades
 

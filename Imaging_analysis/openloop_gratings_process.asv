@@ -30,14 +30,12 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
 
    
     %value for total speed (moving or no)
-    still_cutoff = 2;
+    still_cutoff = 3;
     
     %% using velocity to determine moving clockwise or counter
     % for 3 Hz
-
-    
-    moving_cw = zeros(size(daq.vy));
-    moving_cw(daq.vy >= -3.1 & daq.vy <= 0) = 1;
+    moving_cw =[];
+    moving_cw(daq.vy >= -3.1 & daq.vy <= 0) = 1;  % Set to 1 if between 0.75 and 0.8
     % take care of 6hz case
     if max(daq.vyv)>2.5
          moving_cw(daq.vy >= -3.11 & daq.vyv >= 0) = 1;
@@ -53,8 +51,8 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
         end
     end
     % ccw
-    moving_ccw = zeros(size(daq.vy));
-    moving_ccw(daq.vy >= 0 & daq.vy <= 4) = 1;
+    moving_ccw =[];
+    moving_ccw(daq.vy >= 0 & daq.vy <= 4) = 1;  % Set to 1 if between 0.75 and 0.8
     if max(daq.vyv)>2.5
          moving_ccw(daq.vy >= -3.11 & daq.vyv <= 0) = 1;
     end
@@ -188,7 +186,7 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
 
     % Loop through each segment and separate based on motion value
     % skip first and last presentation due to issues with timing
-    for i = 3:length(change_points) - 3
+    for i = 3:length(change_points) - 2
         % Get the indices for the current segment
         segment_indices = change_points(i):change_points(i+1) - 1;
     
@@ -273,7 +271,7 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     figure;
     
     % Subplot 1: Velocity
-    subplot(3, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
+    subplot(2, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
     hold on;
     % Plot each raw "motionon" velocity segment in lighter green
     for i = 1:length(dff_ccw_motion)
@@ -293,7 +291,7 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     hold off;
     
     % Subplot 2: Speed
-    subplot(3, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
+    subplot(2, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
     hold on;
     % Plot cw rotation
     for i = 1:length(dff_cw_motion)
@@ -312,32 +310,7 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     title('CW rotation');
     legend('CW Rotation');
     hold off;
-    
-    % Subplot 3: motion
-    subplot(3, 1, 3);  % Create the first subplot (2 rows, 1 column, position 1)
-    hold on;
-    % Plot each raw "motionon" velocity segment in lighter green
-    for i = 1:length(total_speed_ccw_motion)
-        plot(daq.t(1:length(total_speed_ccw_motion{i})), total_speed_ccw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
-        plot(daq.t(1:length(total_speed_cw_motion{i})), total_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
-
-    end
-    xline(daq.t(ccw_motion_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
-    xline(daq.t((ccw_motion_on_markers(1)))+2, 'k--', 'LineWidth', 1.5);
-
-    total_speed = [total_speed_ccw_motion, total_speed_cw_motion];
-    min_length = min(cellfun(@length, total_speed));
-    total_speed = cellfun(@(x) x(1:min_length), total_speed, 'UniformOutput', false);
-    ave_speed = cell2mat(reshape(total_speed, length(total_speed), []));
-    ave_spd = mean(ave_speed, 1);
-    plot(daq.t(1:size(ave_speed, 2)), ave_spd, 'm', 'LineWidth', 3, 'DisplayName', 'Average Speed');
-
-    % Customize the plot
-    xlabel('Time (s)');
-    ylabel('Total speed');
-    title('Total Speed');
-    save_plot_with_title_as_filename('cw', 'ccw_andtotspeed', savepath)
-    
+    save_plot_with_title_as_filename('cw', 'ccw', savepath)
 
     %% now both on one chart
     figure
@@ -402,9 +375,6 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
 
     % take average fwd
     % Convert to a matrix for calculating the average
-    min_length = min(cellfun(@length, ave_moving));
-    ave_moving = cellfun(@(x) x(1:min_length), ave_moving, 'UniformOutput', false);
-    ave_still = cellfun(@(x) x(1:min_length), ave_still, 'UniformOutput', false);
     moving_ave = cell2mat(reshape(ave_moving, length(ave_moving), []));
     moving_ave = mean(moving_ave, 1);
     % Convert to a matrix for calculating the average
