@@ -72,7 +72,10 @@ disp(['Save path: ', savepath]);
 [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel);
 
 %% plot velocity data split up by opto chunks
-[exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
+[exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
+
+%% determine turn direction
+[exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed] = turn_directions(exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed);
 
 %% find turns
 yaw_information_right = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.motion, 1, 0);
@@ -82,10 +85,10 @@ yaw_information_left = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.moti
 [exptData, saccade_both] = find_saccades(exptData, yaw_information_right,yaw_information_left, forvel_cutoff);
 
 %% flat path
-plot_flatpath_saccades(exptData, 1, savepath)
+%plot_flatpath_saccades(exptData, 1, savepath)
 
 %% then maybe plot rasters here
-plot_raster(exptData,saccade_both, savepath)
+%plot_raster(exptData,saccade_both, savepath)
 
 %% plot flat path opto vs. saccades
 

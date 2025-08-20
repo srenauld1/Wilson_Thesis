@@ -16,7 +16,7 @@
 % Original: 10/31/2024 - SMR (plotExptpatternsliced)
 %           3/19/2025 - SMR adjusted to only plot closed loop data
 
-function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta, savepath)
+function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments_optoon_extra] = plotExpt_sliced_opto_velocity(exptData,exptMeta, savepath)
     
     % reset counters
     n = 0;
@@ -79,7 +79,7 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         
         % Initialize cell arrays to store segments of velocity
         fwdvelocity_segments_optoon_extra = {};  % Velocity when opto is 1 (including pre-opto points
-        rotspeed_segments_optoon_extra = {}; 
+        rotvel_segments_optoon_extra = {}; 
         opto_on_markers = [];  % To store the position of opto-on points for vertical lines
         opto_off_markers = [];
         opto_averages_fwd = [];
@@ -94,7 +94,7 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
             % Check the opto value in this segment
             if opto(segment_indices(1)) > 0
 
-                angular_speed = min(exptData.angularSpeed, 600);
+                angular_vel = exptData.angularVelocity;
                 % Calculate the start index for pre-opto points (ensuring it doesn’t go below 1)
                 pre_opto_start = max(1, segment_indices(1) - pre_opto_points);
                 % Calculate the end index for post-opto points (ensuring it doesn’t go below 1)
@@ -103,12 +103,12 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
 
                 % only opto on fwd and rot
                 opto_on_fwd = exptData.forwardVelocity(segment_indices);
-                opto_on_rot = angular_speed(segment_indices);
+                opto_on_rot = angular_vel(segment_indices);
 
                 % opto off fwd and rot
                 no_opto = [(pre_opto_start:segment_indices(1)), (segment_indices(end):post_opto_points)];
                 off_fwd = exptData.forwardVelocity(no_opto);
-                off_rot = angular_speed(no_opto);
+                off_rot = angular_vel(no_opto);
 
                 % take average for trial
                 average_fwd = mean(opto_on_fwd);
@@ -117,12 +117,12 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
                 off_rot_ave = mean(off_rot);
             
                 
-                % Include the 200 points before the "optoon" segment
+                % Include the 1000 points before the "optoon" segment
                 extended_segment_indices = pre_opto_start:post_opto_end;
                 
                 % Store the extended velocity data for opto-on
                 fwdvelocity_segments_optoon_extra{end+1} = exptData.forwardVelocity(extended_segment_indices);
-                rotspeed_segments_optoon_extra{end+1} = angular_speed(extended_segment_indices);
+                rotvel_segments_optoon_extra{end+1} = angular_vel(extended_segment_indices);
 
                 % for calculating averages
                 opto_averages_fwd(end+1) = average_fwd;
@@ -149,14 +149,14 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         min_length = min(cellfun(@length, fwdvelocity_segments_optoon_extra));
         if length(change_points) >100
             fwdvelocity_segments_optoon_extra_endremoved = fwdvelocity_segments_optoon_extra(1:end-1);
-            rotspeed_segments_optoon_extra_endremoved = rotspeed_segments_optoon_extra(1:end-1);
+            rotvel_segments_optoon_extra_endremoved = rotvel_segments_optoon_extra(1:end-1);
             min_length = min(cellfun(@length, fwdvelocity_segments_optoon_extra_endremoved));
-            rotspeed_segments_optoon_trimmed = cellfun(@(x) x(1:min_length), rotspeed_segments_optoon_extra_endremoved, 'UniformOutput', false);
+            rotvel_segments_optoon_trimmed = cellfun(@(x) x(1:min_length), rotvel_segments_optoon_extra_endremoved, 'UniformOutput', false);
             fwdvelocity_segments_optoon_trimmed = cellfun(@(x) x(1:min_length), fwdvelocity_segments_optoon_extra_endremoved, 'UniformOutput', false);
         else
             fwdvelocity_segments_optoon_trimmed = cellfun(@(x) x(1:min_length), fwdvelocity_segments_optoon_extra, 'UniformOutput', false);
             % the shortest segmennt
-            rotspeed_segments_optoon_trimmed = cellfun(@(x) x(1:min_length), rotspeed_segments_optoon_extra, 'UniformOutput', false);
+            rotvel_segments_optoon_trimmed = cellfun(@(x) x(1:min_length), rotvel_segments_optoon_extra, 'UniformOutput', false);
             
         end
         
@@ -164,10 +164,10 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         velocity_matrix_optoon = cell2mat(reshape(fwdvelocity_segments_optoon_trimmed, length(fwdvelocity_segments_optoon_trimmed), []));
         average_velocity_optoon = mean(velocity_matrix_optoon, 1);
         
-        % Ensure all "optoon" segments are the same length by trimming to
         
         % Convert to a matrix for calculating the average
-        speed_matrix_optoon = cell2mat(reshape(rotspeed_segments_optoon_trimmed, length(rotspeed_segments_optoon_trimmed), []));
+        speed_matrix_optoon = cell2mat(reshape(rotvel_segments_optoon_trimmed, length(rotvel_segments_optoon_trimmed), []));
+        speed_matrix_optoon = abs(speed_matrix_optoon);
         average_speed_optoon = mean(speed_matrix_optoon, 1);
 
         % Plot the "optoon" segments with pre-opto points and vertical lines
@@ -201,8 +201,8 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         subplot(2, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
         hold on;
         % Plot each raw "optoon" speed segment in lighter blue
-        for i = 1:length(rotspeed_segments_optoon_extra)
-            plot(time(1:length(rotspeed_segments_optoon_extra{i})), rotspeed_segments_optoon_extra{i}, 'Color', [0.5 0.5 1], 'LineWidth', 1);  % Lighter blue
+        for i = 1:length(rotvel_segments_optoon_trimmed)
+            plot(time(1:length(rotvel_segments_optoon_trimmed{i})), abs(rotvel_segments_optoon_trimmed{i}), 'Color', [0.5 0.5 1], 'LineWidth', 1);  % Lighter blue
             xline(time(opto_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
             xline(time(opto_off_markers(1)), 'k--', 'LineWidth', 1.5);
         end
@@ -213,7 +213,7 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
         end
         
         % Calculate and plot the average speed for "optoon" in bold blue
-        plot(time(1:length(rotspeed_segments_optoon_trimmed{1})), average_speed_optoon, 'b', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Speed');
+        plot(time(1:length(rotvel_segments_optoon_trimmed{1})), average_speed_optoon, 'b', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Speed');
         
         % Customize the second subplot
         xlabel('Time (s)');
@@ -237,26 +237,26 @@ function [exptData, exptMeta] = plotExpt_sliced_opto_velocity(exptData,exptMeta,
             if on_off
                 pre_speed = mean(fwdvelocity_segments_optoon_trimmed{i}((pre_opto_points+2900):pre_opto_points+3000));
             end
-            pre_speed_rot = mean(rotspeed_segments_optoon_trimmed{i}((pre_opto_points-100):pre_opto_points));
+            pre_speed_rot = mean(rotvel_segments_optoon_trimmed{i}((pre_opto_points-100):pre_opto_points));
             if pre_speed <3
                 %disp("Still")
                 still_pre_opto{end+1} = fwdvelocity_segments_optoon_extra{i};
                 ave_still{end+1} = fwdvelocity_segments_optoon_trimmed{i};
-                still_pre_opto_rot{end+1} = rotspeed_segments_optoon_extra{i};
-                ave_still_rot{end+1} = rotspeed_segments_optoon_trimmed{i};
+                still_pre_opto_rot{end+1} = rotvel_segments_optoon_extra{i};
+                ave_still_rot{end+1} = rotvel_segments_optoon_trimmed{i};
                 
             else
                 moving_pre_opto{end+1} = fwdvelocity_segments_optoon_extra{i};
                 ave_moving{end+1} = fwdvelocity_segments_optoon_trimmed{i};
-                moving_pre_opto_rot{end+1} = rotspeed_segments_optoon_extra{i};
-                ave_moving_rot{end+1} = rotspeed_segments_optoon_trimmed{i};
+                moving_pre_opto_rot{end+1} = rotvel_segments_optoon_extra{i};
+                ave_moving_rot{end+1} = rotvel_segments_optoon_trimmed{i};
                 %disp("moving")
             end
         end
 
         % take average fwd
         % Convert to a matrix for calculating the average
-        speed_matrix_optoon = cell2mat(reshape(rotspeed_segments_optoon_trimmed, length(rotspeed_segments_optoon_trimmed), []));  
+        speed_matrix_optoon = cell2mat(reshape(rotvel_segments_optoon_trimmed, length(rotvel_segments_optoon_trimmed), []));  
         moving = cell2mat(reshape(ave_moving, length(ave_moving), []));
         moving_ave = mean(moving, 1);
         % Convert to a matrix for calculating the average

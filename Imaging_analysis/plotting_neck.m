@@ -1,11 +1,11 @@
-function ts = plotting_neck(resp, ts, savepath)
+function daq = plotting_neck(resp, daq, savepath)
 
 %% all 3 on one plot
-time = ts.t;                  % Time points
+time = daq.t;                  % Time points
 dff = resp{1,1};           % Example dFF data
-fwd = ts.ball.forvel; % Example forward velocity data
-rot = ts.ball.yawvel; % Example rotational velocity data
-side = ts.ball.sidevel;
+fwd = daq.bfv; % Example forward velocity data
+rot = daq.byv; % Example rotational velocity data
+side = daq.bsv;
 
 % Subplot 1: dFF
 numRows = size(dff, 1);
@@ -63,4 +63,90 @@ linkaxes(findall(gcf, 'Type', 'axes'), 'x');
 
 % Add overall title for the figure
 sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
+save_plot_with_title_as_filename('all_dff', 'all_kin', savepath);
+
+%% plot furthest out rois
+figure
+subplot(4, 1, 1);  % First subplot
+hold on;
+plot(time, normalized_data(1,:), 'LineWidth', 1.5);  % Plot normalized dFF roi 1
+plot(time, normalized_data(numRows,:), 'LineWidth', 1.5);  % Plot normalized dFF roi last
+xlabel('Time (s)');
+ylabel('Normalized dF/F');
+title('Normalized dF/F');
+grid on;
+legend
+
+% Subplot 2: Forward Velocity
+subplot(4, 1, 2);  % Second subplot
+plot(time, fwd, 'g', 'LineWidth', 2);  % Plot forward velocity in green
+xlabel('Time (s)');
+ylabel('Forward Velocity (mm/s)');
+title('Forward Velocity');
+grid on;
+
+% Subplot 3: Sideways Velocity
+subplot(4, 1, 3);  % Third subplot
+plot(time, side, 'b', 'LineWidth', 2);  % Plot sideways velocity in blue
+xlabel('Time (s)');
+ylabel('Side Velocity (mm/s)');
+title('Sideways Velocity');
+grid on;
+
+% Subplot 4: Rotational Velocity
+subplot(4, 1, 4);  % Fourth subplot
+plot(time, rot, 'r', 'LineWidth', 2);  % Plot rotational velocity
+xlabel('Time (s)');
+ylabel('Rotational Velocity (mm/s)');
+title('Rotational Velocity');
+grid on;
+
+% Link the x-axes of all subplots
+linkaxes(findall(gcf, 'Type', 'axes'), 'x');
+
+% Add overall title for the figure
+sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
+save_plot_with_title_as_filename('2outer_roi', 'all_kin', savepath);
+%% plot first 2 rois
+figure
+subplot(4, 1, 1);  % First subplot
+hold on;
+plot(time, normalized_data(1,:), 'LineWidth', 1.5);  % Plot normalized dFF roi 1
+plot(time, normalized_data(2,:), 'LineWidth', 1.5);  % Plot normalized dFF roi last
+xlabel('Time (s)');
+ylabel('Normalized dF/F');
+title('Normalized dF/F');
+grid on;
+legend
+
+% Subplot 2: Forward Velocity
+subplot(4, 1, 2);  % Second subplot
+plot(time, fwd, 'g', 'LineWidth', 2);  % Plot forward velocity in green
+xlabel('Time (s)');
+ylabel('Forward Velocity (mm/s)');
+title('Forward Velocity');
+grid on;
+
+% Subplot 3: Sideways Velocity
+subplot(4, 1, 3);  % Third subplot
+plot(time, side, 'b', 'LineWidth', 2);  % Plot sideways velocity in blue
+xlabel('Time (s)');
+ylabel('Side Velocity (mm/s)');
+title('Sideways Velocity');
+grid on;
+
+% Subplot 4: Rotational Velocity
+subplot(4, 1, 4);  % Fourth subplot
+plot(time, rot, 'r', 'LineWidth', 2);  % Plot rotational velocity
+xlabel('Time (s)');
+ylabel('Rotational Velocity (mm/s)');
+title('Rotational Velocity');
+grid on;
+
+% Link the x-axes of all subplots
+linkaxes(findall(gcf, 'Type', 'axes'), 'x');
+
+% Add overall title for the figure
+sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
+save_plot_with_title_as_filename('first2_roi', 'all_kin', savepath);
 end
