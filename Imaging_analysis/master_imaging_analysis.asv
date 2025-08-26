@@ -24,7 +24,7 @@ jump = 0;
 lplc4=0;
 visual = 0;
 box=0;
-split = 0;
+
 %% load in daq and ts
 % Define the base folder path
 baseFolder = '/Users/sophiarenauld/stacks/'; % Change this to the desired directory
@@ -85,7 +85,15 @@ elseif contains(base_path, 'tmy20')
 elseif contains(base_path, 'cmllp01')
     an4_project = 1; 
 elseif contains(base_path, 'cmllpo1')
-    an4_project = 1;  
+    an4_project = 1; 
+elseif contains(base_path, 'cmllpo1')
+    an4_project = 1; 
+elseif contains(base_path, 'grating')
+    visual = 1; 
+elseif contains(base_path, 'olgrating')
+    visual = 1; 
+elseif contains(base_path, 'vgrating')
+    visual = 1; 
 elseif contains(base_path, 'LC33')
     visual = 1;
 else
@@ -94,21 +102,6 @@ end
 
 if contains(base_path, 'box')
     box=1;
-elseif contains(base_path, 'olgrating')
-    visual = 1; 
-elseif contains(base_path, 'grating')
-    visual = 1; 
-elseif contains(base_path, 'hgrating')
-    visual = 1; 
-elseif contains(base_path, 'vgrating')
-    visual = 1;
-elseif contains(base_path, 'splitgrating')
-    visual = 1;
-    split=1;
-% elseif contains(base_path, 'bbar')
-%     visual = 1;
-elseif contains(base_path, 'dbar')
-    visual = 1;
 end
 % Define the directory for the stimulus
 stim_directory = fullfile(base_path, 'smr_analysis');
@@ -142,7 +135,7 @@ if an4_project % this includes all other visual cells
     
 end
 if visual
-    [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, box, split);
+    openloop_gratings_process(daq, ts, savepath, box)
 end
 
 if ves041
@@ -242,10 +235,6 @@ if ves041
 
 end
 
-%% save fly data
-path_parts = strsplit(base_path, filesep);
-fly_identifier = path_parts{end};
-save_fly_data(daq, ts, dff_motion, fly_identifier, savepath)
 
 %% PILOT ZONE
     %% plot flat path with saccades

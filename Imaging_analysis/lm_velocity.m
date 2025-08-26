@@ -1,198 +1,288 @@
 function lm_velocity(daq, ts, savepath)
 
+%% Define variables and downsample kinematics to match dff
+dff = ts{1}(1,:);
+time_dff = daq.t;  % dff time base
+time_kinematics = daq.t_supp;  % kinematic time base
 
-close all
+% Original kinematic variables (high resolution, unaltered)
+forward_velocity_hr = daq.bfv_supp;  
+rot_velocity_hr = daq.byv_deg_supp;
+side_velocity_hr = daq.bsv_deg_supp;
 
-%% def variables
-forward_velocity = daq.bfv; 
-rot_velocity = daq.byv;
-side_velocity = daq.bsv;
+% Downsample kinematic variables to match dff time base
+forward_velocity = interp1(time_kinematics, forward_velocity_hr, time_dff, 'linear', 'extrap');
+rot_velocity = interp1(time_kinematics, rot_velocity_hr, time_dff, 'linear', 'extrap');
+side_velocity = interp1(time_kinematics, side_velocity_hr, time_dff, 'linear', 'extrap');
+
+% Calculate derived variables
 rot_speed = abs(rot_velocity);
-dff = ts{1};
-% Identify outliers using the default method (usually interquartile range)
-outliers1 = isoutlier(forward_velocity, 'mean', 'ThresholdFactor', 4);
-outliers2 = isoutlier(rot_velocity, 'mean', 'ThresholdFactor', 4);
-outliers = outliers1 | outliers2;
+total_speed = abs(forward_velocity) + abs(rot_velocity) + abs(side_velocity);
 
-% Remove outliers from forward_velocity
-cleaned_forward_velocity = forward_velocity(~outliers);
-cleaned_dff = dff(~outliers);
-full_dff = cleaned_dff;
-cleaned_rot = rot_speed(~outliers);
-cleaned_side = side_velocity(~outliers);
-cleaned_rot_vel = rot_velocity(~outliers);
-ttime = daq.t(~outliers);
-forward_speed = abs(cleaned_forward_velocity);
+fprintf('Original data points - DFF: %d, Kinematics: %d\n', length(dff), length(forward_velocity_hr));
+fprintf('After downsampling - DFF: %d, Kinematics: %d\n', length(dff), length(forward_velocity));
 
-r2_rotation_nofilter = fitlm(abs(cleaned_rot_vel), cleaned_dff);
-r2_forward_nofilter = fitlm(forward_speed, cleaned_dff);
-r2_rotation_nofilter
-r2_forward_nofilter
-
-% Display the number of outliers removed
-disp(['Number of outliers removed: ', num2str(sum(outliers))]);
-
-
-%% Remove stop start transitions
-% Set flag to exclude start/stop transitions using transition window settings
+%% Remove start/stop transitions
 ex_startstop = 1;
-postStartWin = 0.1; % Time window after start (in seconds)
-preStopWin = 0.2;   % Time window before stop (in seconds)
-% Number of trials (columns in the cell activity array)
-nTrials = 1;
+postStartWin = 0.5; % Time window after start (in seconds)
+preStopWin = 0.5;   % Time window before stop (in seconds)
+
 if ex_startstop
-    % Convert post-start and pre-stop windows to indices based on time array
-    postStartIdx = fetchTimeIdx(ttime, postStartWin);
-    preStopIdx = fetchTimeIdx(ttime, preStopWin);
-    total_speed = abs(cleaned_side) +abs(cleaned_rot)+abs(forward_speed);
-    % Loop over each trial
-    for trial = 1:nTrials
-        % Calculate run index using Schmitt Trigger
-        runIdx = schmittTrigger(total_speed(trial, :), 1, 1);
-        %runIdx2 = schmittTrigger(cleaned_rot(:, trial), 0.1, 0.1);
-        %runIdx = runIdx1 | runIdx2;
-        % Identify start and stop transitions in runIdx for the current trial
-        runTransitions = diff(runIdx);    % Calculate transitions in run state
-        startTrans = find(runTransitions == 1); % 0 to 1 (start running)
-        stopTrans = find(runTransitions == -1); % 1 to 0 (stop running)
-        % Loop over each start transition to set post-start period as NaN
-        for st = 1:length(startTrans)
-            tStart = startTrans(st); % Start index
-            tEnd = min(size(cleaned_dff, 2), tStart + postStartIdx); % End index, within bounds
-            cleaned_dff(tStart:tEnd) = nan; % Set post-start window to NaN in cell activity data
-            forward_speed(tStart:tEnd) = nan;
-        end
-        % Loop over each stop transition to set pre-stop period as NaN
-        for sp = 1:length(stopTrans)
-            tStop = stopTrans(sp); % Stop index
-            tStart = max(1, tStop - preStopIdx); % Start index, within bounds
-            cleaned_dff(tStart:tStop) = nan; % Set pre-stop window to NaN in cell activity data
-            forward_speed(tStart:tStop) = nan;
-        end
-        % Set cellactivity to NaN where runIdx is 0 (not running)
-        cleaned_dff(runIdx == 0) = nan;
-        forward_speed(runIdx == 0) = nan;
+    % Convert time windows to sample indices
+    dt = mean(diff(time_dff)); % Average sampling interval
+    postStartIdx = round(postStartWin / dt);
+    preStopIdx = round(preStopWin / dt);
+    
+    % Calculate run index using Schmitt Trigger on total speed
+    runIdx = schmittTrigger(total_speed, 1, 1);
+    runIdx = runIdx(:);
+    
+    % Identify start and stop transitions
+    runTransitions = diff([0; runIdx; 0]); % Pad to catch edge cases
+    startTrans = find(runTransitions == 1); % Start running
+    stopTrans = find(runTransitions == -1); % Stop running
+    
+    % Set post-start periods to NaN
+    for st = 1:length(startTrans)
+        tStart = startTrans(st);
+        tEnd = min(length(dff), tStart + postStartIdx);
+        dff(tStart:tEnd) = NaN;
+        forward_velocity(tStart:tEnd) = NaN;
+        rot_speed(tStart:tEnd) = NaN;
+        side_velocity(tStart:tEnd) = NaN;
+        total_speed(tStart:tEnd) = NaN;
     end
+    
+    % Set pre-stop periods to NaN
+    for sp = 1:length(stopTrans)
+        tStop = stopTrans(sp);
+        tStart = max(1, tStop - preStopIdx);
+        dff(tStart:tStop) = NaN;
+        forward_velocity(tStart:tStop) = NaN;
+        rot_speed(tStart:tStop) = NaN;
+        side_velocity(tStart:tStop) = NaN;
+        total_speed(tStart:tStop) = NaN;
+    end
+    
+    % Set non-running periods to NaN
+    dff(runIdx == 0) = NaN;
+    forward_velocity(runIdx == 0) = NaN;
+    rot_speed(runIdx == 0) = NaN;
+    side_velocity(runIdx == 0) = NaN;
+    total_speed(runIdx == 0) = NaN;
 end
 
+% Remove NaN values for modeling
+valid_idx = ~isnan(dff) & ~isnan(forward_velocity) & ~isnan(rot_speed) & ~isnan(side_velocity);
+model_dff = dff(valid_idx);
+model_forward = forward_velocity(valid_idx);
+model_rot = rot_speed(valid_idx);
+model_side = side_velocity(valid_idx);
+model_total_speed = total_speed(valid_idx);
 
+fprintf('Valid data points for modeling: %d\n', sum(valid_idx));
 
+%% Model 1: DFF vs Forward Velocity
+lm_forward = fitlm(model_forward, model_dff);
+r2_forward = lm_forward.Rsquared.Ordinary;
 
+disp('=== DFF vs Forward Velocity ===');
+disp(lm_forward);
+disp(['R^2 = ', num2str(r2_forward)]);
 
-%% cleaned forward speed
-
-% Create a linear model to predict dff from forward velocity
-lm_fwd_speed= fitlm(forward_speed, cleaned_dff);
-
-% Display the linear model summary
-disp(lm_fwd_speed);
-
-% Extract and display the R^2 value
-r2 = lm_fwd_speed.Rsquared.Ordinary;  % Ordinary R^2
-disp(['R^2 for predicting dff from forward speed: ', num2str(r2)]);
 figure;
-plot(lm_fwd_speed);
-xlabel('Forward Speed');
+plot(lm_forward);
+xlabel('Forward Velocity (mm/s)');
 ylabel('dF/F');
-title(['Linear Fit: R^2 = ', num2str(r2)]);
+title(['DFF vs Forward Velocity: R^2 = ', num2str(r2_forward, '%.3f')]);
 grid on;
+save_plot_with_title_as_filename('dff_vs_forward_velocity', 'linear_model', savepath);
 
-save_plot_with_title_as_filename('r2_Fwd vel', 'dff', savepath);
+%% Model 2: DFF vs Rotational Velocity
+lm_rot = fitlm(model_rot, model_dff);
+r2_rot = lm_rot.Rsquared.Ordinary;
 
-
-
-%% rot 
-% Create a linear model to predict dff from rotaitonal velocity
-lm_rot = fitlm(cleaned_rot, cleaned_dff);
-
-% Display the linear model summary
+disp('=== DFF vs Rotational Velocity ===');
 disp(lm_rot);
+disp(['R^2 = ', num2str(r2_rot)]);
 
-% Extract and display the R^2 value
-r2 = lm_rot.Rsquared.Ordinary;  % Ordinary R^2
-disp(['R^2 for predicting dff from rot velocity: ', num2str(r2)]);
-
-% Plot the linear fit and data points
 figure;
 plot(lm_rot);
-xlabel('Rotational Velocity');
+xlabel('Rotational Velocity (deg/s)');
 ylabel('dF/F');
-title(['Linear Fit: R^2 = ', num2str(r2)]);
+title(['DFF vs Rotational Velocity: R^2 = ', num2str(r2_rot, '%.3f')]);
+grid on;
+save_plot_with_title_as_filename('dff_vs_rotational_velocity', 'linear_model', savepath);
+
+%% Model 3: DFF vs Side Velocity
+lm_side = fitlm(model_side, model_dff);
+r2_side = lm_side.Rsquared.Ordinary;
+
+disp('=== DFF vs Side Velocity ===');
+disp(lm_side);
+disp(['R^2 = ', num2str(r2_side)]);
+
+figure;
+plot(lm_side);
+xlabel('Side Velocity (mm/s)');
+ylabel('dF/F');
+title(['DFF vs Side Velocity: R^2 = ', num2str(r2_side, '%.3f')]);
+grid on;
+save_plot_with_title_as_filename('dff_vs_side_velocity', 'linear_model', savepath);
+
+%% Model 4: DFF vs Total Speed
+lm_total = fitlm(model_total_speed, model_dff);
+r2_total = lm_total.Rsquared.Ordinary;
+
+disp('=== DFF vs Total Speed ===');
+disp(lm_total);
+disp(['R^2 = ', num2str(r2_total)]);
+
+figure;
+plot(lm_total);
+xlabel('Total Speed (mm/s + deg/s)');
+ylabel('dF/F');
+title(['DFF vs Total Speed: R^2 = ', num2str(r2_total, '%.3f')]);
+grid on;
+save_plot_with_title_as_filename('dff_vs_total_speed', 'linear_model', savepath);
+
+%% Combined Model: DFF vs All Velocities
+data_table = table(model_forward, model_rot, model_side, model_total_speed, model_dff, ...
+    'VariableNames', {'ForwardVelocity', 'RotationalVelocity', 'SideVelocity', 'TotalSpeed', 'DFF'});
+
+lm_combined = fitlm(data_table, 'DFF ~ ForwardVelocity + RotationalVelocity + SideVelocity');
+r2_combined = lm_combined.Rsquared.Ordinary;
+
+disp('=== Combined Model: DFF vs All Velocities ===');
+disp(lm_combined);
+disp(['Combined R^2 = ', num2str(r2_combined)]);
+
+% Plot individual relationships
+figure;
+subplot(2, 2, 1);
+scatter(model_forward, model_dff, 20, 'b.', 'MarkerEdgeAlpha', 0.6);
+xlabel('Forward Velocity (mm/s)');
+ylabel('dF/F');
+title(['Forward: R^2 = ', num2str(r2_forward, '%.3f')]);
 grid on;
 
-save_plot_with_title_as_filename('r2_rot vel', 'dff', savepath);
-
-%% both
-
-% Combine predictors into a table
-data_table = table(forward_speed, cleaned_rot, cleaned_dff, ...
-    'VariableNames', {'ForwardVelocity', 'RotationalVelocity', 'dFF'});
-
-% Create a linear model to predict dff from forward and rotational velocity
-lm = fitlm(data_table);
-
-
-
-% Extract and display the R^2 value
-r2 = lm.Rsquared.Ordinary;  % Ordinary R^2
-disp(['R^2 for predicting dff: ', num2str(r2)]);
-
-% Plot the model fit for each predictor
-figure;
-subplot(2, 1, 1);
-scatter(cleaned_forward_velocity, cleaned_dff, 'b.');
-xlabel('Forward Velocity');
+subplot(2, 2, 2);
+scatter(model_rot, model_dff, 20, 'r.', 'MarkerEdgeAlpha', 0.6);
+xlabel('Rotational Velocity (deg/s)');
 ylabel('dF/F');
-title('dFF vs Forward Velocity');
+title(['Rotational: R^2 = ', num2str(r2_rot, '%.3f')]);
+grid on;
 
-subplot(2, 1, 2);
-scatter(cleaned_rot, cleaned_dff, 'r.')
-xlabel('Rotational Velocity');
+subplot(2, 2, 3);
+scatter(model_side, model_dff, 20, 'g.', 'MarkerEdgeAlpha', 0.6);
+xlabel('Side Velocity (mm/s)');
 ylabel('dF/F');
-title('dFF vs Rotational Velocity');
+title(['Side: R^2 = ', num2str(r2_side, '%.3f')]);
+grid on;
 
+subplot(2, 2, 4);
+scatter(model_total_speed, model_dff, 20, 'm.', 'MarkerEdgeAlpha', 0.6);
+xlabel('Total Speed');
+ylabel('dF/F');
+title(['Total Speed: R^2 = ', num2str(r2_total, '%.3f')]);
+grid on;
 
-%% cross correlations
-% Specify the maximum lag
-max_lag = 40;
+sgtitle(['All Velocity Models (Combined R^2 = ', num2str(r2_combined, '%.3f'), ')']);
+save_plot_with_title_as_filename('dff_vs_all_velocities', 'summary', savepath);
 
-% Compute cross-correlation for forward velocity and dFF
-[cc_forward, lags_forward] = xcorr(forward_speed, full_dff, max_lag, 'coeff');
+%% Cross-correlations
+max_lag = 25; % Adjust based on your data
+
+% Forward velocity
+[cc_forward, lags] = xcorr(model_forward, model_dff, max_lag, 'coeff');
 [max_cc_fwd, idx_fwd] = max(cc_forward);
-max_cc_lag_fwd = lags_forward(idx_fwd);
+max_lag_fwd = lags(idx_fwd);
 
-% Compute cross-correlation for rotational velocity and dFF
-[cc_rotational, lags_rotational] = xcorr(cleaned_rot, full_dff, max_lag, 'coeff');
-[max_cc_rot, idx_rot] = max(cc_rotational);
-max_cc_lag_rot = lags_rotational(idx_rot);
+% Rotational velocity  
+[cc_rot, lags] = xcorr(model_rot, model_dff, max_lag, 'coeff');
+[max_cc_rot, idx_rot] = max(cc_rot);
+max_lag_rot = lags(idx_rot);
 
-% Display the results
-disp(['Maximum cross-correlation (forward speed): ', num2str(max_cc_fwd)]);
-disp(['Lag at max cross-correlation (forward speed): ', num2str(max_cc_lag_fwd)]);
-disp(['Maximum cross-correlation (rotational): ', num2str(max_cc_rot)]);
-disp(['Lag at max cross-correlation (rotational): ', num2str(max_cc_lag_rot)]);
+% Side velocity
+[cc_side, lags] = xcorr(model_side, model_dff, max_lag, 'coeff');
+[max_cc_side, idx_side] = max(cc_side);
+max_lag_side = lags(idx_side);
+
+% Total speed
+[cc_total, lags] = xcorr(model_total_speed, model_dff, max_lag, 'coeff');
+[max_cc_total, idx_total] = max(cc_total);
+max_lag_total = lags(idx_total);
+
+% Display results
+fprintf('\n=== Cross-Correlation Results ===\n');
+fprintf('Forward velocity - Max CC: %.3f at lag %d\n', max_cc_fwd, max_lag_fwd);
+fprintf('Rotational velocity - Max CC: %.3f at lag %d\n', max_cc_rot, max_lag_rot);
+fprintf('Side velocity - Max CC: %.3f at lag %d\n', max_cc_side, max_lag_side);
+fprintf('Total speed - Max CC: %.3f at lag %d\n', max_cc_total, max_lag_total);
 
 % Plot cross-correlations
 figure;
-
-% Forward velocity vs. dFF
-subplot(2, 1, 1);
-plot(lags_forward, cc_forward, 'b', 'LineWidth', 1.5);
+subplot(2, 2, 1);
+plot(lags, cc_forward, 'b', 'LineWidth', 1.5);
 xlabel('Lag (samples)');
 ylabel('Cross-correlation');
-title('Cross-Correlation: Forward Velocity vs. dFF');
+title(['Forward Vel: Max = ', num2str(max_cc_fwd, '%.3f'), ' at lag ', num2str(max_lag_fwd)]);
 grid on;
 
-% Rotational velocity vs. dFF
-subplot(2, 1, 2);
-plot(lags_rotational, cc_rotational, 'g', 'LineWidth', 1.5);
+subplot(2, 2, 2);
+plot(lags, cc_rot, 'r', 'LineWidth', 1.5);
 xlabel('Lag (samples)');
 ylabel('Cross-correlation');
-title('Cross-Correlation: Rotational Velocity vs. dFF');
+title(['Rotational Vel: Max = ', num2str(max_cc_rot, '%.3f'), ' at lag ', num2str(max_lag_rot)]);
 grid on;
 
-save_plot_with_title_as_filename('crosscorr', 'velocities', savepath);
+subplot(2, 2, 3);
+plot(lags, cc_side, 'g', 'LineWidth', 1.5);
+xlabel('Lag (samples)');
+ylabel('Cross-correlation');
+title(['Side Vel: Max = ', num2str(max_cc_side, '%.3f'), ' at lag ', num2str(max_lag_side)]);
+grid on;
 
+subplot(2, 2, 4);
+plot(lags, cc_total, 'm', 'LineWidth', 1.5);
+xlabel('Lag (samples)');
+ylabel('Cross-correlation');
+title(['Total Speed: Max = ', num2str(max_cc_total, '%.3f'), ' at lag ', num2str(max_lag_total)]);
+grid on;
+
+sgtitle('Cross-Correlations: Velocities vs DFF');
+save_plot_with_title_as_filename('cross_correlations', 'velocities_dff', savepath);
+
+%% Summary Statistics
+fprintf('\n=== Summary of R^2 Values ===\n');
+fprintf('Forward velocity: %.3f\n', r2_forward);
+fprintf('Rotational velocity: %.3f\n', r2_rot);
+fprintf('Side velocity: %.3f\n', r2_side);
+fprintf('Total speed: %.3f\n', r2_total);
+fprintf('Combined model: %.3f\n', r2_combined);
+
+% Save results to workspace
+results.models.forward = lm_forward;
+results.models.rotational = lm_rot;
+results.models.side = lm_side;
+results.models.total_speed = lm_total;
+results.models.combined = lm_combined;
+
+results.r2.forward = r2_forward;
+results.r2.rotational = r2_rot;
+results.r2.side = r2_side;
+results.r2.total_speed = r2_total;
+results.r2.combined = r2_combined;
+
+results.cross_correlation.forward = struct('max_cc', max_cc_fwd, 'lag', max_lag_fwd);
+results.cross_correlation.rotational = struct('max_cc', max_cc_rot, 'lag', max_lag_rot);
+results.cross_correlation.side = struct('max_cc', max_cc_side, 'lag', max_lag_side);
+results.cross_correlation.total_speed = struct('max_cc', max_cc_total, 'lag', max_lag_total);
+
+assignin('base', 'velocity_dff_analysis_results', results);
+fprintf('\nResults saved to workspace as "velocity_dff_analysis_results"\n');
+
+end
 
 
 % % Shift the data based on the lag
@@ -362,4 +452,3 @@ save_plot_with_title_as_filename('crosscorr', 'velocities', savepath);
 %heatmap_save = fullfile(savepath, "heatmap");
 %savefig(gcf, heatmap_save)
 
-end

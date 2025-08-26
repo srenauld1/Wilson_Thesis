@@ -1,4 +1,12 @@
-function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
+function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, box, split)
+%% calculate normalized dff if exists 2 rois
+    a=size(ts{1});
+    if a(1)>1
+        dff = ts{1}(1,:)-ts{1}(2,:);
+    else
+        dff = ts{1}(1,:);
+    end
+
 %% Plot the dff and pattern
     % Plot the dff and fwd
     figure;
@@ -9,7 +17,7 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     
     % Plot the second time series on the right y-axis
     yyaxis right;
-    plot(daq.t, ts{1}(1,:), '-r');  % Plot second time series in red
+    plot(daq.t, dff, '-r');  % Plot second time series in red
     ylabel('dff');  % Label for the right y-axis
     
     % Add title and x-axis label
@@ -30,42 +38,42 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
 
    
     %value for total speed (moving or no)
-    still_cutoff = 2;
+    still_cutoff = 1;
     
     %% using velocity to determine moving clockwise or counter
     % for 3 Hz
 
     
-    moving_cw = zeros(size(daq.vy));
-    moving_cw(daq.vy >= -3.1 & daq.vy <= 0) = 1;
+    positive_slope = zeros(size(daq.vy));
+    positive_slope(daq.vy >= -3.1 & daq.vy <= 0) = 1;
     % take care of 6hz case
     if max(daq.vyv)>2.5
-         moving_cw(daq.vy >= -3.11 & daq.vyv >= 0) = 1;
+         positive_slope(daq.vy >= -3.11 & daq.vyv >= 0) = 1;
     end
-    diff_array = diff([0, moving_cw, 0]);
+    diff_array = diff([0, positive_slope, 0]);
     run_starts = find(diff_array == 1);
     run_ends = find(diff_array == -1) - 1;
     
     for i = 1:length(run_starts)
         run_length = run_ends(i) - run_starts(i) + 1;
         if run_length < remove_if_shorter_than
-            moving_cw(run_starts(i):run_ends(i)) = 0;
+            positive_slope(run_starts(i):run_ends(i)) = 0;
         end
     end
     % ccw
-    moving_ccw = zeros(size(daq.vy));
-    moving_ccw(daq.vy >= 0 & daq.vy <= 4) = 1;
+    negative_slope = zeros(size(daq.vy));
+    negative_slope(daq.vy >= 0 & daq.vy <= 4) = 1;
     if max(daq.vyv)>2.5
-         moving_ccw(daq.vy >= -3.11 & daq.vyv <= 0) = 1;
+         negative_slope(daq.vy >= -3.11 & daq.vyv <= 0) = 1;
     end
-    diff_array = diff([0, moving_ccw, 0]);
+    diff_array = diff([0, negative_slope, 0]);
     run_starts = find(diff_array == 1);
     run_ends = find(diff_array == -1) - 1;
     
     for i = 1:length(run_starts)
         run_length = run_ends(i) - run_starts(i) + 1;
         if run_length < remove_if_shorter_than
-            moving_ccw(run_starts(i):run_ends(i)) = 0;
+            negative_slope(run_starts(i):run_ends(i)) = 0;
         end
     end
 
@@ -77,13 +85,22 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     dff_cw_motion = {};  
     pattern_cw_motion = {}; 
     total_speed_cw_motion ={};
+    forward_speed_cw_motion ={};
+    rotational_speed_cw_motion ={};
     times_cw_motion ={};
 
     motion_on_markers =[];
     motion_off_markers =[];
 
-    % find changes of onset of cw motion
-    change_points = [1, find(diff(moving_cw) ~= 0) + 1, length(moving_cw)];
+    % find changes of onset of cw motion. this is opposite between bars and
+    % boxes
+    if box
+        change_points = [1, find(diff(positive_slope) ~= 0) + 1, length(positive_slope)];
+        clockwise_motion = positive_slope;
+    else
+        change_points = [1, find(diff(negative_slope) ~= 0) + 1, length(negative_slope)];
+        clockwise_motion = negative_slope;
+    end
 
     % Loop through each segment and separate based on motion value
     % skip first and last presentation due to issues with timing
@@ -98,19 +115,25 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
         segment_indices = change_points(i):change_points(i+1) - 1;
     
         % Check the motion value in this segment
-        if moving_cw(segment_indices(1)) > 0
+        if clockwise_motion(segment_indices(1)) > 0
             % Calculate the start index for pre-motion points (ensuring it doesn’t go below 1)
             pre_motion_point = max(1, segment_indices(1) - pre_motion_points);
             % Calculate the end index for post-motion points (ensuring it doesn’t go below 1)
-            post_motion_point = min(length(moving_ccw), segment_indices(end) + post_motion_points);
+            post_motion_point = min(length(clockwise_motion), segment_indices(end) + post_motion_points);
             %select entire peirod
             extended_segment_indices = pre_motion_point:post_motion_point;
 
             % only motion on fwd and rot
             derivative_of_position = diff(daq.vy);
-            dff_cw_motion{end+1} = ts{1}(extended_segment_indices);
+            dff_cw_motion{end+1} = dff(extended_segment_indices);
             pattern_cw_motion{end+1} = daq.vy(extended_segment_indices);
-            total_speed_cw_motion{end+1} = daq.totalspeed(extended_segment_indices);
+
+            % changed to totalspeed_supp
+            upsample_factor = length(daq.t_supp)/length(daq.t);
+            extended_segment_indices_supp = round(pre_motion_point*upsample_factor):round(post_motion_point*upsample_factor);
+            total_speed_cw_motion{end+1} = daq.totalspeed_supp(extended_segment_indices_supp);
+            forward_speed_cw_motion{end+1} = daq.bfv(extended_segment_indices);
+            rotational_speed_cw_motion{end+1} = abs(daq.byv_supp(extended_segment_indices_supp));
             times_cw_motion{end+1} = daq.t(extended_segment_indices);
             
             % Record the exact point where motion switches on for plotting
@@ -123,19 +146,26 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     min_length = min(cellfun(@length, dff_cw_motion));
     dff_cw_motion = cellfun(@(x) x(1:min_length), dff_cw_motion, 'UniformOutput', false);
     pattern_cw_motion = cellfun(@(x) x(1:min_length), pattern_cw_motion, 'UniformOutput', false);
-    total_speed_cw_motion = cellfun(@(x) x(1:min_length), total_speed_cw_motion, 'UniformOutput', false);
+    min_length_speed = min(cellfun(@length, total_speed_cw_motion));
+    total_speed_cw_motion = cellfun(@(x) x(1:min_length_speed), total_speed_cw_motion, 'UniformOutput', false);
+    forward_speed_cw_motion = cellfun(@(x) x(1:min_length), forward_speed_cw_motion, 'UniformOutput', false);
+    rotational_speed_cw_motion = cellfun(@(x) x(1:min_length_speed), rotational_speed_cw_motion, 'UniformOutput', false);
     times_cw_motion= cellfun(@(x) x(1:min_length), times_cw_motion, 'UniformOutput', false);
     
     % Convert to a matrix for calculating the average dff
     dff_ave = cell2mat(reshape(dff_cw_motion, length(dff_cw_motion), []));
     average_dff = mean(dff_ave, 1);
 
+    % Normalize each dff cell so values are between 0 and 1
+    dff_cw_motion_norm = cellfun(@(x) (x - min(x)) / (max(x) - min(x)), dff_cw_motion, 'UniformOutput', false);
+    cwdff_ave_norm = cell2mat(reshape(dff_cw_motion_norm, length(dff_cw_motion_norm), []));
+    average_cw_dff_norm = mean(cwdff_ave_norm, 1);
 
     % Plot the "motionon" segments with pre-motion points and vertical lines
     figure;
     
     % Subplot 1: Velocity
-    subplot(2, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
+    subplot(3, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
     hold on;
     % Plot each raw "motionon" velocity segment in lighter green
     for i = 1:length(dff_cw_motion)
@@ -149,13 +179,33 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     
     % Customize the first subplot
     xlabel('Time (s)');
-    ylabel('DFF (mm/s)');
-    title('DFF');
-    legend('DFF');
+    ylabel('DFF');
+    title('CW DFF');
+    legend('CW DFF');
+    hold off;
+
+    % Subplot 2: norm dff
+    subplot(3, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
+    hold on;
+    % Plot each raw "motionon" speed segment in lighter blue
+    for i = 1:length(dff_cw_motion_norm)
+        plot(daq.t(1:length(dff_cw_motion_norm{i})), dff_cw_motion_norm{i}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1);  % Lighter blue
+        xline(daq.t(motion_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
+        xline(4, 'k--', 'LineWidth', 1.5);
+    end
+
+    % Plot the average velocity for "motionon" in bold green
+    plot(daq.t(1:length(dff_cw_motion{i})), average_cw_dff_norm, 'black', 'LineWidth', 3, 'DisplayName', 'Average DFF');
+
+    % Customize the second subplot
+    xlabel('Time (s)');
+    ylabel('DFF (norm)');
+    title('DFF Normalized');
+    legend('Average motion-On Angular Speed');
     hold off;
     
-    % Subplot 2: Speed
-    subplot(2, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
+    % Subplot 3: pattern
+    subplot(3, 1, 3);  
     hold on;
     % Plot each raw "motionon" speed segment in lighter blue
     for i = 1:length(pattern_cw_motion)
@@ -170,7 +220,7 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     title('pattern');
     legend('Average motion-On Angular Speed');
     hold off;
-    %save_plot_with_title_as_filename('forward', 'rotation', savepath)
+    save_plot_with_title_as_filename('pattern', 'cwrotation', savepath)
 
     %% ccw
     % start with clockwise motion
@@ -178,13 +228,24 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     dff_ccw_motion = {};  
     pattern_ccw_motion = {}; 
     total_speed_ccw_motion ={};
+    forward_speed_ccw_motion ={};
+    rotational_speed_ccw_motion ={};
     times_ccw_motion ={};
     
     ccw_motion_on_markers =[];
     ccw_motion_off_markers =[];
 
-    % find changes of onset of ccw motion
-    change_points = [1, find(diff(moving_ccw) ~= 0) + 1, length(moving_ccw)];
+
+    % find changes of onset of ccw motion - box and everything else are
+    % opposite
+    if box
+        change_points = [1, find(diff(negative_slope) ~= 0) + 1, length(negative_slope)];
+        counterclockwise_motion = negative_slope;
+    else
+        change_points = [1, find(diff(positive_slope) ~= 0) + 1, length(positive_slope)];
+        counterclockwise_motion = positive_slope;
+    end
+
 
     % Loop through each segment and separate based on motion value
     % skip first and last presentation due to issues with timing
@@ -193,20 +254,26 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
         segment_indices = change_points(i):change_points(i+1) - 1;
     
         % Check the motion value in this segment
-        if moving_ccw(segment_indices(1)) > 0
+        if counterclockwise_motion(segment_indices(1)) > 0
             % Calculate the start index for pre-motion points (ensuring it doesn’t go below 1)
             pre_motion_point = max(1, segment_indices(1) - pre_motion_points);
             % Calculate the end index for post-motion points (ensuring it doesn’t go below 1)
-            post_motion_point = min(length(moving_ccw), segment_indices(end) + post_motion_points);
+            post_motion_point = min(length(counterclockwise_motion), segment_indices(end) + post_motion_points);
 
             %select entire peirod
             extended_segment_indices = pre_motion_point:post_motion_point;
 
             % only motion on fwd and rot
             derivative_of_position = diff(daq.vy);
-            dff_ccw_motion{end+1} = ts{1}(extended_segment_indices);
+            dff_ccw_motion{end+1} = dff(extended_segment_indices);
             pattern_ccw_motion{end+1} = daq.vy(extended_segment_indices);
-            total_speed_ccw_motion{end+1} = daq.totalspeed(extended_segment_indices);
+            
+            % changed to totalspeed_supp
+            upsample_factor = length(daq.t_supp)/length(daq.t);
+            extended_segment_indices_supp = round(pre_motion_point*upsample_factor):round(post_motion_point*upsample_factor);
+            total_speed_ccw_motion{end+1} = daq.totalspeed_supp(extended_segment_indices_supp);
+            forward_speed_ccw_motion{end+1} = daq.bfv(extended_segment_indices);
+            rotational_speed_ccw_motion{end+1} = abs(daq.byv_supp(extended_segment_indices_supp));
             times_ccw_motion{end+1} = daq.t(extended_segment_indices);
             
             % Record the exact point where motion switches on for plotting
@@ -219,19 +286,26 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     min_length = min(cellfun(@length, dff_ccw_motion));
     dff_ccw_motion = cellfun(@(x) x(1:min_length), dff_ccw_motion, 'UniformOutput', false);
     pattern_ccw_motion = cellfun(@(x) x(1:min_length), pattern_ccw_motion, 'UniformOutput', false);
-    total_speed_ccw_motion = cellfun(@(x) x(1:min_length), total_speed_ccw_motion, 'UniformOutput', false);
+    min_length_speed = min(cellfun(@length, total_speed_ccw_motion));
+    total_speed_ccw_motion = cellfun(@(x) x(1:min_length_speed), total_speed_ccw_motion, 'UniformOutput', false);
+    forward_speed_ccw_motion = cellfun(@(x) x(1:min_length), forward_speed_ccw_motion, 'UniformOutput', false);
+    rotational_speed_ccw_motion = cellfun(@(x) x(1:min_length_speed), rotational_speed_ccw_motion, 'UniformOutput', false);
     times_ccw_motion= cellfun(@(x) x(1:min_length), times_ccw_motion, 'UniformOutput', false);
     
     % Convert to a matrix for calculating the average dff
     ccw_dff_ave = cell2mat(reshape(dff_ccw_motion, length(dff_ccw_motion), []));
     CCW_average_dff = mean(ccw_dff_ave, 1);
 
+    % Normalize each dff cell so values are between 0 and 1
+    dff_ccw_motion_norm = cellfun(@(x) (x - min(x)) / (max(x) - min(x)), dff_ccw_motion, 'UniformOutput', false);
+    ccwdff_ave_norm = cell2mat(reshape(dff_ccw_motion_norm, length(dff_ccw_motion_norm), []));
+    average_ccw_dff_norm = mean(ccwdff_ave_norm, 1);
 
     % Plot the "motionon" segments with pre-motion points and vertical lines
     figure;
     
-    % Subplot 1: Velocity
-    subplot(2, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
+    % Subplot 1: dff ccw 
+    subplot(3, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
     hold on;
     % Plot each raw "motionon" velocity segment in lighter green
     for i = 1:length(dff_ccw_motion)
@@ -245,13 +319,33 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     
     % Customize the first subplot
     xlabel('Time (s)');
-    ylabel('DFF (mm/s)');
+    ylabel('DFF');
     title('CCW rotation');
     legend('DFF');
     hold off;
+
+    % Subplot 2: norm dff ccw
+    subplot(3, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
+    hold on;
+    % Plot each raw "motionon" speed segment in lighter blue
+    for i = 1:length(dff_ccw_motion_norm)
+        plot(daq.t(1:length(dff_ccw_motion_norm{i})), dff_ccw_motion_norm{i}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1);  % Lighter blue
+        xline(daq.t(motion_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
+        xline(4, 'k--', 'LineWidth', 1.5);
+    end
+
+    % Plot the average velocity for "motionon" in bold green
+    plot(daq.t(1:length(dff_ccw_motion{i})), average_ccw_dff_norm, 'black', 'LineWidth', 3, 'DisplayName', 'Average DFF');
+
+    % Customize the second subplot
+    xlabel('Time (s)');
+    ylabel('DFF (norm)');
+    title('DFF Normalized');
+    legend('Average motion-On Angular Speed');
+    hold off;
     
-    % Subplot 2: Speed
-    subplot(2, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
+    % Subplot 3: pattern
+    subplot(3, 1, 3);  % Create the second subplot (2 rows, 1 column, position 2)
     hold on;
     % Plot each raw "motionon" speed segment in lighter blue
     for i = 1:length(pattern_ccw_motion)
@@ -266,13 +360,13 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     title('pattern');
     legend('CCW Rotation');
     hold off;
-    %save_plot_with_title_as_filename('forward', 'rotation', savepath)
+    save_plot_with_title_as_filename('pattern', 'ccwrotation', savepath)
 
     %% plot cw and ccw on one chart
     % Plot the "motionon" segments with pre-motion points and vertical lines
     figure;
     
-    % Subplot 1: Velocity
+    % Subplot 1: CCW motion dff
     subplot(3, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
     hold on;
     % Plot each raw "motionon" velocity segment in lighter green
@@ -292,7 +386,7 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     legend('CCW DFF');
     hold off;
     
-    % Subplot 2: Speed
+    % Subplot 2: CW motion dff
     subplot(3, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
     hold on;
     % Plot cw rotation
@@ -313,33 +407,143 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     legend('CW Rotation');
     hold off;
     
-    % Subplot 3: motion
+    % Subplot 3: fly speed
     subplot(3, 1, 3);  % Create the first subplot (2 rows, 1 column, position 1)
     hold on;
     % Plot each raw "motionon" velocity segment in lighter green
     for i = 1:length(total_speed_ccw_motion)
-        plot(daq.t(1:length(total_speed_ccw_motion{i})), total_speed_ccw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
-        plot(daq.t(1:length(total_speed_cw_motion{i})), total_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+        plot(daq.t_supp(1:length(total_speed_ccw_motion{i})), total_speed_ccw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+        %plot(daq.t(1:length(total_speed_cw_motion{i})), total_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
 
     end
-    xline(daq.t(ccw_motion_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
-    xline(daq.t((ccw_motion_on_markers(1)))+2, 'k--', 'LineWidth', 1.5);
+    for i = 1:length(total_speed_cw_motion)
+        plot(daq.t_supp(1:length(total_speed_cw_motion{i})), total_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+        %plot(daq.t(1:length(total_speed_cw_motion{i})), total_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+
+    end
+    xline(2, 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
+    xline(4, 'k--', 'LineWidth', 1.5);
 
     total_speed = [total_speed_ccw_motion, total_speed_cw_motion];
     min_length = min(cellfun(@length, total_speed));
     total_speed = cellfun(@(x) x(1:min_length), total_speed, 'UniformOutput', false);
     ave_speed = cell2mat(reshape(total_speed, length(total_speed), []));
     ave_spd = mean(ave_speed, 1);
-    plot(daq.t(1:size(ave_speed, 2)), ave_spd, 'm', 'LineWidth', 3, 'DisplayName', 'Average Speed');
+    plot(daq.t_supp(1:size(ave_speed, 2)), ave_spd, 'm', 'LineWidth', 3, 'DisplayName', 'Average Speed');
 
     % Customize the plot
     xlabel('Time (s)');
-    ylabel('Total speed');
+    ylabel('Total speed (mm/s)');
     title('Total Speed');
     save_plot_with_title_as_filename('cw', 'ccw_andtotspeed', savepath)
     
+    %% plot cw and ccw dff with fwd and rot speed
+    % Plot the "motionon" segments with pre-motion points and vertical lines
+    figure;
+    
+    % Subplot 1: CCW motion dff
+    subplot(4, 1, 1);  % Create the first subplot (2 rows, 1 column, position 1)
+    hold on;
+    % Plot each raw "motionon" velocity segment in lighter green
+    for i = 1:length(dff_ccw_motion)
+        plot(daq.t(1:length(dff_ccw_motion{i})), dff_ccw_motion{i}, 'Color', [0.5 1 0.5], 'LineWidth', 1);  % Lighter green
+        xline(daq.t(ccw_motion_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
+        xline(daq.t((ccw_motion_on_markers(1)))+2, 'k--', 'LineWidth', 1.5);
+    end
+    
+    % Plot the average velocity for "motionon" in bold green
+    plot(daq.t(1:length(dff_ccw_motion{i})), CCW_average_dff, 'g', 'LineWidth', 3, 'DisplayName', 'Average DFF');
+    
+    % Customize the first subplot
+    xlabel('Time (s)');
+    ylabel('DFF');
+    title('CCW rotation');
+    legend('CCW DFF');
+    hold off;
+    
+    % Subplot 2: CW motion dff
+    subplot(4, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
+    hold on;
+    % Plot cw rotation
+    for i = 1:length(dff_cw_motion)
+        plot(daq.t(1:length(dff_cw_motion{i})), dff_cw_motion{i}, 'Color', [0.5 0.5 1], 'LineWidth', 1);  % Lighter blue
+        xline(daq.t(motion_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
+        xline(daq.t((motion_on_markers(1)))+2, 'k--', 'LineWidth', 1.5);
+    end
 
-    %% now both on one chart
+    % Plot the average velocity for cw in blue
+    plot(daq.t(1:length(dff_cw_motion{i})), average_dff, 'b', 'LineWidth', 3, 'DisplayName', 'Average DFF');
+    
+
+    % Customize the second subplot
+    xlabel('Time (s)');
+    ylabel('DFF');
+    title('CW rotation');
+    legend('CW Rotation');
+    hold off;
+    
+    % Subplot 3: fly speed
+    subplot(4, 1, 3);  % Create the first subplot (2 rows, 1 column, position 1)
+    hold on;
+    % Plot each raw "motionon" velocity segment in lighter green
+    for i = 1:length(forward_speed_ccw_motion)
+        plot(daq.t(1:length(forward_speed_ccw_motion{i})), forward_speed_ccw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+        %plot(daq.t(1:length(forward_speed_cw_motion{i})), forward_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+
+    end
+    for i = 1:length(forward_speed_cw_motion)
+        plot(daq.t(1:length(forward_speed_cw_motion{i})), forward_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+        %plot(daq.t(1:length(forward_speed_cw_motion{i})), forward_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+
+    end
+    xline(2, 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
+    xline(4, 'k--', 'LineWidth', 1.5);
+
+    forward_speed = [forward_speed_ccw_motion, forward_speed_cw_motion];
+    min_length = min(cellfun(@length, forward_speed));
+    forward_speed = cellfun(@(x) x(1:min_length), forward_speed, 'UniformOutput', false);
+    ave_speed = cell2mat(reshape(forward_speed, length(forward_speed), []));
+    ave_spd = mean(ave_speed, 1);
+    plot(daq.t_supp(1:size(ave_speed, 2)), ave_spd, 'm', 'LineWidth', 3, 'DisplayName', 'Average Speed');
+
+    % Customize the plot
+    xlabel('Time (s)');
+    ylabel('Forward speed (mm/s)');
+    title('forward Speed');
+
+    % Subplot 4: fly rotational speed
+    subplot(4, 1, 4);  % Create the first subplot (2 rows, 1 column, position 1)
+    hold on;
+    % Plot each raw "motionon" velocity segment in lighter green
+    for i = 1:length(rotational_speed_ccw_motion)
+        plot(daq.t_supp(1:length(rotational_speed_ccw_motion{i})), rotational_speed_ccw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+        %plot(daq.t(1:length(rotational_speed_cw_motion{i})), rotational_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+
+    end
+    for i = 1:length(rotational_speed_cw_motion)
+        plot(daq.t_supp(1:length(rotational_speed_cw_motion{i})), rotational_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+        %plot(daq.t(1:length(rotational_speed_cw_motion{i})), rotational_speed_cw_motion{i}, 'Color', [0.8 0 1], 'LineWidth', 1);  % Lighter green
+
+    end
+    xline(2, 'k--', 'LineWidth', 1.5);  % Dashed black line at motion-on marker
+    xline(4, 'k--', 'LineWidth', 1.5);
+
+    rotational_speed = [rotational_speed_ccw_motion, rotational_speed_cw_motion];
+    min_length = min(cellfun(@length, rotational_speed));
+    rotational_speed = cellfun(@(x) x(1:min_length), rotational_speed, 'UniformOutput', false);
+    ave_speed = cell2mat(reshape(rotational_speed, length(rotational_speed), []));
+    ave_spd = mean(ave_speed, 1);
+    plot(daq.t_supp(1:size(ave_speed, 2)), ave_spd, 'm', 'LineWidth', 3, 'DisplayName', 'Average Speed');
+
+    % Customize the plot
+    xlabel('Time (s)');
+    ylabel('rotational speed (mm/s)');
+    title('rotational Speed');
+    save_plot_with_title_as_filename('cw_ccw', 'fwd_rot', savepath)
+
+
+
+    %% just cw and ccw dff on one axis
     figure
     hold on;
     
@@ -360,9 +564,11 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
             h2 = h;
         end
     end
+
+    length_cut = min(length(average_dff), length(CCW_average_dff))
     
-    bidirectional_dff = (average_dff+CCW_average_dff(1:length(average_dff)))/2;
-    h3 = plot(daq.t(1:length(dff_cw_motion{i})), bidirectional_dff, 'm', 'LineWidth', 3);
+    bidirectional_dff = (average_dff(1:length_cut)+CCW_average_dff(1:length_cut))/2;
+    h3 = plot(daq.t(1:length_cut), bidirectional_dff, 'm', 'LineWidth', 3);
     
     % Create legend with specific handles and labels
     legend([h1, h2, h3], {'CCW', 'CW', 'Average'}, 'Location', 'best');
@@ -380,29 +586,31 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     %% now separate walking vs not
 
     % first merge cw and ccw
-    dff= [dff_cw_motion, dff_ccw_motion];
-    speed= [total_speed_cw_motion, total_speed_ccw_motion];
+    dff_total= [dff_cw_motion, dff_ccw_motion];
+    speed= forward_speed; %[total_speed_cw_motion, total_speed_ccw_motion];
     still = {}; 
     moving={};
     ave_still = {}; 
     ave_moving ={};
     
-    for i = 1:length(dff)
+    for i = 1:length(dff_total)
         pre_speed = mean(speed{i}(pre_motion_points:length(speed{i})-post_motion_points));
         if pre_speed <still_cutoff
             disp("Still")
-            still{end+1} = dff{i};
-            ave_still{end+1} = dff{i};  
+            still{end+1} = dff_total{i};
+            ave_still{end+1} = dff_total{i};  
         else
-            moving{end+1} = dff{i};
-            ave_moving{end+1} = dff{i};
+            moving{end+1} = dff_total{i};
+            ave_moving{end+1} = dff_total{i};
             disp("moving")
         end
     end
 
     % take average fwd
     % Convert to a matrix for calculating the average
-    min_length = min(cellfun(@length, ave_moving));
+    min_length_moving = min(cellfun(@length, ave_moving));
+    min_length_still= min(cellfun(@length, ave_still));
+    min_length = min(min_length_moving, min_length_still);
     ave_moving = cellfun(@(x) x(1:min_length), ave_moving, 'UniformOutput', false);
     ave_still = cellfun(@(x) x(1:min_length), ave_still, 'UniformOutput', false);
     moving_ave = cell2mat(reshape(ave_moving, length(ave_moving), []));
@@ -450,9 +658,183 @@ function [daq, ts] = openloop_gratings_process(daq, ts, savepath)
     xline(daq.t((ccw_motion_on_markers(1)))+2, 'k--', 'LineWidth', 1.5);
     % Customize the second subplot
     xlabel('Time (s)');
-    ylabel(sprintf('DFF still (still = total_vel<%.2f)', still_cutoff));
+    ylabel(sprintf('DFF still (still = forward <%.2f)', still_cutoff));
     title('Still during visual panel motion');
     hold off;
     save_plot_with_title_as_filename('dff_moving', 'dff_still', savepath)
+    %% save dff motions in struct
+    % Create the combined structure
+    dff_motion = struct();
+    dff_motion.ccw = dff_ccw_motion;
+    dff_motion.cw = dff_cw_motion;
+    dff_motion.cw_ave = average_dff;
+    dff_motion.ccw_ave = CCW_average_dff;
+    
+    % Add metadata
+    dff_motion.num_ccw_trials = length(dff_ccw_motion);
+    dff_motion.num_cw_trials = length(dff_cw_motion);
+    dff_motion.total_trials = length(dff_ccw_motion) + length(dff_cw_motion);
+    
+%% now plotting the dff and kinematics with shaded visual motion
+    % Create the figure and subplots
+    time = daq.t;
+    time_supp = daq.t_supp;
+    fwd = daq.bfv_supp;
+    rot = daq.byv_deg_supp;
+    figure;
+    % Subplot 1: dFF
+    subplot(3, 1, 1);  % First subplot
+    hold on
+    % Calculate your scaling
+    total_padding = max(dff)-min(dff);
+    clockwise_motion_fordff = (clockwise_motion*total_padding)+min(dff);
+    counterclockwise_motion_fordff = (counterclockwise_motion*total_padding)+min(dff);
+    
+    % Find non-zero periods
+    cw_mask = clockwise_motion ~= 0;
+    ccw_mask = counterclockwise_motion ~= 0;
+    
+    % Create rectangles with scaled heights
+    for i = 1:length(time)
+        if cw_mask(i)
+            patch([time(i)-0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)-0.5*mean(diff(time))], ...
+                  [min(dff), min(dff), clockwise_motion_fordff(i), clockwise_motion_fordff(i)], [0.5, 0, 0.5], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        end
+        if ccw_mask(i)
+            patch([time(i)-0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)-0.5*mean(diff(time))], ...
+                  [min(dff), min(dff), counterclockwise_motion_fordff(i), counterclockwise_motion_fordff(i)], [1, 0.5, 0], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        end
+    end
+    h_dff = plot(time, dff, 'r', 'LineWidth', 1.5);  % Plot dFF in red
+    
+    % Create invisible patches for legend
+    h_cw = patch(NaN, NaN, [0.5, 0, 0.5], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+    h_ccw = patch(NaN, NaN, [1, 0.5, 0], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+    
+    legend([h_dff, h_cw, h_ccw], {'dF/F', 'Clockwise', 'Counterclockwise'}, 'Location', 'best');
+    
+    xlabel('Time (s)');
+    ylabel('dF/F');
+    title('dF/F');
+    grid on;
+    
+    % Subplot 2: Forward Velocity
+    subplot(3, 1, 2);  % Second subplot
+    hold on
+    % Calculate your scaling
+    total_padding = max(fwd)-min(fwd);
+    clockwise_motion_fordff = (clockwise_motion*total_padding)+min(fwd);
+    counterclockwise_motion_fordff = (counterclockwise_motion*total_padding)+min(fwd);
+    
+    % Find non-zero periods
+    cw_mask = clockwise_motion ~= 0;
+    ccw_mask = counterclockwise_motion ~= 0;
+    
+    % Create rectangles with scaled heights
+    for i = 1:length(time)
+        if cw_mask(i)
+            patch([time(i)-0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)-0.5*mean(diff(time))], ...
+                  [min(fwd), min(fwd), clockwise_motion_fordff(i), clockwise_motion_fordff(i)], [0.5, 0, 0.5], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        end
+        if ccw_mask(i)
+            patch([time(i)-0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)-0.5*mean(diff(time))], ...
+                  [min(fwd), min(fwd), counterclockwise_motion_fordff(i), counterclockwise_motion_fordff(i)], [1, 0.5, 0], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        end
+    end
+    plot(time_supp, fwd, 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
+    xlabel('Time (s)');
+    ylabel('Forward Velocity (mm/s)');
+    title('Forward Velocity');
+    grid on;
+    
+    % Subplot 3: Rotational Velocity
+    subplot(3, 1, 3);  % Third subplot
+    hold on
+    % Calculate your scaling
+    total_padding = max(rot)-min(rot);
+    clockwise_motion_fordff = (clockwise_motion*total_padding)+min(rot);
+    counterclockwise_motion_fordff = (counterclockwise_motion*total_padding)+min(rot);
+    
+    % Find non-zero periods
+    cw_mask = clockwise_motion ~= 0;
+    ccw_mask = counterclockwise_motion ~= 0;
+    
+    % Create rectangles with scaled heights
+    for i = 1:length(time)
+        if cw_mask(i)
+            patch([time(i)-0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)-0.5*mean(diff(time))], ...
+                  [min(rot), min(rot), clockwise_motion_fordff(i), clockwise_motion_fordff(i)], [0.5, 0, 0.5], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        end
+        if ccw_mask(i)
+            patch([time(i)-0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)+0.5*mean(diff(time)), time(i)-0.5*mean(diff(time))], ...
+                  [min(rot), min(rot), counterclockwise_motion_fordff(i), counterclockwise_motion_fordff(i)], [1, 0.5, 0], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        end
+    end
+    plot(time_supp, rot, 'b', 'LineWidth', 2);  % Plot rotational velocity in blue
+    xlabel('Time (s)');
+    ylabel('Rotational Velocity (rad/s)');
+    title('Rotational Velocity');
+    grid on;
+    
+    % Link the x-axes of all subplots
+    linkaxes(findall(gcf, 'Type', 'axes'), 'x');
+    
+    % Add overall labels
+    sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
+    
+    save_plot_with_title_as_filename('fwd_rot_opto', 'dff_separate', savepath);
 
+
+%% now plot ccw and cw motion on same axis scale
+    % Calculate overall y-limits from all data first
+    all_ccw_data = cell2mat(dff_ccw_motion');
+    all_cw_data = cell2mat(dff_cw_motion');
+    all_data = [all_ccw_data(:); all_cw_data(:); CCW_average_dff(:); average_dff(:)];
+    overall_ylim = [min(all_data), max(all_data)];
+    
+    % Add some padding
+    padding = 0.05 * (overall_ylim(2) - overall_ylim(1));
+    overall_ylim = [overall_ylim(1) - padding, overall_ylim(2) + padding];
+    
+    % Plot the "motionon" segments with pre-motion points and vertical lines
+    figure;
+    
+    % Subplot 1: CCW motion dff (ORANGE)
+    subplot(2, 1, 1);
+    hold on;
+    % Plot each raw "motionon" velocity segment in lighter orange
+    for i = 1:length(dff_ccw_motion)
+        plot(daq.t(1:length(dff_ccw_motion{i})), dff_ccw_motion{i}, 'Color', [1 0.7 0.3], 'LineWidth', 1);
+        xline(daq.t(ccw_motion_on_markers(1)), 'k--', 'LineWidth', 1.5);
+        xline(daq.t((ccw_motion_on_markers(1)))+2, 'k--', 'LineWidth', 1.5);
+    end
+    
+    plot(daq.t(1:length(dff_ccw_motion{i})), CCW_average_dff, 'Color', [1 0.5 0], 'LineWidth', 3, 'DisplayName', 'Average DFF');
+    
+    ylim(overall_ylim);  % Set consistent limits
+    xlabel('Time (s)');
+    ylabel('DFF');
+    title('CCW Rotation');
+    legend('CCW Rotation');
+    hold off;
+    
+    % Subplot 2: CW motion dff (PURPLE)
+    subplot(2, 1, 2);
+    hold on;
+    for i = 1:length(dff_cw_motion)
+        plot(daq.t(1:length(dff_cw_motion{i})), dff_cw_motion{i}, 'Color', [0.7 0.3 1], 'LineWidth', 1);
+        xline(daq.t(motion_on_markers(1)), 'k--', 'LineWidth', 1.5);
+        xline(daq.t((motion_on_markers(1)))+2, 'k--', 'LineWidth', 1.5);
+    end
+    
+    plot(daq.t(1:length(dff_cw_motion{i})), average_dff, 'Color', [0.5 0 1], 'LineWidth', 3, 'DisplayName', 'Average DFF');
+    
+    ylim(overall_ylim);  % Set consistent limits
+    xlabel('Time (s)');
+    ylabel('DFF');
+    title('CW Rotation');
+    legend('CW Rotation');
+    hold off;
+    
+    save_plot_with_title_as_filename('cw', 'ccw', savepath)
 end

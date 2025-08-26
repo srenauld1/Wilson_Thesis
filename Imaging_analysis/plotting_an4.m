@@ -8,9 +8,9 @@ close all
 %[daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(daq, savepath, 10, 2,0.88,0.88);
 %% smooth fictrac
 fwd = daq.bfv;
-yaw = daq.byv;
-side = daq.bsv;
-dff = ts{1};
+yaw = daq.byv_deg;
+side = daq.bsv_deg;
+dff = ts{1}(1,:);
 time=daq.t;
 
 
@@ -44,9 +44,6 @@ yyaxis left;
 plot(time, yaw, '-g', 'LineWidth', 3);  % Plot first time series in blue
 ylabel('Yaw velocity');  % Label for the left y-axis
 
-% Set the y-axis limits for the left axis to [-5, 10]
-ylim([-5 5]);
-
 % Plot the second time series on the right y-axis
 yyaxis right;
 plot(time, dff, '-r', 'LineWidth', 3);  % Plot second time series in red
@@ -65,9 +62,6 @@ figure;
 yyaxis left;
 plot(time, fwd, '-b');  % Plot first time series in blue
 ylabel('Forward velocity');  % Label for the left y-axis
-
-% Set the y-axis limits for the left axis to [-5, 10]
-ylim([-5 5]);
 
 % Plot the second time series on the right y-axis
 yyaxis right;
@@ -89,9 +83,6 @@ figure;
 yyaxis left;
 plot(time, side, '-y');  % Plot first time series in blue
 ylabel('Sideways velocity');  % Label for the left y-axis
-
-% Set the y-axis limits for the left axis to [-5, 10]
-ylim([-5 10]);
 
 % Plot the second time series on the right y-axis
 yyaxis right;
@@ -128,7 +119,7 @@ grid on;
 
 % Subplot 2: Forward Velocity
 subplot(3, 1, 2);  % Second subplot
-plot(time, fwd, 'g', 'LineWidth', 2);  % Plot forward velocity in green
+plot(time, fwd, 'black', 'LineWidth', 2);  % Plot forward velocity in green
 xlabel('Time (s)');
 ylabel('Forward Velocity (mm/s)');
 title('Forward Velocity');
@@ -138,7 +129,7 @@ grid on;
 subplot(3, 1, 3);  % Third subplot
 plot(time, rot, 'b', 'LineWidth', 2);  % Plot rotational velocity in blue
 xlabel('Time (s)');
-ylabel('Rotational Velocity (mm/s)');
+ylabel('Rotational Velocity (rad/s)');
 title('Rotational Velocity');
 grid on;
 
@@ -221,7 +212,7 @@ save_plot_with_title_as_filename('x_color', 'y_color', savepath);
 %% revamp variables
 
 total_mov_mm = daq.totalspeed;    
-not_moving = daq.motion.moving_not;
+not_moving = daq.motion.moving_or_not;
 speed = abs(yaw);
 % Identify outliers using the default method (usually interquartile range)
 outliers1 = isoutlier(fwd, 'mean', 'ThresholdFactor', 6);
@@ -284,7 +275,7 @@ yticks = get(c, 'YTick');  % Get current tick positions
 % Convert normalized values back to actual rotation speed values
 actual_values = yticks/100 * (max(cleaned_rot_speed)-min(cleaned_rot_speed)) + min(cleaned_rot_speed);
 % Format tick labels to 1 decimal place
-ylabel(c, 'Rotation Speed (mm/s)')
+ylabel(c, 'Rotation Speed (deg/s)')
 set(c, 'YTickLabel', arrayfun(@(x) sprintf('%.1f', x), actual_values, 'UniformOutput', false))
 
 hold on
