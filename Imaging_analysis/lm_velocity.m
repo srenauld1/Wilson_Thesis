@@ -160,7 +160,7 @@ disp(['Combined R^2 = ', num2str(r2_combined)]);
 % Plot individual relationships
 figure;
 subplot(2, 2, 1);
-scatter(model_forward, model_dff, 20, 'b.', 'MarkerEdgeAlpha', 0.6);
+scatter(model_forward, model_dff, 20, 'k.', 'MarkerEdgeAlpha', 0.6);
 xlabel('Forward Velocity (mm/s)');
 ylabel('dF/F');
 title(['Forward: R^2 = ', num2str(r2_forward, '%.3f')]);
@@ -223,7 +223,7 @@ fprintf('Total speed - Max CC: %.3f at lag %d\n', max_cc_total, max_lag_total);
 % Plot cross-correlations
 figure;
 subplot(2, 2, 1);
-plot(lags, cc_forward, 'b', 'LineWidth', 1.5);
+plot(lags, cc_forward, 'k', 'LineWidth', 1.5);
 xlabel('Lag (samples)');
 ylabel('Cross-correlation');
 title(['Forward Vel: Max = ', num2str(max_cc_fwd, '%.3f'), ' at lag ', num2str(max_lag_fwd)]);

@@ -13,89 +13,89 @@ side = daq.bsv_deg;
 dff = ts{1}(1,:);
 time=daq.t;
 
-
-%% Plot the dff and fwd
-% Plot the dff and fwd
-figure;
-yyaxis left;
-plot(time, fwd, '-b');
-plot(time, fwd, '-b', 'LineWidth', 3)% Plot first time series in blue
-ylabel('Forward Velocity');  % Label for the left y-axis
-
-% Set the y-axis limits for the left axis to [-5, 10]
-ylim([-5 10]);
-
-% Plot the second time series on the right y-axis
-yyaxis right;
-plot(time, dff, '-r' , 'LineWidth', 3);  % Plot second time series in red
-ylabel('dff');  % Label for the right y-axis
-
-% Add title and x-axis label
-xlabel('Time');
-title('Forward velocity and DFF');
-
-% Optional: Add legend
-legend('Forward Velocity', 'dff');
-save_plot_with_title_as_filename('Fwd vel', 'dff', savepath);
-
-%% plot dff and yaw
-figure;
-yyaxis left;
-plot(time, yaw, '-g', 'LineWidth', 3);  % Plot first time series in blue
-ylabel('Yaw velocity');  % Label for the left y-axis
-
-% Plot the second time series on the right y-axis
-yyaxis right;
-plot(time, dff, '-r', 'LineWidth', 3);  % Plot second time series in red
-ylabel('dff');  % Label for the right y-axis
-
-% Add title and x-axis label
-xlabel('Time');
-title('Yaw velocity and DFF');
-
-% Optional: Add legend
-legend('yaw velocity', 'dff');
-save_plot_with_title_as_filename('Yaw vel', 'dff', savepath);
-
-%% plot fwd and yaw
-figure;
-yyaxis left;
-plot(time, fwd, '-b');  % Plot first time series in blue
-ylabel('Forward velocity');  % Label for the left y-axis
-
-% Plot the second time series on the right y-axis
-yyaxis right;
-plot(time, yaw, '-g');  % Plot second time series in red
-ylabel('yaw vel');  % Label for the right y-axis
-
-% Add title and x-axis label
-xlabel('Time');
-title('forward and yaw velocity');
-
-% Optional: Add legend
-legend('fwd velocity', 'yaw velocity');
-save_plot_with_title_as_filename('Fwd vel', 'Yaw vel', savepath);
-
-
-%% Plot the side and dff
-% Plot the dff and fwd
-figure;
-yyaxis left;
-plot(time, side, '-y');  % Plot first time series in blue
-ylabel('Sideways velocity');  % Label for the left y-axis
-
-% Plot the second time series on the right y-axis
-yyaxis right;
-plot(time, dff, '-r');  % Plot second time series in red
-ylabel('dff');  % Label for the right y-axis
-
-% Add title and x-axis label
-xlabel('Time');
-title('Side velocity vs dff');
-
-% Optional: Add legend
-legend('Sideways velocity', 'dff');
-save_plot_with_title_as_filename('Side vel', 'dff', savepath);
+%% old granular plots
+% %% Plot the dff and fwd
+% % Plot the dff and fwd
+% figure;
+% yyaxis left;
+% plot(time, fwd, '-b');
+% plot(time, fwd, '-b', 'LineWidth', 3)% Plot first time series in blue
+% ylabel('Forward Velocity');  % Label for the left y-axis
+% 
+% % Set the y-axis limits for the left axis to [-5, 10]
+% ylim([-5 10]);
+% 
+% % Plot the second time series on the right y-axis
+% yyaxis right;
+% plot(time, dff, '-r' , 'LineWidth', 3);  % Plot second time series in red
+% ylabel('dff');  % Label for the right y-axis
+% 
+% % Add title and x-axis label
+% xlabel('Time');
+% title('Forward velocity and DFF');
+% 
+% % Optional: Add legend
+% legend('Forward Velocity', 'dff');
+% save_plot_with_title_as_filename('Fwd vel', 'dff', savepath);
+% 
+% %% plot dff and yaw
+% figure;
+% yyaxis left;
+% plot(time, yaw, '-g', 'LineWidth', 3);  % Plot first time series in blue
+% ylabel('Yaw velocity');  % Label for the left y-axis
+% 
+% % Plot the second time series on the right y-axis
+% yyaxis right;
+% plot(time, dff, '-r', 'LineWidth', 3);  % Plot second time series in red
+% ylabel('dff');  % Label for the right y-axis
+% 
+% % Add title and x-axis label
+% xlabel('Time');
+% title('Yaw velocity and DFF');
+% 
+% % Optional: Add legend
+% legend('yaw velocity', 'dff');
+% save_plot_with_title_as_filename('Yaw vel', 'dff', savepath);
+% 
+% %% plot fwd and yaw
+% figure;
+% yyaxis left;
+% plot(time, fwd, '-b');  % Plot first time series in blue
+% ylabel('Forward velocity');  % Label for the left y-axis
+% 
+% % Plot the second time series on the right y-axis
+% yyaxis right;
+% plot(time, yaw, '-g');  % Plot second time series in red
+% ylabel('yaw vel');  % Label for the right y-axis
+% 
+% % Add title and x-axis label
+% xlabel('Time');
+% title('forward and yaw velocity');
+% 
+% % Optional: Add legend
+% legend('fwd velocity', 'yaw velocity');
+% save_plot_with_title_as_filename('Fwd vel', 'Yaw vel', savepath);
+% 
+% 
+% %% Plot the side and dff
+% % Plot the dff and fwd
+% figure;
+% yyaxis left;
+% plot(time, side, '-y');  % Plot first time series in blue
+% ylabel('Sideways velocity');  % Label for the left y-axis
+% 
+% % Plot the second time series on the right y-axis
+% yyaxis right;
+% plot(time, dff, '-r');  % Plot second time series in red
+% ylabel('dff');  % Label for the right y-axis
+% 
+% % Add title and x-axis label
+% xlabel('Time');
+% title('Side velocity vs dff');
+% 
+% % Optional: Add legend
+% legend('Sideways velocity', 'dff');
+% save_plot_with_title_as_filename('Side vel', 'dff', savepath);
 
 %% all 3 on one plot
 time = daq.t;                  % Time points
@@ -110,7 +110,7 @@ figure;
 % Subplot 1: dFF
 subplot(3, 1, 1);  % First subplot
 hold on
-plot(time, dff, 'r', 'LineWidth', 2);  % Plot dFF in red
+plot(time, dff, 'b', 'LineWidth', 2);  % Plot dFF in red
 xline(150.363);
 xlabel('Time (s)');
 ylabel('dF/F');
@@ -127,7 +127,7 @@ grid on;
 
 % Subplot 3: Rotational Velocity
 subplot(3, 1, 3);  % Third subplot
-plot(time, rot, 'b', 'LineWidth', 2);  % Plot rotational velocity in blue
+plot(time, rot, 'r', 'LineWidth', 2);  % Plot rotational velocity in blue
 xlabel('Time (s)');
 ylabel('Rotational Velocity (rad/s)');
 title('Rotational Velocity');

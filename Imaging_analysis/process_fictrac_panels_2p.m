@@ -26,7 +26,7 @@
 % Original: 3/19/2025 - SMR
 
 
-function [daq, yaw_information_right,yaw_information_left,yaw_information_left_supp, yaw_information_right_supp ] = process_fictrac_panels_2p(daq, minVel, jump)
+function [daq, yaw_information_right,yaw_information_left,yaw_information_left_supp, yaw_information_right_supp ] = process_fictrac_panels_2p(daq, vel_on,vel_off, jump)
     
     if jump
         %% detect jumps
@@ -70,23 +70,35 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
         end
     end
 
-    %% create moving not moving binary for downsampled data
-    % calculate total speed
-    % multiply the two radian values (yaw and side velocity by radius of
-    % the ball 4.5mm)
-    total_speed = abs(daq.bfv) +(abs(daq.byv)*4.5) + (abs(daq.bsv)*4.5);
-    daq.totalspeed = total_speed;
-    ids_fly_moving = find(daq.totalspeed >= minVel);
-
-    % Create a column for moving/not moving
-    daq.motion.moving_or_not = zeros(size(daq.totalspeed));  % Initialize with zeros
+    %% Define Schmitt trigger thresholds (example: you choose these values!)
+    %speed = abs(daq.bfv) + (abs(daq.byv)*4.5) + (abs(daq.bsv)*4.5);
+    %daq.totalspeed = speed;
+    speed = daq.bfv;
     
-    daq.motion.moving_or_not(ids_fly_moving) = 1;  % Set to 1 where the conditions are met
+    motion = zeros(size(speed));
     
-    % Find indices where the fly is not moving (where movement_state is 0)
-    ftNotMoveInd = find(daq.motion.moving_or_not == 0);
+    % Start state (assume not moving)
+    if speed(1) >= vel_on
+        motion(1) = 1;
+    else
+        motion(1) = 0;
+    end
     
-    daq.motion.ftNotMoveInd = ftNotMoveInd;
+    % Apply Schmitt trigger logic
+    for i = 2:numel(speed)
+        if motion(i-1) == 0 && speed(i) >= vel_on
+            motion(i) = 1; % start moving
+        elseif motion(i-1) == 1 && speed(i) > vel_off
+            motion(i) = 1; % keep moving
+        else
+            motion(i) = 0; % stop moving
+        end
+    end
+    
+    daq.motion.moving_or_not = motion;
+    
+    % Optionally: Indices where fly is NOT moving
+    daq.motion.ftNotMoveInd = find(motion==0);
 
     %% turn yaw into degrees
     daq.byv_deg = rad2deg(daq.byv);
@@ -100,22 +112,34 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
     daq.smoothedfwdVelocity = smoothdata(daq.bfv, 'gaussian',30);
 
     %% create moving not moving binary for 60Hz data
-    % calculate total speed
-    % multiply the two radian values (yaw and side velocity by radius of
-    % the ball 4.5mm)
-    total_speed = abs(daq.bfv_supp) +(4.5*abs(daq.byv_supp)) + (4.5*abs(daq.bsv_supp));
-    daq.totalspeed_supp = total_speed;
-    ids_fly_moving = find(daq.totalspeed_supp >= minVel);
-
-    % Create a column for moving/not moving
-    daq.motion_supp.moving_not = zeros(size(daq.totalspeed_supp));  % Initialize with zeros
+    % Compute the total speed as before
+    total_speed_supp = abs(daq.bfv_supp) + (4.5*abs(daq.byv_supp)) + (4.5*abs(daq.bsv_supp));
+    daq.totalspeed_supp = total_speed_supp;
     
-    daq.motion_supp.moving_not(ids_fly_moving) = 1;  % Set to 1 where the conditions are met
+    % Initialize movement state
+    motion_supp = zeros(size(total_speed_supp));
     
-    % Find indices where the fly is not moving (where movement_state is 0)
-    ftNotMoveInd = find(daq.motion_supp.moving_not == 0);
+    % Start state (can also force to zero if you prefer)
+    if total_speed_supp(1) >= vel_on
+        motion_supp(1) = 1;
+    else
+        motion_supp(1) = 0;
+    end
     
-    daq.motion_supp.ftNotMoveInd = ftNotMoveInd;
+    % Schmitt trigger logic
+    for i = 2:numel(total_speed_supp)
+        if motion_supp(i-1) == 0 && total_speed_supp(i) >= vel_on
+            motion_supp(i) = 1; % Enter moving state
+        elseif motion_supp(i-1) == 1 && total_speed_supp(i) > vel_off
+            motion_supp(i) = 1; % Remain moving
+        else
+            motion_supp(i) = 0; % Enter not-moving state
+        end
+    end
+    
+    % Store results
+    daq.motion_supp.moving_not = motion_supp;
+    daq.motion_supp.ftNotMoveInd = find(motion_supp==0);
 
     %% turn yaw into degrees
     daq.byv_deg_supp = rad2deg(daq.byv_supp);

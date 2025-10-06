@@ -494,7 +494,7 @@ save_plot_with_title_as_filename('movement_offset', 'variables', savepath);
 
 %% Parameters
 preN = 0; %round(sample_rate);
-offN = round(sample_rate);
+offN = 0; %round(sample_rate);
 min_run_len = 4; %0.5*round(sample_rate);
 min_inbetween_len = round(sample_rate);
 

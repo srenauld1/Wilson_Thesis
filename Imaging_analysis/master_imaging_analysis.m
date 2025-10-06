@@ -2,7 +2,7 @@
 
 % This first function re-orients the G4 panels to the true front (rather
 % than where the panels decide is 0) 0 is in front of the fly
-% This function also downsamples time, opto, and the panels such that they
+% This function aclolso downsamples time, opto, and the panels such that they
 % have the same length as the fictrac variables
 % This function also uses the functions compute_absolute_circular_diff and 
 % detect_local_peaks to determine where jumps are and add in a 2 second
@@ -125,9 +125,10 @@ savepath = stim_directory;
 disp(['Save path: ', savepath]);
 
 %% process and pick out jumps
-minVel = 5;
+vel_on = 1;  % Speed above which fly is moving (enter movement)
+vel_off = 1; % Speed below which fly is NOT moving (exit movement)
 forvel_cutoff = 2;
-[daq, yaw_information_right,yaw_information_left,yaw_information_left_supp, yaw_information_right_supp ] = process_fictrac_panels_2p(daq, minVel, jump);
+[daq, yaw_information_right,yaw_information_left,yaw_information_left_supp, yaw_information_right_supp ] = process_fictrac_panels_2p(daq, vel_on, vel_off, jump);
 %% now here i will have a function to extract saccades
 [daq, saccade_both] = find_saccades_2p(daq, yaw_information_right,yaw_information_left, forvel_cutoff, 0);
 [daq, saccade_both_supp] = find_saccades_2p(daq, yaw_information_right_supp,yaw_information_left_supp, forvel_cutoff, 1);
@@ -245,7 +246,11 @@ end
 %% save fly data
 path_parts = strsplit(base_path, filesep);
 fly_identifier = path_parts{end};
-save_fly_data(daq, ts, dff_motion, fly_identifier, savepath)
+if ves041
+    save_fly_data(daq, ts, fly_identifier, savepath)
+else
+    save_fly_data(daq, ts, dff_motion, fly_identifier, savepath)
+end
 
 %% PILOT ZONE
     %% plot flat path with saccades
