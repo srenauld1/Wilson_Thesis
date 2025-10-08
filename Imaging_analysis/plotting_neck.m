@@ -2,10 +2,10 @@ function daq = plotting_neck(resp, daq, savepath)
 
 %% all 3 on one plot
 time = daq.t;                  % Time points
-dff = resp{1,1};           % Example dFF data
-fwd = daq.bfv; % Example forward velocity data
-rot = daq.byv; % Example rotational velocity data
-side = daq.bsv;
+dff = dat.ts;           % Example dFF data
+fwd = daq.bvf; % Example forward velocity data
+rot = daq.bvy; % Example rotational velocity data
+side = daq.bvs;
 
 % Subplot 1: dFF
 numRows = size(dff, 1);

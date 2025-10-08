@@ -4,8 +4,8 @@ clear all
 baseFolder = '/Users/sophiarenauld/stacks/';
 
 % Prompt the user to select a file from the base folder
-[fileName, pathName] = uigetfile('fly_data_*.mat', 'Select Processed Behavior + imaging Data', baseFolder);
-[fileName2, pathName2] = uigetfile('*cmrg_.mat', 'Select tiff', baseFolder);
+[fileName, pathName] = uigetfile('fly_data*.mat', 'Select Processed Behavior + imaging Data', baseFolder);
+[fileName2, pathName2] = uigetfile('*or_.mat', 'Select tiff', baseFolder);
 % Check if the user clicked "Cancel"
 if isequal(fileName, 0)
     disp('User canceled the file selection.');
@@ -139,8 +139,8 @@ end
 % end
 
 %% variables
-trace1 = fly_data.ts{1,1}(1, :); % Fluorescence vector [1 x T]
-trace2 = fly_data.daq.bfv;       % Behavioral velocity [1 x T]
+trace1 = fly_data.dat.ts; % Fluorescence vector [1 x T]
+trace2 = fly_data.daq.bvf;       % Behavioral velocity [1 x T]
 trace3 = fly_data.daq.t;         % Time vector [1 x T] (seconds)
 mov = stack;                     % Movie [X, Y, n_planes, n_frames]
 

@@ -31,14 +31,14 @@ function [daq, saccade_both] = find_saccades_2p(daq, yaw_information_right,yaw_i
 % initialize kinematic data
 if (upsample)
     forward = daq.smoothedfwdVelocity_supp;
-    yaw = daq.byv_deg_supp;
+    yaw = daq.bvy_deg_supp;
     time = daq.t_supp;
     % Initialize the saccading array with zeros
     numEntries = size(time,2);  % The total number of observations you want to evaluate
     daq.saccading_supp = zeros(1, numEntries);  % Initialize as non-saccading
 else
     forward = daq.smoothedfwdVelocity;
-    yaw = daq.byv_deg;
+    yaw = daq.bvy_deg;
     time = daq.t;
     % Initialize the saccading array with zeros
     numEntries = size(time,2);  % The total number of observations you want to evaluate

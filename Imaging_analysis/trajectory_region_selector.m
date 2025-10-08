@@ -43,7 +43,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
     % Dual-axis plot area (right side)
     ax_signals = subplot('Position', [0.55, 0.4, 0.4, 0.5]);
     plot(0, 0); % Placeholder
-    title('DFF and BYV\_deg vs Time in Selected Regions')
+    title('DFF and bvy\_deg vs Time in Selected Regions')
     xlabel('Time (s)')
     grid on
     
@@ -77,7 +77,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
         'FontSize', 12);
     
     % Text for summary
-    summary_text = text(0.05, 0.8, 'Draw polygon regions to see DFF and BYV_deg analysis', ...
+    summary_text = text(0.05, 0.8, 'Draw polygon regions to see DFF and bvy_deg analysis', ...
         'Parent', ax_summary, 'FontSize', 11, 'VerticalAlignment', 'top', ...
         'FontName', 'FixedWidth');
     
@@ -112,12 +112,12 @@ function trajectory_region_selector(daq, dff, jump, varargin)
             region_time_supp = daq.t_supp(supp_time_mask);
             
             % Handle different field names for yaw velocity
-            if isfield(daq, 'byv_deg_supp')
-                region_byv_deg = daq.byv_deg_supp(supp_time_mask);
-            elseif isfield(daq, 'byv_supp')
-                region_byv_deg = daq.byv_supp(supp_time_mask);
+            if isfield(daq, 'bvy_deg_supp')
+                region_bvy_deg = daq.bvy_deg_supp(supp_time_mask);
+            elseif isfield(daq, 'bvy_supp')
+                region_bvy_deg = daq.bvy_supp(supp_time_mask);
             else
-                error('Neither daq.byv_deg_supp nor daq.byv_supp found');
+                error('Neither daq.bvy_deg_supp nor daq.bvy_supp found');
             end
             
             % Store region info
@@ -130,12 +130,12 @@ function trajectory_region_selector(daq, dff, jump, varargin)
                 'spatial_y', py(inside_mask), ...
                 'spatial_count', sum(inside_mask), ...
                 'dff', region_dff, ...
-                'byv_deg', region_byv_deg, ...
+                'bvy_deg', region_bvy_deg, ...
                 'time_dff', region_time_dff, ...
                 'time_supp', region_time_supp, ...
                 'time_range', [time_min, time_max], ...
                 'dff_count', length(region_dff), ...
-                'supp_count', length(region_byv_deg));
+                'supp_count', length(region_bvy_deg));
             
             % Plot selected spatial points with same color as region
             plot(px(inside_mask), py(inside_mask), 'o', 'Color', color, ...
@@ -146,8 +146,8 @@ function trajectory_region_selector(daq, dff, jump, varargin)
             update_summary_display();
             
             % Print info to console
-            fprintf('Region %d: Spatial points = %d, DFF points = %d, BYV points = %d\n', ...
-                region_num, sum(inside_mask), length(region_dff), length(region_byv_deg));
+            fprintf('Region %d: Spatial points = %d, DFF points = %d, bvy points = %d\n', ...
+                region_num, sum(inside_mask), length(region_dff), length(region_bvy_deg));
             fprintf('  Time range: %.2f to %.2f s\n', time_min, time_max);
         end
     end
@@ -186,7 +186,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
         % Reset to left axis and set up clean state
         yyaxis left;
         plot(0, 0, 'Color', 'none'); % Invisible placeholder to establish axes
-        title('DFF and BYV\_deg vs Time in Selected Regions')
+        title('DFF and bvy\_deg vs Time in Selected Regions')
         xlabel('Time (s)')
         ylabel('')  % Clear any axis labels
         
@@ -201,7 +201,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
         legend off  % Remove any existing legend
         
         % Clear summary text
-        set(summary_text, 'String', 'Draw polygon regions to see DFF and BYV_deg analysis');
+        set(summary_text, 'String', 'Draw polygon regions to see DFF and bvy_deg analysis');
         end
     
     function save_figure(~, ~)
@@ -271,7 +271,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
         
         if isempty(selected_points)
             plot(0, 0); % Placeholder
-            title('DFF and BYV\_deg vs Time in Selected Regions')
+            title('DFF and bvy\_deg vs Time in Selected Regions')
             xlabel('Time (s)')
         else
             % Set up dual y-axes
@@ -303,54 +303,54 @@ function trajectory_region_selector(daq, dff, jump, varargin)
             ax_left = gca;
             ax_left.YColor = 'b';
             
-            % Plot BYV_deg on right axis
+            % Plot bvy_deg on right axis
             yyaxis right
             hold on;
             
-            byv_handles = [];
+            bvy_handles = [];
             
             for i = 1:length(selected_points)
                 if selected_points{i}.supp_count > 0
                     base_color = regions{i}.color;
                     
-                    % Get darker shade for BYV
+                    % Get darker shade for bvy
                     if base_color == 'r'
-                        byv_color = [0.6, 0, 0]; % Dark red
+                        bvy_color = [0.6, 0, 0]; % Dark red
                     elseif base_color == 'g'
-                        byv_color = [0, 0.6, 0]; % Dark green
+                        bvy_color = [0, 0.6, 0]; % Dark green
                     elseif base_color == 'm'
-                        byv_color = [0.6, 0, 0.6]; % Dark magenta
+                        bvy_color = [0.6, 0, 0.6]; % Dark magenta
                     elseif base_color == 'c'
-                        byv_color = [0, 0.6, 0.6]; % Dark cyan
+                        bvy_color = [0, 0.6, 0.6]; % Dark cyan
                     elseif base_color == 'y'
-                        byv_color = [0.8, 0.6, 0]; % Dark yellow/orange
+                        bvy_color = [0.8, 0.6, 0]; % Dark yellow/orange
                     else % 'k'
-                        byv_color = [0.3, 0.3, 0.3]; % Dark gray
+                        bvy_color = [0.3, 0.3, 0.3]; % Dark gray
                     end
                     
-                    % Sort by time for proper line plotting (BYV)
+                    % Sort by time for proper line plotting (bvy)
                     [sorted_time_supp, sort_idx_supp] = sort(selected_points{i}.time_supp);
-                    sorted_byv_deg = selected_points{i}.byv_deg(sort_idx_supp);
+                    sorted_bvy_deg = selected_points{i}.bvy_deg(sort_idx_supp);
                     
-                    h_byv = plot(sorted_time_supp, sorted_byv_deg, ...
-                        's--', 'Color', byv_color, 'LineWidth', 1.5, ...
-                        'MarkerSize', 4, 'MarkerFaceColor', byv_color);
+                    h_bvy = plot(sorted_time_supp, sorted_bvy_deg, ...
+                        's--', 'Color', bvy_color, 'LineWidth', 1.5, ...
+                        'MarkerSize', 4, 'MarkerFaceColor', bvy_color);
                     
-                    byv_handles = [byv_handles, h_byv];
-                    legend_entries{end+1} = sprintf('Region %d BYV_deg (n=%d)', i, selected_points{i}.supp_count);
+                    bvy_handles = [bvy_handles, h_bvy];
+                    legend_entries{end+1} = sprintf('Region %d bvy_deg (n=%d)', i, selected_points{i}.supp_count);
                 end
             end
             
-            ylabel('BYV\_deg (°)', 'Color', 'r')
+            ylabel('bvy\_deg (°)', 'Color', 'r')
             ax_right = gca;
             ax_right.YColor = 'r';
             
-            title('DFF (left, circles) and BYV\_deg (right, squares) vs Time')
+            title('DFF (left, circles) and bvy\_deg (right, squares) vs Time')
             xlabel('Time (s)')
             
             % Create legend with both types of handles
             if ~isempty(legend_entries)
-                all_handles = [dff_handles, byv_handles];
+                all_handles = [dff_handles, bvy_handles];
                 legend(all_handles, legend_entries, 'Location', 'best', 'FontSize', 9);
             end
         end
@@ -360,7 +360,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
     
     function update_summary_display()
         if isempty(selected_points)
-            summary_str = 'Draw polygon regions to see DFF and BYV_deg analysis';
+            summary_str = 'Draw polygon regions to see DFF and bvy_deg analysis';
         else
             summary_str = sprintf('REGION SUMMARY:\n\n');
             
@@ -369,7 +369,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
                     selected_points{i}.time_range(1), selected_points{i}.time_range(2))];
                 summary_str = [summary_str, sprintf('  Spatial points: %d\n', selected_points{i}.spatial_count)];
                 summary_str = [summary_str, sprintf('  DFF points: %d\n', selected_points{i}.dff_count)];
-                summary_str = [summary_str, sprintf('  BYV points: %d\n', selected_points{i}.supp_count)];
+                summary_str = [summary_str, sprintf('  bvy points: %d\n', selected_points{i}.supp_count)];
                 
                 if selected_points{i}.dff_count > 0
                     summary_str = [summary_str, sprintf('  DFF: %.3f ± %.3f\n', ...
@@ -377,8 +377,8 @@ function trajectory_region_selector(daq, dff, jump, varargin)
                 end
                 
                 if selected_points{i}.supp_count > 0
-                    summary_str = [summary_str, sprintf('  BYV_deg: %.1f ± %.1f°\n', ...
-                        mean(selected_points{i}.byv_deg), std(selected_points{i}.byv_deg))];
+                    summary_str = [summary_str, sprintf('  bvy_deg: %.1f ± %.1f°\n', ...
+                        mean(selected_points{i}.bvy_deg), std(selected_points{i}.bvy_deg))];
                 end
                 
                 summary_str = [summary_str, sprintf('\n')];
@@ -403,13 +403,13 @@ function trajectory_region_selector(daq, dff, jump, varargin)
         
         % Calculate overall statistics
         all_dff = [];
-        all_byv_deg = [];
+        all_bvy_deg = [];
         for i = 1:length(selected_points)
             if selected_points{i}.dff_count > 0
                 all_dff = [all_dff; selected_points{i}.dff];
             end
             if selected_points{i}.supp_count > 0
-                all_byv_deg = [all_byv_deg; selected_points{i}.byv_deg];
+                all_bvy_deg = [all_bvy_deg; selected_points{i}.bvy_deg];
             end
             
             % Individual region stats
@@ -425,19 +425,19 @@ function trajectory_region_selector(daq, dff, jump, varargin)
             end
             
             if selected_points{i}.supp_count > 0
-                results.summary_stats.(sprintf('region_%d', i)).mean_byv_deg = mean(selected_points{i}.byv_deg);
-                results.summary_stats.(sprintf('region_%d', i)).std_byv_deg = std(selected_points{i}.byv_deg);
+                results.summary_stats.(sprintf('region_%d', i)).mean_bvy_deg = mean(selected_points{i}.bvy_deg);
+                results.summary_stats.(sprintf('region_%d', i)).std_bvy_deg = std(selected_points{i}.bvy_deg);
             end
         end
         
-        if ~isempty(all_dff) && ~isempty(all_byv_deg)
+        if ~isempty(all_dff) && ~isempty(all_bvy_deg)
             results.summary_stats.overall = struct(...
                 'mean_dff', mean(all_dff), ...
                 'std_dff', std(all_dff), ...
-                'mean_byv_deg', mean(all_byv_deg), ...
-                'std_byv_deg', std(all_byv_deg), ...
+                'mean_bvy_deg', mean(all_bvy_deg), ...
+                'std_bvy_deg', std(all_bvy_deg), ...
                 'total_dff_points', length(all_dff), ...
-                'total_byv_points', length(all_byv_deg));
+                'total_bvy_points', length(all_bvy_deg));
         end
         
         % Export to base workspace
@@ -451,8 +451,8 @@ function trajectory_region_selector(daq, dff, jump, varargin)
         
         % Show summary
         total_spatial = sum(cellfun(@(x) x.spatial_count, selected_points));
-        msgbox(sprintf('Results exported!\n\nRegions: %d\nSpatial points: %d\nDFF points: %d\nBYV points: %d', ...
-            length(selected_points), total_spatial, length(all_dff), length(all_byv_deg)), ...
+        msgbox(sprintf('Results exported!\n\nRegions: %d\nSpatial points: %d\nDFF points: %d\nbvy points: %d', ...
+            length(selected_points), total_spatial, length(all_dff), length(all_bvy_deg)), ...
             'Export Complete');
         
         % Print to command window
@@ -465,9 +465,9 @@ function trajectory_region_selector(daq, dff, jump, varargin)
             if selected_points{i}.dff_count > 0
                 fprintf(', mean = %.3f ± %.3f', mean(selected_points{i}.dff), std(selected_points{i}.dff));
             end
-            fprintf('\n  BYV: %d points', selected_points{i}.supp_count);
+            fprintf('\n  bvy: %d points', selected_points{i}.supp_count);
             if selected_points{i}.supp_count > 0
-                fprintf(', mean = %.1f ± %.1f°', mean(selected_points{i}.byv_deg), std(selected_points{i}.byv_deg));
+                fprintf(', mean = %.1f ± %.1f°', mean(selected_points{i}.bvy_deg), std(selected_points{i}.bvy_deg));
             end
             fprintf('\n');
         end

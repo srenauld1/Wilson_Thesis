@@ -1,14 +1,14 @@
-function lm_velocity(daq, ts, savepath)
+function lm_velocity(daq, dat, savepath)
 
 %% Define variables and downsample kinematics to match dff
-dff = ts{1}(1,:);
+dff = dat.ts(1,:);
 time_dff = daq.t;  % dff time base
 time_kinematics = daq.t_supp;  % kinematic time base
 
 % Original kinematic variables (high resolution, unaltered)
-forward_velocity_hr = daq.bfv_supp;  
-rot_velocity_hr = daq.byv_deg_supp;
-side_velocity_hr = daq.bsv_deg_supp;
+forward_velocity_hr = daq.bvf_supp;  
+rot_velocity_hr = daq.bvy_deg_supp;
+side_velocity_hr = daq.bvs_deg_supp;
 
 % Downsample kinematic variables to match dff time base
 forward_velocity = interp1(time_kinematics, forward_velocity_hr, time_dff, 'linear', 'extrap');

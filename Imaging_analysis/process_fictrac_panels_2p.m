@@ -27,7 +27,7 @@
 
 
 function [daq, yaw_information_right,yaw_information_left,yaw_information_left_supp, yaw_information_right_supp ] = process_fictrac_panels_2p(daq, vel_on,vel_off, jump)
-    
+
     if jump
         %% detect jumps
         daq = compute_absolute_circular_diff_2p(daq);
@@ -71,9 +71,9 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
     end
 
     %% Define Schmitt trigger thresholds (example: you choose these values!)
-    %speed = abs(daq.bfv) + (abs(daq.byv)*4.5) + (abs(daq.bsv)*4.5);
+    %speed = abs(daq.bvf) + (abs(daq.bvy)*4.5) + (abs(daq.bvs)*4.5);
     %daq.totalspeed = speed;
-    speed = daq.bfv;
+    speed = daq.bvf;
     
     motion = zeros(size(speed));
     
@@ -101,19 +101,19 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
     daq.motion.ftNotMoveInd = find(motion==0);
 
     %% turn yaw into degrees
-    daq.byv_deg = rad2deg(daq.byv);
-    daq.byv_deg_supp = rad2deg(daq.byv_supp);
-    daq.bsv_deg = rad2deg(daq.bsv);
-    daq.bsv_deg_supp = rad2deg(daq.bsv_supp);
+    daq.bvy_deg = rad2deg(daq.bvy);
+    daq.bvy_deg_supp = rad2deg(daq.bvy_supp);
+    daq.bvs_deg = rad2deg(daq.bvs);
+    daq.bvs_deg_supp = rad2deg(daq.bvs_supp);
     
     
     %% overly smooth rotational velocity
-    daq.smoothedangularVelocity = smoothdata(daq.byv_deg, 'gaussian',30);
-    daq.smoothedfwdVelocity = smoothdata(daq.bfv, 'gaussian',30);
+    daq.smoothedangularVelocity = smoothdata(daq.bvy_deg, 'gaussian',30);
+    daq.smoothedfwdVelocity = smoothdata(daq.bvf, 'gaussian',30);
 
     %% create moving not moving binary for 60Hz data
     % Compute the total speed as before
-    total_speed_supp = abs(daq.bfv_supp) + (4.5*abs(daq.byv_supp)) + (4.5*abs(daq.bsv_supp));
+    total_speed_supp = abs(daq.bvf_supp) + (4.5*abs(daq.bvy_supp)) + (4.5*abs(daq.bvs_supp));
     daq.totalspeed_supp = total_speed_supp;
     
     % Initialize movement state
@@ -142,12 +142,12 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
     daq.motion_supp.ftNotMoveInd = find(motion_supp==0);
 
     %% turn yaw into degrees
-    daq.byv_deg_supp = rad2deg(daq.byv_supp);
+    daq.bvy_deg_supp = rad2deg(daq.bvy_supp);
     
     
     %% overly smooth rotational velocity
-    daq.smoothedangularVelocity_supp = smoothdata(daq.byv_deg_supp, 'gaussian',100);
-    daq.smoothedfwdVelocity_supp = smoothdata(daq.bfv_supp, 'gaussian',100);
+    daq.smoothedangularVelocity_supp = smoothdata(daq.bvy_deg_supp, 'gaussian',100);
+    daq.smoothedfwdVelocity_supp = smoothdata(daq.bvf_supp, 'gaussian',100);
     
     %% find turns
     yaw_information_right = findYawVelPeaksFT(daq, 20, [0.2,1], daq.motion, 1,0);

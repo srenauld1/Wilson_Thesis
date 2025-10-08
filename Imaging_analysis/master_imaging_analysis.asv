@@ -99,11 +99,12 @@ if contains(base_path, 'box')
     visual = 1; 
 elseif contains(base_path, 'olgrating')
     visual = 1; 
-elseif contains(base_path, 'vgrating')
+elseif contains(base_path, 'grating')
     visual = 1; 
-    split=0;
 elseif contains(base_path, 'hgrating')
     visual = 1; 
+elseif contains(base_path, 'vgrating')
+    visual = 1;
 elseif contains(base_path, 'splitgrating')
     visual = 1;
     split=1;
@@ -128,8 +129,8 @@ disp(['Save path: ', savepath]);
 
 %% adjust variables
 fields = fieldnames(daq);
-patterns = {'byv','bfv','bsv','byv_supp','bfv_supp','bsv_supp', 'vy', 'vy_supp', 'vyv', 'vyv_supp'};
-replacements = {'bvy','bvf','bvs','bvy_supp','bvf_supp','bvs_supp', 'vh', 'vh_supp', 'vvy', 'vvy_supp'};
+patterns = {'byv','bfv','bsv','byv_supp','bfv_supp','bsv_supp', 'vy', 'vy_supp'};
+replacements = {'bvy','bvf','bvs','bvy_supp','bvf_supp','bvs_supp', 'vh', 'vh_sup'};
 
 for i = 1:numel(fields)
     oldname = fields{i};

@@ -8,12 +8,12 @@ function daq = compute_absolute_circular_diff_2p(daq)
     %   ts: modified structure with ts.absolute_circular_diff added
     
     % Check if heading field exists
-    if ~isfield(daq, 'vy')
+    if ~isfield(daq, 'vh')
         error('Field daq.vy not found in data structure.');
     end
     
     % Get heading data
-    heading = daq.vy;
+    heading = daq.vh;
     
     % Check if row or column vector and handle accordingly
     if isrow(heading)

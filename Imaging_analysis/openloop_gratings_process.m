@@ -1,17 +1,26 @@
-function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, box, split)
+function [daq, dat, dff_motion] = openloop_gratings_process(daq, dat, savepath, box, splitgrating)
 %% calculate normalized dff if exists 2 rois
-    a=size(ts{1});
+    a=size(dat.ts);
     if a(1)>1
-        dff = ts{1}(1,:)-ts{1}(2,:);
+        dff = dat.ts(1,:)-dat.ts(2,:) ;
     else
-        dff = ts{1}(1,:);
+        dff = dat.ts;
     end
+
+%% --- LABEL SWITCH ---
+if splitgrating
+    label_cw  = 'Back-to-Front';
+    label_ccw = 'Front-to-Back';
+else
+    label_cw  = 'Clockwise';
+    label_ccw = 'Counterclockwise';
+end
 
 %% Plot the dff and pattern
     % Plot the dff and fwd
     figure;
     yyaxis left;
-    plot(daq.t_supp, daq.vy_supp, '-k');
+    plot(daq.t_supp, daq.vh_supp, '-k');
     ylabel('pattern');  % Label for the left y-axis
     
     
@@ -45,11 +54,11 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % for 3 Hz
 
     
-    positive_slope = zeros(size(daq.vy));
-    positive_slope(daq.vy >= -3.1 & daq.vy <= 0) = 1;
+    positive_slope = zeros(size(daq.vh));
+    positive_slope(daq.vh >= -3.1 & daq.vh <= 0) = 1;
     % take care of 6hz case
-    if max(daq.vyv)>2.5
-         positive_slope(daq.vy >= -3.11 & daq.vyv >= 0) = 1;
+    if max(daq.vvy)>2.5
+         positive_slope(daq.vh >= -3.11 & daq.vvy >= 0) = 1;
     end
     diff_array = diff([0, positive_slope, 0]);
     run_starts = find(diff_array == 1);
@@ -62,10 +71,10 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
         end
     end
     % ccw
-    negative_slope = zeros(size(daq.vy));
-    negative_slope(daq.vy >= 0 & daq.vy <= 4) = 1;
-    if max(daq.vyv)>2.5
-         negative_slope(daq.vy >= -3.11 & daq.vyv <= 0) = 1;
+    negative_slope = zeros(size(daq.vh));
+    negative_slope(daq.vh >= 0 & daq.vh <= 4) = 1;
+    if max(daq.vvy)>2.5
+         negative_slope(daq.vh >= -3.11 & daq.vvy <= 0) = 1;
     end
     diff_array = diff([0, negative_slope, 0]);
     run_starts = find(diff_array == 1);
@@ -164,16 +173,16 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
             extended_segment_indices = pre_motion_point:post_motion_point;
 
             % only motion on fwd and rot
-            derivative_of_position = diff(daq.vy);
+            derivative_of_position = diff(daq.vh);
             dff_cw_motion{end+1} = dff(extended_segment_indices);
-            pattern_cw_motion{end+1} = daq.vy(extended_segment_indices);
+            pattern_cw_motion{end+1} = daq.vh(extended_segment_indices);
 
             % changed to totalspeed_supp
             upsample_factor = length(daq.t_supp)/length(daq.t);
             extended_segment_indices_supp = round(pre_motion_point*upsample_factor):round(post_motion_point*upsample_factor);
             total_speed_cw_motion{end+1} = daq.totalspeed_supp(extended_segment_indices_supp);
-            forward_speed_cw_motion{end+1} = daq.bfv(extended_segment_indices);
-            rotational_speed_cw_motion{end+1} = abs(daq.byv_supp(extended_segment_indices_supp));
+            forward_speed_cw_motion{end+1} = daq.bvf(extended_segment_indices);
+            rotational_speed_cw_motion{end+1} = abs(daq.bvy_supp(extended_segment_indices_supp));
             times_cw_motion{end+1} = daq.t(extended_segment_indices);
             
             % Record the exact point where motion switches on for plotting
@@ -220,8 +229,8 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % Customize the first subplot
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CW DFF');
-    legend('CW DFF');
+    title([label_cw ' DFF']);
+    legend(label_cw);
     hold off;
 
     % Subplot 2: norm dff
@@ -260,7 +269,7 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     title('pattern');
     legend('Average motion-On Angular Speed');
     hold off;
-    save_plot_with_title_as_filename('pattern', 'cwrotation', savepath)
+    save_plot_with_title_as_filename('pattern', label_cw, savepath)
 
     %% ccw
     % start with clockwise motion
@@ -304,16 +313,16 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
             extended_segment_indices = pre_motion_point:post_motion_point;
 
             % only motion on fwd and rot
-            derivative_of_position = diff(daq.vy);
+            derivative_of_position = diff(daq.vh);
             dff_ccw_motion{end+1} = dff(extended_segment_indices);
-            pattern_ccw_motion{end+1} = daq.vy(extended_segment_indices);
+            pattern_ccw_motion{end+1} = daq.vh(extended_segment_indices);
             
             % changed to totalspeed_supp
             upsample_factor = length(daq.t_supp)/length(daq.t);
             extended_segment_indices_supp = round(pre_motion_point*upsample_factor):round(post_motion_point*upsample_factor);
             total_speed_ccw_motion{end+1} = daq.totalspeed_supp(extended_segment_indices_supp);
-            forward_speed_ccw_motion{end+1} = daq.bfv(extended_segment_indices);
-            rotational_speed_ccw_motion{end+1} = abs(daq.byv_supp(extended_segment_indices_supp));
+            forward_speed_ccw_motion{end+1} = daq.bvf(extended_segment_indices);
+            rotational_speed_ccw_motion{end+1} = abs(daq.bvy_supp(extended_segment_indices_supp));
             times_ccw_motion{end+1} = daq.t(extended_segment_indices);
             
             % Record the exact point where motion switches on for plotting
@@ -360,8 +369,8 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % Customize the first subplot
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CCW rotation');
-    legend('DFF');
+    title(label_ccw);
+    legend(label_ccw);
     hold off;
 
     % Subplot 2: norm dff ccw
@@ -398,9 +407,9 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     xlabel('Time (s)');
     ylabel('pattern position');
     title('pattern');
-    legend('CCW Rotation');
+    legend(label_ccw);
     hold off;
-    save_plot_with_title_as_filename('pattern', 'ccwrotation', savepath)
+    save_plot_with_title_as_filename('pattern', label_ccw, savepath)
 
     %% plot cw and ccw on one chart
     % Plot the "motionon" segments with pre-motion points and vertical lines
@@ -422,8 +431,8 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % Customize the first subplot
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CCW rotation');
-    legend('CCW DFF');
+    title(label_ccw);
+    legend([label_ccw ' DFF']);
     hold off;
     
     % Subplot 2: CW motion dff
@@ -443,8 +452,8 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % Customize the second subplot
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CW rotation');
-    legend('CW Rotation');
+    title(label_cw);
+    legend([label_cw ' DFF']);
     hold off;
     
     % Subplot 3: fly speed
@@ -475,7 +484,7 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     xlabel('Time (s)');
     ylabel('Total speed (mm/s)');
     title('Total Speed');
-    save_plot_with_title_as_filename('cw', 'ccw_andtotspeed', savepath)
+    save_plot_with_title_as_filename(label_cw, [label_ccw 'andtotspeed'], savepath)
     
     %% plot cw and ccw dff with fwd and rot speed
     % Plot the "motionon" segments with pre-motion points and vertical lines
@@ -497,8 +506,8 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % Customize the first subplot
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CCW rotation');
-    legend('CCW DFF');
+    title(label_ccw);
+    legend([label_ccw ' DFF']);
     hold off;
     
     % Subplot 2: CW motion dff
@@ -518,8 +527,8 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % Customize the second subplot
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CW rotation');
-    legend('CW Rotation');
+    title(label_cw);
+    legend([label_cw ' DFF']);
     hold off;
     
     % Subplot 3: fly speed
@@ -579,7 +588,7 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     xlabel('Time (s)');
     ylabel('rotational speed (mm/s)');
     title('rotational Speed');
-    save_plot_with_title_as_filename('cw_ccw', 'fwd_rot', savepath)
+    save_plot_with_title_as_filename([label_cw label_ccw], 'fwd_rot', savepath)
 
 
 
@@ -605,13 +614,13 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
         end
     end
 
-    length_cut = min(length(average_dff), length(CCW_average_dff))
+    length_cut = min(length(average_dff), length(CCW_average_dff));
     
     bidirectional_dff = (average_dff(1:length_cut)+CCW_average_dff(1:length_cut))/2;
     h3 = plot(daq.t(1:length_cut), bidirectional_dff, 'm', 'LineWidth', 3);
     
     % Create legend with specific handles and labels
-    legend([h1, h2, h3], {'CCW', 'CW', 'Average'}, 'Location', 'best');
+    legend([h1, h2, h3], {label_ccw, label_cw, 'Average'}, 'Location', 'best');
     
     xline(daq.t(ccw_motion_on_markers(1)), 'k--', 'LineWidth', 1.5);
     xline(daq.t((ccw_motion_on_markers(1)))+stimlen, 'k--', 'LineWidth', 1.5);
@@ -620,7 +629,7 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     xlabel('Time (s)');
     ylabel('DFF');
     title('Bi-Directional Visual Rotation');
-    save_plot_with_title_as_filename('cw', 'ccw_samechart', savepath)
+    save_plot_with_title_as_filename(label_cw, [label_cw '_samechart'], savepath)
 
 
     %% now separate walking vs not - cw
@@ -708,11 +717,9 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
             'EdgeColor', 'none', 'FaceAlpha', 0.2);
         hold off;
     end
-    save_plot_with_title_as_filename('cw_dff_moving', 'cw_dff_still', savepath)
+    save_plot_with_title_as_filename([label_cw '_dff_moving'], [label_cw '_dff_still'], savepath)
 
-     %% now separate walking vs not - cw
-
-    % first merge cw and ccw
+     %% now separate walking vs not - ccw
     dff_total= dff_ccw_motion; %[dff_cw_motion, dff_ccw_motion];
     speed= forward_speed_ccw_motion; %[total_speed_cw_motion, total_speed_ccw_motion];
     still = {}; 
@@ -746,7 +753,7 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     still_ave = cell2mat(reshape(ave_still, length(ave_still), []));
     still_ave = mean(still_ave, 1);
 
-    %% plot cw moving not moving
+    %% plot ccw moving not moving
     figure;
     
     % ---- Subplot 1: moving ----
@@ -795,7 +802,7 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
             'EdgeColor', 'none', 'FaceAlpha', 0.2);
         hold off;
     end
-    save_plot_with_title_as_filename('ccw_dff_moving', 'ccw_dff_still', savepath)
+    save_plot_with_title_as_filename([label_ccw '_dff_moving'], [label_ccw '_dff_still'], savepath)
     %% save dff motions in struct
     % Create the combined structure
     dff_motion = struct();
@@ -813,10 +820,10 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     % Create the figure and subplots
     time = daq.t;
     time_supp = daq.t_supp;
-    fwd = daq.bfv_supp;
+    fwd = daq.bvf_supp;
     [fwd,winsize] = smoothdata(fwd,"gaussian", 20);
     winsize
-    rot = daq.byv_deg_supp;
+    rot = daq.bvy_deg_supp;
     figure;
     % Subplot 1: dFF
     subplot(3, 1, 1);  % First subplot
@@ -847,7 +854,7 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     h_cw = patch(NaN, NaN, [0.5, 0, 0.5], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
     h_ccw = patch(NaN, NaN, [1, 0.5, 0], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
     
-    legend([h_dff, h_cw, h_ccw], {'dF/F', 'Clockwise', 'Counterclockwise'}, 'Location', 'best');
+    legend([h_dff, h_cw, h_ccw], {'dF/F', label_cw, label_ccw}, 'Location', 'best');
     
     xlabel('Time (s)');
     ylabel('dF/F');
@@ -956,8 +963,8 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     ylim(overall_ylim);  % Set consistent limits
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CCW Rotation');
-    legend('CCW Rotation');
+    title(label_ccw);
+    legend(label_ccw);
     hold off;
     
     % Subplot 2: CW motion dff (PURPLE)
@@ -974,9 +981,9 @@ function [daq, ts, dff_motion] = openloop_gratings_process(daq, ts, savepath, bo
     ylim(overall_ylim);  % Set consistent limits
     xlabel('Time (s)');
     ylabel('DFF');
-    title('CW Rotation');
-    legend('CW Rotation');
+    title(label_cw);
+    legend(label_cw);
     hold off;
     
-    save_plot_with_title_as_filename('cw', 'ccw', savepath)
+    save_plot_with_title_as_filename(label_cw, label_ccw, savepath)
 end

@@ -7,10 +7,10 @@ close all
 
 %[daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(daq, savepath, 10, 2,0.88,0.88);
 %% smooth fictrac
-fwd = daq.bfv;
-yaw = daq.byv_deg;
-side = daq.bsv_deg;
-dff = ts{1}(1,:);
+fwd = daq.bvf;
+yaw = daq.bvy_deg;
+side = daq.bvs_deg;
+dff = dat.ts;
 time=daq.t;
 
 %% old granular plots

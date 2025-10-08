@@ -1,6 +1,6 @@
 
 %% function
-function plotting_ves041(daq, ts, jump, savepath)
+function plotting_ves041(daq, dat, jump, savepath)
 
 close all
 
@@ -55,11 +55,11 @@ hold off;
 save_plot_with_title_as_filename('benhamou_sinuosity', 'x_y', savepath);
 %% define variables
 time = daq.t;                  % Time points
-dff = ts{1, 1}(1,:);                    % Example dFF data
+dff = dat.ts(1, :);                    % Example dFF data
 time_kin = daq.t_supp;        
-fwd = daq.bfv; % Example forward velocity data
-rot = daq.byv_deg; % Example rotational velocity data
-side = daq.bsv_deg;
+fwd = daq.bvf; % Example forward velocity data
+rot = daq.bvy_deg; % Example rotational velocity data
+side = daq.bvs_deg;
 sample_rate = 1/(max(daq.t)/length(daq.t)); %samples per second
 
 %% all 3 (fwd, rot, dff) on one plot
@@ -162,16 +162,16 @@ plot(daq.px(1), daq.py(1), 'r.', 'MarkerSize', 20)
 title("DFF colored (non-linear), cue flat path - dots")
 save_plot_with_title_as_filename('x_color', 'y_color', savepath);
 %% now interactively plot dff and yaw velocity
-trajectory_region_selector(daq, ts{1}, jump)
+trajectory_region_selector(daq, dff, jump)
 
 %% aligned to motion on plotting dff, forward vel, rot vel (all aligned)
 preN = round(sample_rate);
 offN = 0;
 min_run_len = 2*round(sample_rate);
 motion = daq.motion.moving_or_not(:);
-fluo = ts{1,1}(1,:)';
-for_vel = daq.bfv(:);
-rot_speed = abs(daq.byv_deg(:)); % rotational velocity in degrees/sec
+fluo = dff';
+for_vel = daq.bvf(:);
+rot_speed = abs(daq.bvy_deg(:)); % rotational velocity in degrees/sec
 tt = daq.t(:); % your time vector
 
 d = diff([0; motion; 0]);
@@ -190,7 +190,7 @@ still_keep = still_lengths >= min_run_len;
 onsets = onsets(still_keep);
 offsets = offsets(still_keep);
 
-fluo_cell = {}; forvel_cell = {}; rotvel_cell = {}; t_cell = {};
+fluo_cell = {}; forvel_cell = {}; rotsel_cell = {}; t_cell = {};
 for i=1:numel(onsets)
     t_start = onsets(i) - preN;
     t_end   = offsets(i) + offN;
@@ -201,7 +201,7 @@ for i=1:numel(onsets)
     t_rel = t_epoch - t_onset;
     fluo_cell{end+1}    = fluo(idx_epoch);
     forvel_cell{end+1}  = for_vel(idx_epoch);
-    rotvel_cell{end+1}  = rot_speed(idx_epoch);
+    rotsel_cell{end+1}  = rot_speed(idx_epoch);
     t_cell{end+1}       = t_rel;
 end
 
@@ -211,7 +211,7 @@ t_pre = -preN*dt_median;
 bouts_with_all_pre = cellfun(@(t) any(t <= t_pre), t_cell);
 fluo_cell    = fluo_cell(bouts_with_all_pre);
 forvel_cell  = forvel_cell(bouts_with_all_pre);
-rotvel_cell  = rotvel_cell(bouts_with_all_pre);
+rotsel_cell  = rotsel_cell(bouts_with_all_pre);
 t_cell       = t_cell(bouts_with_all_pre);
 
 % Mean axis: overlapping duration only
@@ -221,11 +221,11 @@ t_mean = t_pre:dt_median:t_post_max;
 % Interpolate all epochs to t_mean for averaging
 fluo_mat    = nan(length(t_mean), numel(fluo_cell));
 forvel_mat  = nan(length(t_mean), numel(forvel_cell));
-rotvel_mat  = nan(length(t_mean), numel(rotvel_cell));
+rotsel_mat  = nan(length(t_mean), numel(rotsel_cell));
 for i = 1:numel(fluo_cell)
     fluo_mat(:,i)   = interp1(t_cell{i}, fluo_cell{i}, t_mean, 'linear', nan);
     forvel_mat(:,i) = interp1(t_cell{i}, forvel_cell{i}, t_mean, 'linear', nan);
-    rotvel_mat(:,i) = interp1(t_cell{i}, rotvel_cell{i}, t_mean, 'linear', nan);
+    rotsel_mat(:,i) = interp1(t_cell{i}, rotsel_cell{i}, t_mean, 'linear', nan);
 end
 
 % ---- Plot all runs (variable) and mean (fixed axis) ----
@@ -257,10 +257,10 @@ hold off;
 
 % Rotational velocity (deg/sec)
 subplot(3,1,3); hold on;
-for i = 1:numel(rotvel_cell)
-    plot(t_cell{i}, rotvel_cell{i}, 'Color', [0.7 0 0], 'HandleVisibility','off'); % dark red
+for i = 1:numel(rotsel_cell)
+    plot(t_cell{i}, rotsel_cell{i}, 'Color', [0.7 0 0], 'HandleVisibility','off'); % dark red
 end
-plot(t_mean, nanmean(rotvel_mat,2), 'Color', [0.3 0 0], 'LineWidth', 2, 'DisplayName', 'Mean'); % darker red
+plot(t_mean, nanmean(rotsel_mat,2), 'Color', [0.3 0 0], 'LineWidth', 2, 'DisplayName', 'Mean'); % darker red
 line([0 0], ylim, 'Color', [0 0 0], 'LineStyle', ':', 'LineWidth', 2);
 xlabel('Time from movement onset (s)');
 ylabel('Rotational Speed (deg/s)');
@@ -285,9 +285,9 @@ min_run_len = round(sample_rate); % 1 second off
 offN = 0;     % set >0 if you want more after next offset
 
 motion = daq.motion.moving_or_not(:);
-fluo   = ts{1,1}(1,:)';
-for_vel  = daq.bfv(:);
-rot_speed  = abs(daq.byv_deg(:));    % <--- rotational velocity in deg/s
+fluo   = dff';
+for_vel  = daq.bvf(:);
+rot_speed  = abs(daq.bvy_deg(:));    % <--- rotational velocity in deg/s
 tt     = daq.t(:);
 
 % Find all motion on (onsets) and off (offsets)
@@ -488,20 +488,16 @@ save_plot_with_title_as_filename('movement_offset', 'variables', savepath);
 % save_plot_with_title_as_filename('Side vel', 'dff', savepath);
 
 
-
-%%
-
-
 %% Parameters
-preN = 0; %round(sample_rate);
-offN = 0; %round(sample_rate);
-min_run_len = 4; %0.5*round(sample_rate);
+preN = 2*round(sample_rate);
+offN = 2*round(sample_rate);
+min_run_len = 2; %0.5*round(sample_rate);
 min_inbetween_len = round(sample_rate);
 
 motion = daq.motion.moving_or_not(:);
-fluo = ts{1,1}(1,:)';
-for_vel = daq.bfv(:);
-rot_speed = abs(daq.byv_deg(:));
+fluo = dff';
+for_vel = daq.bvf(:);
+rot_speed = abs(daq.bvy_deg(:));
 tt = daq.t(:);
 
 %% Find bouts
@@ -517,349 +513,292 @@ offsets = offsets(move_keep);
 % Compute PRE-still (before each bout)
 prev_offsets = [0; offsets(1:end-1)];
 pre_still = onsets - prev_offsets - 1;
+is_strict_pre_still = false(size(onsets));
+for i = 1:numel(onsets)
+    idx = max(prev_offsets(i)+1,1):onsets(i)-1;  % interval BEFORE each onset
+    if pre_still(i) >= min_inbetween_len && all(motion(idx)==0)
+        is_strict_pre_still(i) = true;
+    end
+end
 
 % Compute POST-still (after each bout)
 next_onsets = [onsets(2:end); numel(motion)+1];
 post_still = next_onsets - offsets - 1;
+is_strict_post_still = false(size(offsets));
+for i = 1:numel(offsets)
+    idx = offsets(i)+1 : min(offsets(i)+min_inbetween_len,numel(motion));
+    if post_still(i) >= min_inbetween_len && all(motion(idx)==0)
+        is_strict_post_still(i) = true;
+    end
+end
 
-% Classification
-is_short = (pre_still < min_inbetween_len) & (post_still < min_inbetween_len);
-is_long = ~is_short;
+% --- GROUP MASKS (STRICT) ---
+onset_long   = is_strict_pre_still;
+onset_short  = ~is_strict_pre_still;
+offset_long  = is_strict_post_still;
+offset_short = ~is_strict_post_still;
 
-groups = {'Long Pre or Post Still', 'Short Pre and Post Still'};
-gr_mask = {is_long, is_short};
-group_colors = {[0.3 0.5 1], [1 0.4 0.4]}; % blue for long, red for short
+% --- PLOT ONSET-ALIGNED GROUPS ---
+onset_groups = {'Long-pre-still onset','Short-pre-still onset'};
+onset_masks = {onset_long, onset_short};
+onset_colors = {[0.3 0.5 1],[1 0.4 0.4]};
 
-%% For each group, collect the bouts
 for g = 1:2
-    mask = gr_mask{g};
-    this_onsets = onsets(mask);
-    this_offsets = offsets(mask);
+    mask = onset_masks{g};
+    curr_onsets = onsets(mask);
+    curr_offsets = offsets(mask);
 
-    % -------- ALIGN TO ONSETS --------
-    fluo_cell = {}; forvel_cell = {}; rotvel_cell = {}; t_cell = {};
-    for i=1:numel(this_onsets)
-        t_start = this_onsets(i) - preN;
-        t_end   = this_offsets(i) + offN;
+    fluo_cell = {}; forvel_cell = {}; rotsel_cell = {}; t_cell = {};
+    for i = 1:numel(curr_onsets)
+        t_start = curr_onsets(i) - preN;
+        t_end   = curr_onsets(i) + offN;
         if t_start < 1 || t_end > numel(fluo), continue; end
         idx_epoch = t_start:t_end;
         t_epoch = tt(idx_epoch);
-        t_onset = tt(this_onsets(i));
+        t_onset = tt(curr_onsets(i));
         t_rel = t_epoch - t_onset;
         fluo_cell{end+1}    = fluo(idx_epoch);
         forvel_cell{end+1}  = for_vel(idx_epoch);
-        rotvel_cell{end+1}  = rot_speed(idx_epoch);
+        rotsel_cell{end+1}  = rot_speed(idx_epoch);
         t_cell{end+1}       = t_rel;
     end
-    % Robust dt and restrict
+
+    if isempty(fluo_cell), continue; end
+
     dt_median = median(cellfun(@(t) median(diff(t)), t_cell));
     t_pre = -preN*dt_median;
-    bouts_with_all_pre = cellfun(@(t) any(t <= t_pre), t_cell);
-    fluo_cell    = fluo_cell(bouts_with_all_pre);
-    forvel_cell  = forvel_cell(bouts_with_all_pre);
-    rotvel_cell  = rotvel_cell(bouts_with_all_pre);
-    t_cell       = t_cell(bouts_with_all_pre);
+    t_post = offN*dt_median;
+    t_mean = t_pre:dt_median:t_post;
 
-    t_post_max = min(cellfun(@(t) max(t), t_cell));
-    t_mean = t_pre:dt_median:t_post_max;
     fluo_mat    = nan(length(t_mean), numel(fluo_cell));
     forvel_mat  = nan(length(t_mean), numel(forvel_cell));
-    rotvel_mat  = nan(length(t_mean), numel(rotvel_cell));
+    rotsel_mat  = nan(length(t_mean), numel(rotsel_cell));
     for i = 1:numel(fluo_cell)
+        if numel(t_cell{i})<2, continue, end
         fluo_mat(:,i)   = interp1(t_cell{i}, fluo_cell{i}, t_mean, 'linear', nan);
         forvel_mat(:,i) = interp1(t_cell{i}, forvel_cell{i}, t_mean, 'linear', nan);
-        rotvel_mat(:,i) = interp1(t_cell{i}, rotvel_cell{i}, t_mean, 'linear', nan);
+        rotsel_mat(:,i) = interp1(t_cell{i}, rotsel_cell{i}, t_mean, 'linear', nan);
     end
 
-    % ----------- PLOT: ALIGNED TO ONSETS -----------
-    figure('Name', ['Onset-aligned: ' groups{g}]);
+    figure('Name',onset_groups{g});
     subplot(3,1,1); hold on;
     for i = 1:numel(fluo_cell)
-        plot(t_cell{i}, fluo_cell{i}, 'Color', [group_colors{g}, 0.2], 'HandleVisibility','off');
+        plot(t_cell{i}, fluo_cell{i}, 'Color', [onset_colors{g}, 0.2], 'HandleVisibility','off');
     end
-    plot(t_mean, nanmean(fluo_mat,2), 'LineWidth', 2, 'Color', group_colors{g}, 'DisplayName', 'Mean');
-    line([0 0], ylim, 'Color', [0 0 0], 'LineStyle', ':', 'LineWidth', 2);
-    xlabel('Time from movement onset (s)');
-    ylabel('DF/F');
-    title(['dF/F aligned to movement onset (' groups{g} ')']); hold off;
+    plot(t_mean, nanmean(fluo_mat,2), 'LineWidth', 2, 'Color', onset_colors{g}, 'DisplayName', 'Mean');
+    line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
+    xlabel('Time from onset (s)'); ylabel('DF/F');
+    title(onset_groups{g}); hold off;
 
     subplot(3,1,2); hold on;
     for i = 1:numel(forvel_cell)
         plot(t_cell{i}, forvel_cell{i}, 'Color', [0.5 0.5 0.5 0.2], 'HandleVisibility','off');
     end
-    plot(t_mean, nanmean(forvel_mat,2), 'Color', [0 0 0], 'LineWidth', 2, 'DisplayName', 'Mean');
-    line([0 0], ylim, 'Color', [0 0 0], 'LineStyle', ':', 'LineWidth', 2);
-    xlabel('Time from movement onset (s)');
-    ylabel('Forward Velocity (mm/s)');
-    title('Forward Velocity aligned to movement onset');
+    plot(t_mean, nanmean(forvel_mat,2), 'k', 'LineWidth', 2);
+    line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
+    ylabel('Forward Velocity'); title('Forward Velocity');
     hold off;
 
     subplot(3,1,3); hold on;
-    for i = 1:numel(rotvel_cell)
-        plot(t_cell{i}, rotvel_cell{i}, 'Color', [0.7 0 0 0.2], 'HandleVisibility','off');
+    for i = 1:numel(rotsel_cell)
+        plot(t_cell{i}, rotsel_cell{i}, 'Color', [0.7 0 0 0.2], 'HandleVisibility','off');
     end
-    plot(t_mean, nanmean(rotvel_mat,2), 'Color', [0.3 0 0], 'LineWidth', 2, 'DisplayName', 'Mean');
-    line([0 0], ylim, 'Color', [0 0 0], 'LineStyle', ':', 'LineWidth', 2);
-    xlabel('Time from movement onset (s)');
-    ylabel('Rotational Speed (deg/s)');
-    title('Rotational speed aligned to movement onset');
+    plot(t_mean, nanmean(rotsel_mat,2), 'Color', [0.3 0 0], 'LineWidth', 2);
+    line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
+    ylabel('Rotational Speed'); xlabel('Time from onset (s)');
+    title('Rotational Speed');
     hold off;
 
-    n_epochs = numel(fluo_cell);
-    subplot(3,1,1);
+    n_epochs = numel(fluo_cell); subplot(3,1,1);
     yl = ylim; xl = xlim;
     text(xl(2), yl(2), sprintf('n epochs = %d', n_epochs), ...
-        'HorizontalAlignment', 'right', ...
-        'VerticalAlignment', 'top', ...
-        'FontSize', 10, 'FontWeight', 'bold', ...
-        'BackgroundColor', 'w', 'EdgeColor','k');
-    % --- Place this code after EVERY figure block! ---
-    % Define params as strings (for figure title & filename)
-    params_str = sprintf('preN=%d, offN=%d, min_run_len=%d, min_inbetween_len=%d, sample_rate=%.2f, group=%s, n=%d', ...
-        preN, offN, min_run_len, min_inbetween_len, sample_rate, groups{g}, n_epochs);
+        'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', ...
+        'FontSize', 10, 'FontWeight', 'bold', 'BackgroundColor', 'w', 'EdgeColor','k');
+    sgtitle(sprintf('%s | preN=%d, offN=%d, min_run_len=%d, min_inbetween_len=%d, n=%d', ...
+        onset_groups{g}, preN, offN, min_run_len, min_inbetween_len, n_epochs));
     
-    % Add as a super-title to the figure 
-    sgtitle(params_str, 'FontWeight', 'bold', 'Interpreter', 'none');
-    
-    % Make a version of group name safe for filename usage:
-    safe_group = regexprep(groups{g}, '\W', '_');
-    plot_type = get(gcf, 'Name');
-    if isempty(plot_type), plot_type = 'plot'; end
-    
-    % Construct file name
-    fname = sprintf('dff_plot_%s_%s_preN%d_offN%d_minrun%d_mininbetween%d_SR%.2f_n%d.png', ...
-        plot_type, safe_group, preN, offN, min_run_len, min_inbetween_len, sample_rate, n_epochs);
-    
-    % Save the figure (as PNG, you can switch to .fig, .pdf, etc as needed)
-    save_plot_with_title_as_filename(fname, 'onset', savepath);
+    % ---- Save the current figure ----
+    % The filename can encode the group and params
+    fname = sprintf('%s_onset_preN%d_offN%d_minRun%d_minStill%d_n%d', ...
+        regexprep(onset_groups{g},'[\W]+','_'), preN, offN, min_run_len, min_inbetween_len, n_epochs);
+    save_plot_with_title_as_filename('Onset', fname, savepath);
+end
 
-    % -------- ALIGN TO OFFSETS --------
-    fluo_cell = {}; forvel_cell = {}; rotvel_cell = {}; t_cell = {};
-    for i=1:numel(this_offsets)
-        t_start = this_onsets(i) - preN;
-        t_end   = this_offsets(i) + offN;
+% --- OFFSET-ALIGNED ---
+offset_groups = {'Long-post-still offset','Short-post-still offset'};
+offset_masks = {offset_long, offset_short};
+offset_colors = {[0.2 0.8 0.2],[1 0.6 0.1]};  % green and orange
+for g = 1:2
+    mask = offset_masks{g};
+    curr_onsets = onsets(mask);
+    curr_offsets = offsets(mask);
+
+    fluo_cell = {}; forvel_cell = {}; rotsel_cell = {}; t_cell = {};
+    for i = 1:numel(curr_offsets)
+        t_start = curr_offsets(i) - preN;
+        t_end = curr_offsets(i) + offN;
         if t_start < 1 || t_end > numel(fluo), continue; end
         idx_epoch = t_start:t_end;
         t_epoch = tt(idx_epoch);
-        t_offset = tt(this_offsets(i));
+        t_offset = tt(curr_offsets(i));
         t_rel = t_epoch - t_offset;
         fluo_cell{end+1}    = fluo(idx_epoch);
         forvel_cell{end+1}  = for_vel(idx_epoch);
-        rotvel_cell{end+1}  = rot_speed(idx_epoch);
+        rotsel_cell{end+1}  = rot_speed(idx_epoch);
         t_cell{end+1}       = t_rel;
     end
-    % Robust dt and restrict
+
+    if isempty(fluo_cell), continue; end
+
     dt_median = median(cellfun(@(t) median(diff(t)), t_cell));
     t_pre = -preN*dt_median;
-    bouts_with_all_pre = cellfun(@(t) any(t <= t_pre), t_cell);
-    fluo_cell    = fluo_cell(bouts_with_all_pre);
-    forvel_cell  = forvel_cell(bouts_with_all_pre);
-    rotvel_cell  = rotvel_cell(bouts_with_all_pre);
-    t_cell       = t_cell(bouts_with_all_pre);
+    t_post = offN*dt_median;
+    t_mean = t_pre:dt_median:t_post;
 
-    t_post_max = min(cellfun(@(t) max(t), t_cell));
-    t_mean = t_pre:dt_median:t_post_max;
     fluo_mat    = nan(length(t_mean), numel(fluo_cell));
     forvel_mat  = nan(length(t_mean), numel(forvel_cell));
-    rotvel_mat  = nan(length(t_mean), numel(rotvel_cell));
+    rotsel_mat  = nan(length(t_mean), numel(rotsel_cell));
     for i = 1:numel(fluo_cell)
+        if numel(t_cell{i})<2, continue, end
         fluo_mat(:,i)   = interp1(t_cell{i}, fluo_cell{i}, t_mean, 'linear', nan);
         forvel_mat(:,i) = interp1(t_cell{i}, forvel_cell{i}, t_mean, 'linear', nan);
-        rotvel_mat(:,i) = interp1(t_cell{i}, rotvel_cell{i}, t_mean, 'linear', nan);
+        rotsel_mat(:,i) = interp1(t_cell{i}, rotsel_cell{i}, t_mean, 'linear', nan);
     end
 
-    % ----------- PLOT: ALIGNED TO OFFSETS -----------
-    figure('Name', ['Offset-aligned: ' groups{g}]);
+    figure('Name',offset_groups{g});
     subplot(3,1,1); hold on;
     for i = 1:numel(fluo_cell)
-        plot(t_cell{i}, fluo_cell{i}, 'Color', [group_colors{g}, 0.2], 'HandleVisibility','off');
+        plot(t_cell{i}, fluo_cell{i}, 'Color', [offset_colors{g}, 0.2], 'HandleVisibility','off');
     end
-    plot(t_mean, nanmean(fluo_mat,2), 'LineWidth', 2, 'Color', group_colors{g}, 'DisplayName', 'Mean');
-    line([0 0], ylim, 'Color', [0 0 0], 'LineStyle', ':', 'LineWidth', 2);
-    xlabel('Time from movement offset (s)');
-    ylabel('DF/F');
-    title(['dF/F aligned to movement offset (' groups{g} ')']); hold off;
+    plot(t_mean, nanmean(fluo_mat,2), 'LineWidth', 2, 'Color', offset_colors{g}, 'DisplayName', 'Mean');
+    line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
+    xlabel('Time from offset (s)'); ylabel('DF/F');
+    title(offset_groups{g}); hold off;
 
     subplot(3,1,2); hold on;
     for i = 1:numel(forvel_cell)
         plot(t_cell{i}, forvel_cell{i}, 'Color', [0.5 0.5 0.5 0.2], 'HandleVisibility','off');
     end
-    plot(t_mean, nanmean(forvel_mat,2), 'Color', [0 0 0], 'LineWidth', 2, 'DisplayName', 'Mean');
-    line([0 0], ylim, 'Color', [0 0 0], 'LineStyle', ':', 'LineWidth', 2);
-    xlabel('Time from movement offset (s)');
-    ylabel('Forward Velocity (mm/s)');
-    title('Forward Velocity aligned to movement offset');
+    plot(t_mean, nanmean(forvel_mat,2), 'k', 'LineWidth', 2);
+    line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
+    ylabel('Forward Velocity'); title('Forward Velocity');
     hold off;
 
     subplot(3,1,3); hold on;
-    for i = 1:numel(rotvel_cell)
-        plot(t_cell{i}, rotvel_cell{i}, 'Color', [0.7 0 0 0.2], 'HandleVisibility','off');
+    for i = 1:numel(rotsel_cell)
+        plot(t_cell{i}, rotsel_cell{i}, 'Color', [0.7 0 0 0.2], 'HandleVisibility','off');
     end
-    plot(t_mean, nanmean(rotvel_mat,2), 'Color', [0.3 0 0], 'LineWidth', 2, 'DisplayName', 'Mean');
-    line([0 0], ylim, 'Color', [0 0 0], 'LineStyle', ':', 'LineWidth', 2);
-    xlabel('Time from movement offset (s)');
-    ylabel('Rotational Speed (deg/s)');
-    title('Rotational speed aligned to movement offset');
+    plot(t_mean, nanmean(rotsel_mat,2), 'Color', [0.3 0 0], 'LineWidth', 2);
+    line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth', 2);
+    ylabel('Rotational Speed'); xlabel('Time from offset (s)');
+    title('Rotational Speed');
     hold off;
 
-    n_epochs = numel(fluo_cell);
-    subplot(3,1,1);
+    n_epochs = numel(fluo_cell); subplot(3,1,1);
     yl = ylim; xl = xlim;
     text(xl(2), yl(2), sprintf('n epochs = %d', n_epochs), ...
-        'HorizontalAlignment', 'right', ...
-        'VerticalAlignment', 'top', ...
-        'FontSize', 10, 'FontWeight', 'bold', ...
-        'BackgroundColor', 'w', 'EdgeColor','k');
-    % --- Place this code after EVERY figure block! ---
-    % Define params as strings (for figure title & filename)
-    params_str = sprintf('preN=%d, offN=%d, min_run_len=%d, min_inbetween_len=%d, sample_rate=%.2f, group=%s, n=%d', ...
-        preN, offN, min_run_len, min_inbetween_len, sample_rate, groups{g}, n_epochs);
-    
-    % Add as a super-title to the figure 
-    sgtitle(params_str, 'FontWeight', 'bold', 'Interpreter', 'none');
-    
-    % Make a version of group name safe for filename usage:
-    safe_group = regexprep(groups{g}, '\W', '_');
-    plot_type = get(gcf, 'Name');
-    if isempty(plot_type), plot_type = 'plot'; end
-    
-    % Construct file name
-    fname = sprintf('dff_plot_%s_%s_preN%d_offN%d_minrun%d_mininbetween%d_SR%.2f_n%d.png', ...
-        plot_type, safe_group, preN, offN, min_run_len, min_inbetween_len, sample_rate, n_epochs);
-    
-    % Save the figure (as PNG, you can switch to .fig, .pdf, etc as needed)
-    save_plot_with_title_as_filename(fname, 'offset', savepath);
+        'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', ...
+        'FontSize', 10, 'FontWeight', 'bold', 'BackgroundColor', 'w', 'EdgeColor','k');
+    sgtitle(sprintf('%s | preN=%d, offN=%d, min_run_len=%d, min_inbetween_len=%d, n=%d', ...
+        offset_groups{g}, preN, offN, min_run_len, min_inbetween_len, n_epochs));
+
+    % ---- Save the current figure ----
+    % The filename can encode the group and params
+    fname = sprintf('%s_offset_preN%d_offN%d_minRun%d_minStill%d_n%d', ...
+        regexprep(offset_groups{g},'[\W]+','_'), preN, offN, min_run_len, min_inbetween_len, n_epochs);
+    save_plot_with_title_as_filename('Offset', fname, savepath);
 end
 
 %% dff peaks
-figure
-plot(dff)
-findpeaks(dff, ...
-    'MinPeakProminence', 3, ...     % Only peaks that "stand out" this height from surroundings
-    'MinPeakDistance', 20,    ...     % Min # samples between peaks (e.g. if you want 100 ms separation and fs=100 Hz, use 10)
-    'MinPeakHeight', 6,     ...     % Only peaks above certain value
-    'Threshold', 1);        % Only peaks that rise at least this above the surrounding troughs
+dff_smooth2 = smooth(smooth(dff, 'rlowess'), 21, 'rlowess');
+%findpeaks(dff_smooth2, 'MinPeakDistance', 25, 'MinPeakHeight', 2);
+[pks, locs] = findpeaks(dff_smooth2, 'MinPeakDistance', 30, 'MinPeakHeight', 1.25);
 
+window_s = 2; % seconds before/after
+window_N = round(window_s * sample_rate);
 
-dff = dff(:);        % or: if needed, daq.dff(:)
-threshold = 0.8;
-dff_slope = [NaN; diff(dff)];  % will be column
-
-mask = dff_slope > threshold;
-
-t = (1:length(dff))';   % make t a column too
-
-figure; hold on;
-
-% RED: where slope > threshold
-onsets  = find(diff([0; mask]) == 1);
-offsets = find(diff([mask; 0]) == -1);
-for i = 1:length(onsets)
-    idx = onsets(i):offsets(i)-1;
-    plot(t(idx), dff(idx), 'r', 'LineWidth', 2)
-end
-
-% BLACK: where slope <= threshold
-mask_comp = ~mask;
-onsets  = find(diff([0; mask_comp]) == 1);
-offsets = find(diff([mask_comp; 0]) == -1);
-for i = 1:length(onsets)
-    idx = onsets(i):offsets(i)-1;
-    plot(t(idx), dff(idx), 'k', 'LineWidth', 2)
-end
-
-xlabel('Time');
-ylabel('DF/F');
-title('dF/F colored where diff(dF/F) > 1.5');
-hold off;
-
-
-%%
-%--- Parameters and data (replace variables as needed) ---
-fs = sample_rate; % Sample rate in Hz (set this to yours!)
+% Ensure column vectors
 dff = dff(:);
-bfv = daq.bfv;
-byv = abs(daq.byv_deg);
-tt  = daq.t; % Timebase vector
+bvf = daq.bvf(:);
+rots = abs(daq.bvy_deg(:)); % rotational speed (deg/s)
+tt = daq.t(:);
 
-%--- Find events where the slope exceeds threshold ---
-thresh = 2.5;
-dff_slope = [NaN; diff(dff)];
-event_idx = find(dff_slope > thresh);
+dff_epochs = {};
+bvf_epochs = {};
+rots_epochs = {};
+t_epochs   = {};
 
-%--- Extract epochs around each event ---
-preS = 1; postS = 2; % Seconds before and after
-preN = round(preS * fs);
-postN = round(postS * fs);
-
-dff_epochs = {}; bfv_epochs = {}; byv_epochs = {}; t_epochs = {};
-for i = 1:length(event_idx)
-    idx = event_idx(i);
-    i_start = idx - preN;
-    i_end   = idx + postN;
-    if i_start < 1 || i_end > length(dff), continue, end
-    inds = i_start:i_end;
-    dff_epochs{end+1} = dff(inds);
-    bfv_epochs{end+1} = bfv(inds);
-    byv_epochs{end+1} = byv(inds);
-    t0 = tt(idx);
-    t_epochs{end+1} = tt(inds) - t0;
+for i = 1:numel(locs)
+    idx_c = locs(i);
+    idx_start = idx_c - window_N;
+    idx_end   = idx_c + window_N;
+    if idx_start < 1 || idx_end > length(dff), continue, end
+    idx_win = idx_start:idx_end;
+    t0 = tt(idx_c);
+    t_epoch = tt(idx_win) - t0;
+    dff_epochs{end+1}  = dff(idx_win);
+    bvf_epochs{end+1}  = bvf(idx_win);
+    rots_epochs{end+1} = rots(idx_win);
+    t_epochs{end+1}    = t_epoch;
 end
 
-%--- Make mean-aligned axis and matrices for averaging ---
-n_epochs = numel(dff_epochs);
-if n_epochs == 0
-    error('No events found that match criteria!');
+n_epochs = numel(bvf_epochs);
+if n_epochs < 1
+    error('No useable peaks found with sufficient window length!');
 end
 
 dt_median = median(cellfun(@(t) median(diff(t)), t_epochs));
-t_mean = -preN*dt_median : dt_median : postN*dt_median;
-L = length(t_mean);
+t_mean = -window_N*dt_median : dt_median : window_N*dt_median;
 
-dff_mat = nan(L, n_epochs);
-bfv_mat = nan(L, n_epochs);
-byv_mat = nan(L, n_epochs);
+dff_mat  = nan(length(t_mean), n_epochs);
+bvf_mat  = nan(length(t_mean), n_epochs);
+rots_mat = nan(length(t_mean), n_epochs);
 
 for i = 1:n_epochs
-    dff_mat(:,i) = interp1(t_epochs{i}, dff_epochs{i}, t_mean, 'linear', nan);
-    bfv_mat(:,i) = interp1(t_epochs{i}, bfv_epochs{i}, t_mean, 'linear', nan);
-    byv_mat(:,i) = interp1(t_epochs{i}, byv_epochs{i}, t_mean, 'linear', nan);
+    dff_mat(:,i)  = interp1(t_epochs{i}, dff_epochs{i}, t_mean, 'linear', nan);
+    bvf_mat(:,i)  = interp1(t_epochs{i}, bvf_epochs{i}, t_mean, 'linear', nan);
+    rots_mat(:,i) = interp1(t_epochs{i}, rots_epochs{i}, t_mean, 'linear', nan);
 end
 
-%--- Plot result ---
 figure;
+
+% dF/F
 subplot(3,1,1); hold on;
 for i = 1:n_epochs
-    plot(t_epochs{i}, dff_epochs{i}, 'Color', [0.5 0.5 1 0.3], 'HandleVisibility','off');
+    plot(t_epochs{i}, dff_epochs{i}, 'Color', [0.4 0.8 1 0.2],'HandleVisibility','off');
 end
-plot(t_mean, nanmean(dff_mat,2), 'b', 'LineWidth',2);
-line([0 0], ylim, 'Color','k','LineStyle',':');
-xlabel('Time from dF/F slope event (s)'); ylabel('dF/F');
-title('dF/F aligned to dF/F slope > 0.8');
+plot(t_mean, nanmean(dff_mat,2), 'b', 'LineWidth', 2);
+line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
+xlabel('Time from dF/F peak (s)');
+ylabel('dF/F');
+title('dF/F aligned to dF/F peak');
 hold off;
 
+% Forward velocity
 subplot(3,1,2); hold on;
 for i = 1:n_epochs
-    plot(t_epochs{i}, bfv_epochs{i}, 'Color', [0.5 0.5 0.5 0.3], 'HandleVisibility','off');
+    plot(t_epochs{i}, bvf_epochs{i}, 'Color', [0.5 0.5 0.5], 'HandleVisibility','off');
 end
-plot(t_mean, nanmean(bfv_mat,2), 'k', 'LineWidth',2);
-line([0 0], ylim, 'Color','k','LineStyle',':');
-xlabel('Time from dF/F slope event (s)'); ylabel('Forward velocity');
-title('Forward velocity aligned to dF/F slope > 0.8');
+plot(t_mean, nanmean(bvf_mat,2), 'k', 'LineWidth', 2, 'DisplayName', 'Mean');
+line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
+xlabel('Time from dF/F peak (s)');
+ylabel('Forward velocity');
+title(sprintf('Forward velocity aligned to dF/F peak (n peaks=%d)', n_epochs));
 hold off;
 
+% Rotational velocity
 subplot(3,1,3); hold on;
 for i = 1:n_epochs
-    plot(t_epochs{i}, byv_epochs{i}, 'Color', [0.7 0.2 0.2 0.3], 'HandleVisibility','off');
+    plot(t_epochs{i}, rots_epochs{i}, 'Color', [1 0.5 0.5 0.2], 'HandleVisibility','off');
 end
-plot(t_mean, nanmean(byv_mat,2), 'r', 'LineWidth',2);
-line([0 0], ylim, 'Color','k','LineStyle',':');
-xlabel('Time from dF/F slope event (s)'); ylabel('Side velocity');
-title('Side velocity aligned to dF/F slope > 0.8');
+plot(t_mean, nanmean(rots_mat,2), 'r', 'LineWidth', 2, 'DisplayName', 'Mean');
+line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
+xlabel('Time from dF/F peak (s)');
+ylabel('Rotational velocity (deg/s)');
+title('Rotational velocity aligned to dF/F peak');
 hold off;
 
-sgtitle(sprintf('Alignment to dF/F slope > %.1f, n events = %d', thresh, n_epochs));
-
-
+sgtitle('dF/F and behavior aligned to dF/F peaks');
+save_plot_with_title_as_filename('dff_peaks', 'kinematics', savepath);
 end
 
