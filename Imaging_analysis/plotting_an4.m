@@ -1,6 +1,6 @@
 
 %% function
-function plotting_an4(daq, ts, jump, savepath)
+function plotting_an4(daq, dat, jump, savepath)
 
 close all
 
@@ -10,7 +10,7 @@ close all
 fwd = daq.bvf;
 yaw = daq.bvy_deg;
 side = daq.bvs_deg;
-dff = dat.ts;
+dff = dat.ts(1,:);
 time=daq.t;
 
 %% old granular plots

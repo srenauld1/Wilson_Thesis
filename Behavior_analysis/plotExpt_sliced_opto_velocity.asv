@@ -107,12 +107,12 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
 
                 % only opto on fwd and rot
                 opto_on_fwd = exptData.forwardVelocity(segment_indices);
-                opto_on_rot = abs(angular_vel(segment_indices));
+                opto_on_rot = angular_vel(segment_indices);
 
                 % opto off fwd and rot
                 pre_opto = (pre_opto_start:segment_indices(1));
                 pre_opto_fwd = exptData.forwardVelocity(pre_opto);
-                pre_opto_rot = abs(angular_vel(pre_opto));
+                pre_opto_rot = angular_vel(pre_opto);
 
                 % take average for trial
                 average_fwd = mean(opto_on_fwd);
@@ -151,22 +151,22 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         end
 
         average_fwd = mean(opto_averages_fwd);
-        %disp(["OPTO ON FWD AVE:", num2str(average_fwd)])
+        disp(["OPTO ON FWD AVE:", num2str(average_fwd)])
         average_rot = mean(opto_averages_rot);
-        %disp(["OPTO ON ROT AVE:", num2str(average_rot)])
+        disp(["OPTO ON ROT AVE:", num2str(average_rot)])
         average_fwd_no = mean(no_averages_fwd);
-        %disp(["PRE-OPTO FWD AVE:", num2str(average_fwd_no)])
+        disp(["PRE-OPTO FWD AVE:", num2str(average_fwd_no)])
         average_rot_no = mean(no_averages_rot);
-        %disp(["PRE-OPTO ROT AVE:", num2str(average_rot_no)])
+        disp(["PRE-OPTO ROT AVE:", num2str(average_rot_no)])
         % acceleration
         average_fwd_accel = mean(opto_averages_fwdaccel);
-        %disp(["OPTO ON FWD ACCELERATION AVE:", num2str(average_fwd_accel)])
+        disp(["OPTO ON FWD ACCELERATION AVE:", num2str(average_fwd_accel)])
         average_rot_accel = mean(opto_averages_rotaccel);
-        %disp(["OPTO ON ROT ACCELERATION AVE:", num2str(average_rot_accel)])
+        disp(["OPTO ON ROT ACCELERATION AVE:", num2str(average_rot_accel)])
         average_fwd_no_accel = mean(no_averages_fwdaccel);
-        %disp(["PRE-OPTO FWD ACCELERATION AVE:", num2str(average_fwd_no_accel)])
+        disp(["PRE-OPTO FWD ACCELERATION AVE:", num2str(average_fwd_no_accel)])
         average_rot_no_accel = mean(no_averages_rotaccel);
-        %disp(["PRE-OPTO ROT ACCELERATION AVE:", num2str(average_rot_no_accel)])
+        disp(["PRE-OPTO ROT ACCELERATION AVE:", num2str(average_rot_no_accel)])
 
         % Ensure all "optoon" segments are the same length by trimming to the shortest segment
         min_length = min(cellfun(@length, fwdvelocity_segments_optoon_extra));
@@ -280,7 +280,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
                 moving_pre_opto{end+1} = fwdvelocity_segments_optoon_extra{i};
                 ave_moving{end+1} = fwdvelocity_segments_optoon_trimmed{i};
                 moving_pre_opto_rot{end+1} = rotvel_segments_optoon_extra{i};
-                ave_moving_rot{end+1} = abs(rotvel_segments_optoon_trimmed{i});
+                ave_moving_rot{end+1} = rotvel_segments_optoon_trimmed{i};
                 %disp("moving")'
                 % NOW LOOK AT ACCELERATION AND SPEED FOR MOVING ONLY TRIALS
                 moving_opto_forward_acceleration{end+1} = opto_averages_fwdaccel(:,i);
@@ -295,14 +295,14 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         end
 
         % speed
-        moving_opto_forward_ave = mean(cell2mat(moving_opto_forward));
-        disp(["MOVING OPTO ON FWD SPEED AVE:", num2str(moving_opto_forward_ave)])
-        moving_opto_rot_ave = mean(cell2mat(moving_opto_rotation));
-        disp(["MOVING OPTO ON ROT SPEED AVE:", num2str(moving_opto_rot_ave)])
-        moving_preopto_forward_ave = mean(cell2mat(moving_preopto_forward));
-        disp(["MOVING PRE-OPTO FWD SPEED AVE:", num2str(moving_preopto_forward_ave)])
-        moving_preopto_rot_ave = mean(cell2mat(moving_preopto_rotation));
-        disp(["MOVING PRE-OPTO ROT SPEED AVE:", num2str(moving_preopto_rot_ave)])
+        moving_opto_forward_ave = mean(cell2mat(moving_opto_forward_acceleration));
+        disp(["MOVING OPTO ON FWD ACCELERATION AVE:", num2str(moving_opto_forward_ave)])
+        moving_opto_rot_ave = mean(cell2mat(moving_opto_rot_acceleration));
+        disp(["MOVING OPTO ON ROT ACCELERATION AVE:", num2str(moving_opto_rot_ave)])
+        moving_preopto_forward_ave = mean(cell2mat(moving_preopto_forward_acceleration));
+        disp(["MOVING PRE-OPTO FWD ACCELERATION AVE:", num2str(moving_preopto_forward_ave)])
+        moving_preopto_rot_ave = mean(cell2mat(moving_preopto_rot_acceleration));
+        disp(["MOVING PRE-OPTO ROT ACCELERATION AVE:", num2str(moving_preopto_rot_ave)])
 
 
         % acceleration
@@ -341,7 +341,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         hold on;
         % Plot each raw "optoon" velocity segment in lighter green
         for i = 1:length(moving_pre_opto_rot)
-            plot(time(1:length(moving_pre_opto_rot{i})), abs(moving_pre_opto_rot{i}), 'Color', [0.8, 0.3, 0], 'LineWidth', 1);  % Lighter green
+            plot(time(1:length(moving_pre_opto_rot{i})), moving_pre_opto_rot{i}, 'Color', [0.75, 0, 0.75], 'LineWidth', 1);  % Lighter green
             xline(time(opto_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
             xline(time(opto_off_markers(1)), 'k--', 'LineWidth', 1.5);
         end
@@ -352,7 +352,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         end
 
         % Plot the average velocity for "optoon" in bold green
-        plot(time(1:length(moving_ave_rot)), moving_ave_rot, 'Color', [1, 0.5, 0], 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
+        plot(time(1:length(moving_ave_rot)), moving_ave_rot, 'Color', [1 0 1], 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
         
         
         % Customize the first subplot

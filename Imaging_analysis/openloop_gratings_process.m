@@ -4,7 +4,7 @@ function [daq, dat, dff_motion] = openloop_gratings_process(daq, dat, savepath, 
     if a(1)>1
         dff = dat.ts(1,:)-dat.ts(2,:) ;
     else
-        dff = dat.ts;
+        dff = dat.ts(1,:);
     end
 
 %% --- LABEL SWITCH ---
@@ -635,8 +635,8 @@ end
     %% now separate walking vs not - cw
 
     % first merge cw and ccw
-    dff_total= dff_cw_motion; %[dff_cw_motion, dff_ccw_motion];
-    speed= forward_speed_cw_motion; %[total_speed_cw_motion, total_speed_ccw_motion];
+    dff_total= dff_cw_motion;
+    speed= forward_speed_cw_motion;
     still = {}; 
     moving={};
     ave_still = {}; 
@@ -644,6 +644,7 @@ end
     
     for i = 1:length(dff_total)
         pre_speed = mean(speed{i}(pre_motion_points:length(speed{i})-post_motion_points));
+        pre_speed
         if pre_speed <still_cutoff
             disp("Still")
             still{end+1} = dff_total{i};

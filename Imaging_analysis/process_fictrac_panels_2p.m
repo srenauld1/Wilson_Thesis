@@ -72,8 +72,8 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
 
     %% Define Schmitt trigger thresholds (example: you choose these values!)
     %speed = abs(daq.bvf) + (abs(daq.bvy)*4.5) + (abs(daq.bvs)*4.5);
-    %daq.totalspeed = speed;
     speed = daq.bvf;
+    daq.totalspeed = speed;
     
     motion = zeros(size(speed));
     

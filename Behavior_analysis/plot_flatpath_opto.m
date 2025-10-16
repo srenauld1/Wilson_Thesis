@@ -1,0 +1,54 @@
+function plot_flatpath_opto(daq, savepath, upsampled_x_data, upsampled_y_data)
+% Plot flat path, opto ON in bright, thick RED, OFF in BLACK, start in GREEN
+
+if isfield(daq, 'optoStim')
+    % Downsample if needed
+    downsampled_exptData = struct();
+    fields = fieldnames(daq);
+    for i = 1:length(fields)
+        field = fields{i};
+        if isnumeric(daq.(field))
+            downsampled_exptData.(field) = daq.(field)(1:50:end);
+        end
+    end
+    x = downsampled_exptData.x;
+    y = downsampled_exptData.y;
+    opto_timing = downsampled_exptData.optoStim;
+else
+    x = upsampled_x_data;
+    y = upsampled_y_data;
+    opto_timing = zeros(size(x));
+end
+
+figure; hold on;
+h_opto = []; h_noopto = []; h_start = [];
+
+% First plot all opto OFF segments (for background)
+for i = 1:length(x)-1
+    if opto_timing(i) == 0
+        h = plot(x(i:i+1), y(i:i+1), 'k-', 'LineWidth', 1.3); % Black
+        if isempty(h_noopto), h_noopto = h; end
+    end
+end
+
+% Then plot all opto ON segments on top, with thick, bright red line (and circles for visibility)
+for i = 1:length(x)-1
+    if opto_timing(i) ~= 0
+        h = plot(x(i:i+1), y(i:i+1), '-', 'Color', [1 0 0], 'LineWidth', 4); % BRIGHT RED, THICK
+        % plot(x(i:i+1), y(i:i+1), 'o', 'Color', [1 0 0], 'MarkerSize', 6, 'MarkerFaceColor', [1 0 0]);
+        if isempty(h_opto), h_opto = h; end
+    end
+end
+
+% Start point in green
+h_start = plot(x(1), y(1), 'go', 'MarkerSize', 5, 'MarkerFaceColor', 'g', 'DisplayName', 'Start');
+
+xlabel('X Position');
+ylabel('Y Position');
+title('Flat Path: Opto ON (Red, thick), Opto OFF (Black), Start (Green)');
+legend([h_opto, h_noopto, h_start], {'Opto ON', 'Opto OFF', 'Start'}, 'Location', 'best');
+
+axis equal; axis tight; grid on; hold off;
+
+save_plot_with_title_as_filename('flatpath', 'opto', savepath)
+end

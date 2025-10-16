@@ -163,8 +163,8 @@ if iscell(dat) && numel(dat)==1 && isstruct(dat{1})
 end
 
 %% process and pick out jumps
-vel_on = 1;  % Speed above which fly is moving (enter movement)
-vel_off = 1; % Speed below which fly is NOT moving (exit movement)
+vel_on = 0.5;  % Speed above which fly is moving (enter movement)
+vel_off = 0.5; % Speed below which fly is NOT moving (exit movement)
 forvel_cutoff = 2;
 [daq, yaw_information_right,yaw_information_left,yaw_information_left_supp, yaw_information_right_supp ] = process_fictrac_panels_2p(daq, vel_on, vel_off, jump);
 %% now here i will have a function to extract saccades
@@ -176,8 +176,8 @@ if neck
 end
 
 if an4_project % this includes all other visual cells
-    %plotting_an4(daq, dat, jump, savepath)
-    %lm_velocity(daq, dat, savepath)
+    plotting_an4(daq, dat, jump, savepath)
+    lm_velocity(daq, dat, savepath)
     
 end
 if visual
