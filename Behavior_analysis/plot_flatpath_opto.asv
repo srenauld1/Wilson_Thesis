@@ -42,9 +42,9 @@ end
 
 % Start point in green
 h_start = plot(x(1), y(1), 'go', 'MarkerSize', 5, 'MarkerFaceColor', 'g', 'DisplayName', 'Start');
-%plot jumps
+
 jump_idx = find(daq.jump_detected == 1);
-plot(daq.x(jump_idx), daq.y(jump_idx), 'bo');
+plot(daq.x(jump_idx), daq.y(jump_idx), 'bo', ...);
 
 xlabel('X Position');
 ylabel('Y Position');

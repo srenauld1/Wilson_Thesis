@@ -20,7 +20,7 @@ end
     % Plot the dff and fwd
     figure;
     yyaxis left;
-    plot(daq.t_supp, daq.vh_supp, '-k');
+    plot(daq.t, daq.vh, '-k');
     ylabel('pattern');  % Label for the left y-axis
     
     

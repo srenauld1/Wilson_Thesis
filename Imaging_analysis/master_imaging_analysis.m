@@ -39,7 +39,7 @@ else
     % Load the selected file into the workspace
     fullFilePath = fullfile(pathName, fileName);
     fullFilePath2 = fullfile(pathName2, fileName2);
-    load(fullFilePath);
+    daq = load(fullFilePath);
     load(fullFilePath2);
     disp(['User selected "', fullFilePath, '".']);
    
