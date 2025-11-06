@@ -34,7 +34,7 @@ end
 % Then plot all opto ON segments on top, with thick, bright red line (and circles for visibility)
 for i = 1:length(x)-1
     if opto_timing(i) ~= 0
-        h = plot(x(i:i+1), y(i:i+1), '-', 'Color', [1 0 0], 'LineWidth', 4); % BRIGHT RED, THICK
+        h = plot(x(i:i+1), y(i:i+1), '-', 'Color', [1 0 0], 'LineWidth', 1.3); % BRIGHT RED, THICK
         % plot(x(i:i+1), y(i:i+1), 'o', 'Color', [1 0 0], 'MarkerSize', 6, 'MarkerFaceColor', [1 0 0]);
         if isempty(h_opto), h_opto = h; end
     end
@@ -45,8 +45,11 @@ h_start = plot(x(1), y(1), 'go', 'MarkerSize', 5, 'MarkerFaceColor', 'g', 'Displ
 %plot jumps
 jump_idx = find(daq.jump_detected == 1);
 % After all other plotting:
-h_jump = plot(daq.x(jump_idx), daq.y(jump_idx), 'bo', 'MarkerSize', 8, ...
-              'MarkerFaceColor', 'b', 'DisplayName', 'Jumps');
+h_jump = plot(daq.x(jump_idx), daq.y(jump_idx), 'bo', ...
+              'MarkerSize', 8, ...
+              'MarkerFaceColor', 'none', ...        % <-- This keeps the marker hollow
+              'LineWidth', 2, ...                   % Optional: thicker circle
+              'DisplayName', 'Jumps');
 
 xlabel('X Position');
 ylabel('Y Position');

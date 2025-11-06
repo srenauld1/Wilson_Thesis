@@ -42,14 +42,19 @@ end
 
 % Start point in green
 h_start = plot(x(1), y(1), 'go', 'MarkerSize', 5, 'MarkerFaceColor', 'g', 'DisplayName', 'Start');
-
+%plot jumps
 jump_idx = find(daq.jump_detected == 1);
-plot(daq.x(jump_idx), daq.y(jump_idx), 'bo', ...);
+% After all other plotting:
+h_jump = plot(daq.x(jump_idx), daq.y(jump_idx), 'bo', ...
+              'MarkerSize', 8, ...
+              'MarkerFaceColor', 'none', ...        % <-- This keeps the marker hollow
+              'LineWidth', 2, ...                   % Optional: thicker circle
+              'DisplayName', 'Jumps');
 
 xlabel('X Position');
 ylabel('Y Position');
 title('Flat Path: Opto ON (Red, thick), Opto OFF (Black), Start (Green)');
-legend([h_opto, h_noopto, h_start], {'Opto ON', 'Opto OFF', 'Start'}, 'Location', 'best');
+legend([h_opto, h_noopto, h_start, h_jump], {'Opto ON', 'Opto OFF', 'Start', 'Jumps'}, 'Location', 'best');
 
 axis equal; axis tight; grid on; hold off;
 
