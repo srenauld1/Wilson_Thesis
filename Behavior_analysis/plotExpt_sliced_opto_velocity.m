@@ -34,6 +34,10 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
     %% define variables
     opto=exptData.optoStim;
     time = exptData.t;
+    % define angular velocity
+    angular_vel = exptData.angularVelocity_raw(:, 1:30:end);
+    fwd_vel = exptData.forwardVelocity_raw(:, 1:30:end);
+    
 
     %% chop up by opto blocks
     if checkOpto
@@ -65,10 +69,10 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
             % Check the opto value in this segment
             if opto(segment_indices(1)) >0
                 % Store velocity data where opto is 1
-                velocity_segments_optoon{end+1} = exptData.forwardVelocity(segment_indices);
+                velocity_segments_optoon{end+1} = fwd_vel(segment_indices);
             else
                 % Store velocity data where opto is 0
-                velocity_segments_optooff{end+1} = exptData.forwardVelocity(segment_indices);
+                velocity_segments_optooff{end+1} = fwd_vel(segment_indices);
             end
         end
 
@@ -76,7 +80,8 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         % Define the number of timepoints to include before opto-on
         pre_opto_points = 1000;
         post_opto_points = 1000;
-        
+
+
         % Initialize cell arrays to store segments of velocity
         fwdvelocity_segments_optoon_extra = {};  % Velocity when opto is 1 (including pre-opto points
         rotvel_segments_optoon_extra = {}; 
@@ -98,7 +103,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
             % Check the opto value in this segment
             if opto(segment_indices(1)) > 0
 
-                angular_vel = exptData.angularVelocity;
+
                 % Calculate the start index for pre-opto points (ensuring it doesn’t go below 1)
                 pre_opto_start = max(1, segment_indices(1) - pre_opto_points);
                 % Calculate the end index for post-opto points (ensuring it doesn’t go below 1)
@@ -106,12 +111,12 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
 
 
                 % only opto on fwd and rot
-                opto_on_fwd = exptData.forwardVelocity(segment_indices);
+                opto_on_fwd = fwd_vel(segment_indices);
                 opto_on_rot = abs(angular_vel(segment_indices));
 
                 % opto off fwd and rot
                 pre_opto = (pre_opto_start:segment_indices(1));
-                pre_opto_fwd = exptData.forwardVelocity(pre_opto);
+                pre_opto_fwd = fwd_vel(pre_opto);
                 pre_opto_rot = abs(angular_vel(pre_opto));
 
                 % take average for trial
@@ -129,7 +134,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
                 extended_segment_indices = pre_opto_start:post_opto_end;
                 
                 % Store the extended velocity data for opto-on
-                fwdvelocity_segments_optoon_extra{end+1} = exptData.forwardVelocity(extended_segment_indices);
+                fwdvelocity_segments_optoon_extra{end+1} = fwd_vel(extended_segment_indices);
                 rotvel_segments_optoon_extra{end+1} = angular_vel(extended_segment_indices);
 
                 % for calculating averages
@@ -211,7 +216,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         end
         
         % Plot the average velocity for "optoon" in bold green
-        plot(time(1:length(fwdvelocity_segments_optoon_extra{1})), average_velocity_optoon, 'g', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
+        plot(time(1:length(average_velocity_optoon)), average_velocity_optoon, 'g', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
         
         % Customize the first subplot
         xlabel('Time (s)');

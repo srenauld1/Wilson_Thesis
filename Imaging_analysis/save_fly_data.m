@@ -1,4 +1,4 @@
-function save_fly_data(daq, dat, varargin)
+function save_fly_data(a2p_data, varargin)
 % Save fly data with identifier for later batch analysis
 %
 % Required:
@@ -10,7 +10,7 @@ function save_fly_data(daq, dat, varargin)
 %   varargin - more fieldname,data pairs
 
     % Parse inputs (detect whether dff_motion was provided)
-    if nargin < 3
+    if nargin < 2
         error('Not enough input arguments.');
     end
     if ischar(varargin{1}) || isstring(varargin{1})
@@ -31,8 +31,7 @@ function save_fly_data(daq, dat, varargin)
 
     % Prepare data structure
     fly_data = struct();
-    fly_data.daq = daq;
-    fly_data.dat = dat;
+    fly_data = a2p_data;
     if ~isempty(dff_motion)
         fly_data.dff_motion = dff_motion;
     end

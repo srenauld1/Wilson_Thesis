@@ -1,4 +1,4 @@
-function daq = compute_absolute_circular_diff_2p(daq)
+function a2p_data = compute_absolute_circular_diff_2p(a2p_data)
     % Computes absolute circular differences in ts.vis.yaw
     %
     % Parameters:
@@ -8,12 +8,12 @@ function daq = compute_absolute_circular_diff_2p(daq)
     %   ts: modified structure with ts.absolute_circular_diff added
     
     % Check if heading field exists
-    if ~isfield(daq, 'vh')
+    if ~isfield(a2p_data.dq(1), 'vh')
         error('Field daq.vy not found in data structure.');
     end
     
     % Get heading data
-    heading = daq.vh;
+    heading =a2p_data.dq(1).vh;
     
     % Check if row or column vector and handle accordingly
     if isrow(heading)
@@ -30,5 +30,5 @@ function daq = compute_absolute_circular_diff_2p(daq)
         cos(heading_diff)));
     
     % Add results to data structure
-    daq.absolute_circular_diff = circular_diff;
+    a2p_data.dq(1).absolute_circular_diff = circular_diff;
 end

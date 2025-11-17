@@ -26,20 +26,21 @@
 % Original: 3/19/2025 - SMR
 
 
-function [daq, yaw_information_right,yaw_information_left,yaw_information_left_supp, yaw_information_right_supp ] = process_fictrac_panels_2p(daq, vel_on,vel_off, jump)
+function a2p_data = process_fictrac_panels_2p(a2p_data, vel_on,vel_off, jump)
 
     if jump
+        % NOT ADJUSTED TO NEW A2P
         %% detect jumps
-        daq = compute_absolute_circular_diff_2p(daq);
-        daq = detect_local_peaks_2p(daq);
+        a2p_data = compute_absolute_circular_diff_2p(a2p_data);
+        a2p_data = detect_local_peaks_2p(a2p_data);
     
         %% add in jump buffer for later calculations
         % Define the padding size on each side
-        one_indices = find(daq.jump_detected == 1);
-        jump_idx = daq.jump_detected;
+        one_indices = find(a2p_data.jump_detected == 1);
+        jump_idx = a2p_data.jump_detected;
     
         % calculate trial duration
-        duration = length(daq.t)/daq.t(end);
+        duration = length(a2p_data.t)/a2p_data.t(end);
         
         % Define the padding size on each side
         buffer_before_and_after_jump = 2;
@@ -49,31 +50,30 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
         for i = 1:length(one_indices)
             idx = one_indices(i);
             start_idx = max(1, idx - padding);
-            end_idx = min(length(daq.jump_detected), idx + padding);
+            end_idx = min(length(a2p_data.jump_detected), idx + padding);
             jump_idx(start_idx:end_idx) = 1;
         end
     
-        daq.omit_jump_blocks = jump_idx;
+        a2p_data.omit_jump_blocks = jump_idx;
     end
 
     %% remove anything that is empty
     % Get the field names of the structure
-    fieldNames = fieldnames(daq);
+    fieldNames = fieldnames(a2p_data.dq);
     
     % Loop through each field to check for emptiness
     for i = 1:length(fieldNames)
         field = fieldNames{i};  % Current field name
         
         % Check if the current field is empty
-        if isempty(daq.(field))
-            daq = rmfield(daq, field);  % Remove the field if it's empty
+        if isempty(a2p_data.dq(1).(field))
+            a2p_data.dq = rmfield(a2p_data.dq, field);  % Remove the field if it's empty
         end
     end
 
     %% Define Schmitt trigger thresholds (example: you choose these values!)
-    %speed = abs(daq.bvf) + (abs(daq.bvy)*4.5) + (abs(daq.bvs)*4.5);
-    speed = daq.bvf;
-    daq.totalspeed = speed;
+    speed = a2p_data.dq(1).bvf;
+    a2p_data.dq(1).totalspeed = abs(a2p_data.dq(1).bvf) + (abs(a2p_data.dq(1).bvy)*4.5) + (abs(a2p_data.dq(1).bvs)*4.5);
     
     motion = zeros(size(speed));
     
@@ -95,26 +95,21 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
         end
     end
     
-    daq.motion.moving_or_not = motion;
+    a2p_data.dq(1).motion.moving_or_not = motion;
     
     % Optionally: Indices where fly is NOT moving
-    daq.motion.ftNotMoveInd = find(motion==0);
+    a2p_data.dq(1).motion.ftNotMoveInd = find(motion==0);
 
-    %% turn yaw into degrees
-    daq.bvy_deg = rad2deg(daq.bvy);
-    daq.bvy_deg_supp = rad2deg(daq.bvy_supp);
-    daq.bvs_deg = rad2deg(daq.bvs);
-    daq.bvs_deg_supp = rad2deg(daq.bvs_supp);
-    
-    
-    %% overly smooth rotational velocity
-    daq.smoothedangularVelocity = smoothdata(daq.bvy_deg, 'gaussian',30);
-    daq.smoothedfwdVelocity = smoothdata(daq.bvf, 'gaussian',30);
+    %% turn yaw + side (rad/s) into degrees/s
+    a2p_data.dq(1).bvy_deg = rad2deg(a2p_data.dq(1).bvy);
+    a2p_data.dq(2).bvy_deg = rad2deg(a2p_data.dq(2).bvy);
+    a2p_data.dq(1).bvs_deg = rad2deg(a2p_data.dq(1).bvs);
+    a2p_data.dq(2).bvs_deg = rad2deg(a2p_data.dq(2).bvs);
 
     %% create moving not moving binary for 60Hz data
     % Compute the total speed as before
-    total_speed_supp = abs(daq.bvf_supp) + (4.5*abs(daq.bvy_supp)) + (4.5*abs(daq.bvs_supp));
-    daq.totalspeed_supp = total_speed_supp;
+    total_speed_supp = abs(a2p_data.dq(2).bvf) + (4.5*abs(a2p_data.dq(2).bvy)) + (4.5*abs(a2p_data.dq(2).bvs));
+    a2p_data.dq(2).totalspeed = total_speed_supp;
     
     % Initialize movement state
     motion_supp = zeros(size(total_speed_supp));
@@ -138,65 +133,58 @@ function [daq, yaw_information_right,yaw_information_left,yaw_information_left_s
     end
     
     % Store results
-    daq.motion_supp.moving_not = motion_supp;
-    daq.motion_supp.ftNotMoveInd = find(motion_supp==0);
+    a2p_data.dq(2).motion.moving_not = motion_supp;
+    a2p_data.dq(2).motion.ftNotMoveInd = find(motion_supp==0);
 
-    %% turn yaw into degrees
-    daq.bvy_deg_supp = rad2deg(daq.bvy_supp);
-    
-    
-    %% overly smooth rotational velocity
-    daq.smoothedangularVelocity_supp = smoothdata(daq.bvy_deg_supp, 'gaussian',100);
-    daq.smoothedfwdVelocity_supp = smoothdata(daq.bvf_supp, 'gaussian',100);
-    
-    %% find turns
-    yaw_information_right = findYawVelPeaksFT(daq, 20, [0.2,1], daq.motion, 1,0);
-    yaw_information_left = findYawVelPeaksFT(daq, 20, [0.2,1], daq.motion, 0, 0);
-    yaw_information_right_supp = findYawVelPeaksFT(daq, 20, [0.2,3], daq.motion_supp, 1, 1);
-    yaw_information_left_supp = findYawVelPeaksFT(daq, 20, [0.2,3], daq.motion_supp, 0, 1);
-    
-    %% merge turn data for assessing algorythm
-    yaw_both = struct();
-    yaw_both.yawVelPeakTimes = [yaw_information_left.yawVelPeakTimes, yaw_information_right.yawVelPeakTimes];
-    yaw_both.boutStartTimes = [yaw_information_left.boutStartTimes, yaw_information_right.boutStartTimes];
-    yaw_both.boutEndTimes = [yaw_information_left.boutEndTimes, yaw_information_right.boutEndTimes];
-    yaw_both.yawVelPeakInd = [yaw_information_left.yawVelPeakInd, yaw_information_right.yawVelPeakInd];
-    yaw_both.boutStartInd = [yaw_information_left.boutStartInd, yaw_information_right.boutStartInd];
-    yaw_both.boutEndInd = [yaw_information_left.boutEndInd, yaw_information_right.boutEndInd];
-    
-    %% add to expt data
-    daq.turning = zeros(1, length(daq.smoothedangularVelocity));
-    % Loop through each entry for saccades
-    for i = 1:length(yaw_both.boutStartInd)
-        bout_start = yaw_both.boutStartInd(i);
-        bout_end = yaw_both.boutEndInd(i);
-    
-        % Set saccading to 1 for any index in between start and end
-        if bout_start <= length(daq.smoothedangularVelocity) && bout_end <= length(daq.smoothedangularVelocity)
-            daq.turning(1, bout_start:bout_end) = 1;  % Mark saccading for left
-        end
-    end
-    
-    %% merge turn data for assessing algorythm
-    yaw_both_supp = struct();
-    yaw_both_supp.yawVelPeakTimes = [yaw_information_left_supp.yawVelPeakTimes, yaw_information_right_supp.yawVelPeakTimes];
-    yaw_both_supp.boutStartTimes = [yaw_information_left_supp.boutStartTimes, yaw_information_right_supp.boutStartTimes];
-    yaw_both_supp.boutEndTimes = [yaw_information_left_supp.boutEndTimes, yaw_information_right_supp.boutEndTimes];
-    yaw_both_supp.yawVelPeakInd = [yaw_information_left_supp.yawVelPeakInd, yaw_information_right_supp.yawVelPeakInd];
-    yaw_both_supp.boutStartInd = [yaw_information_left_supp.boutStartInd, yaw_information_right_supp.boutStartInd];
-    yaw_both_supp.boutEndInd = [yaw_information_left_supp.boutEndInd, yaw_information_right_supp.boutEndInd];
-    
-    %% add to expt data
-    daq.turning_supp = zeros(1, length(daq.smoothedangularVelocity_supp));
-    % Loop through each entry for saccades
-    for i = 1:length(yaw_both_supp.boutStartInd)
-        bout_start = yaw_both_supp.boutStartInd(i);
-        bout_end = yaw_both_supp.boutEndInd(i);
-    
-        % Set saccading to 1 for any index in between start and end
-        if bout_start <= length(daq.smoothedangularVelocity_supp) && bout_end <= length(daq.smoothedangularVelocity_supp)
-            daq.turning_supp(1, bout_start:bout_end) = 1;  % Mark saccading for left  % Mark saccading for left
-        end
-    end
+    %% removed turn finding code
+    % %% find turns
+    % yaw_information_right = findYawVelPeaksFT(daq, 20, [0.2,1], daq.motion, 1,0);
+    % yaw_information_left = findYawVelPeaksFT(daq, 20, [0.2,1], daq.motion, 0, 0);
+    % yaw_information_right_supp = findYawVelPeaksFT(daq, 20, [0.2,3], daq.motion_supp, 1, 1);
+    % yaw_information_left_supp = findYawVelPeaksFT(daq, 20, [0.2,3], daq.motion_supp, 0, 1);
+    % 
+    % %% merge turn data for assessing algorythm
+    % yaw_both = struct();
+    % yaw_both.yawVelPeakTimes = [yaw_information_left.yawVelPeakTimes, yaw_information_right.yawVelPeakTimes];
+    % yaw_both.boutStartTimes = [yaw_information_left.boutStartTimes, yaw_information_right.boutStartTimes];
+    % yaw_both.boutEndTimes = [yaw_information_left.boutEndTimes, yaw_information_right.boutEndTimes];
+    % yaw_both.yawVelPeakInd = [yaw_information_left.yawVelPeakInd, yaw_information_right.yawVelPeakInd];
+    % yaw_both.boutStartInd = [yaw_information_left.boutStartInd, yaw_information_right.boutStartInd];
+    % yaw_both.boutEndInd = [yaw_information_left.boutEndInd, yaw_information_right.boutEndInd];
+    % 
+    % %% add to expt data
+    % daq.turning = zeros(1, length(daq.smoothedangularVelocity));
+    % % Loop through each entry for saccades
+    % for i = 1:length(yaw_both.boutStartInd)
+    %     bout_start = yaw_both.boutStartInd(i);
+    %     bout_end = yaw_both.boutEndInd(i);
+    % 
+    %     % Set saccading to 1 for any index in between start and end
+    %     if bout_start <= length(daq.smoothedangularVelocity) && bout_end <= length(daq.smoothedangularVelocity)
+    %         daq.turning(1, bout_start:bout_end) = 1;  % Mark saccading for left
+    %     end
+    % end
+    % 
+    % %% merge turn data for assessing algorythm
+    % yaw_both_supp = struct();
+    % yaw_both_supp.yawVelPeakTimes = [yaw_information_left_supp.yawVelPeakTimes, yaw_information_right_supp.yawVelPeakTimes];
+    % yaw_both_supp.boutStartTimes = [yaw_information_left_supp.boutStartTimes, yaw_information_right_supp.boutStartTimes];
+    % yaw_both_supp.boutEndTimes = [yaw_information_left_supp.boutEndTimes, yaw_information_right_supp.boutEndTimes];
+    % yaw_both_supp.yawVelPeakInd = [yaw_information_left_supp.yawVelPeakInd, yaw_information_right_supp.yawVelPeakInd];
+    % yaw_both_supp.boutStartInd = [yaw_information_left_supp.boutStartInd, yaw_information_right_supp.boutStartInd];
+    % yaw_both_supp.boutEndInd = [yaw_information_left_supp.boutEndInd, yaw_information_right_supp.boutEndInd];
+    % 
+    % %% add to expt data
+    % daq.turning_supp = zeros(1, length(daq.smoothedangularVelocity_supp));
+    % % Loop through each entry for saccades
+    % for i = 1:length(yaw_both_supp.boutStartInd)
+    %     bout_start = yaw_both_supp.boutStartInd(i);
+    %     bout_end = yaw_both_supp.boutEndInd(i);
+    % 
+    %     % Set saccading to 1 for any index in between start and end
+    %     if bout_start <= length(daq.smoothedangularVelocity_supp) && bout_end <= length(daq.smoothedangularVelocity_supp)
+    %         daq.turning_supp(1, bout_start:bout_end) = 1;  % Mark saccading for left  % Mark saccading for left
+    %     end
+    % end
 
 end

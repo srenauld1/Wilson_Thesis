@@ -77,22 +77,8 @@ disp(['Save path: ', savepath]);
 %% plot flatpath with opto on and off
 plot_flatpath_opto(exptData, savepath)
 
-%% determine turn direction
-% [exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed] = turn_directions(exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed);
-% 
-% %% find turns
-% yaw_information_right = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.motion, 1, 0);
-% yaw_information_left = findYawVelPeaksFT(exptData, 100, [0.2,0.7], exptData.motion, 0, 0);
-% 
-% %% now here i will have a function to extract saccades
-% [exptData, saccade_both] = find_saccades(exptData, yaw_information_right,yaw_information_left, forvel_cutoff);
+%% now plot sinuosity
+S = benhamou_sinuosity(exptData.x', exptData.y');
 
-%% flat path
-%plot_flatpath_saccades(exptData, 1, savepath)
-
-%% then maybe plot rasters here
-%plot_raster(exptData,saccade_both, savepath)
-
-%% plot flat path opto vs. saccades
 
 

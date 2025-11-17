@@ -1,6 +1,6 @@
 
 %% function
-function plotting_ves041(daq, dat, jump, savepath)
+function plotting_ves041(a2p_data, jump, savepath)
 
 close all
 
@@ -9,16 +9,16 @@ close all
 
 %% benhamou_sinuosity(x, y)
 % tuen x and y into columns
-x = daq.px';
-y =daq.py';
-x_supp = daq.px_supp';
-y_supp =daq.py_supp';
+x = a2p_data.dq(1).px';
+y =a2p_data.dq(1).py';
+x_supp = a2p_data.dq(2).px';
+y_supp =a2p_data.dq(2).py';
 S = benhamou_sinuosity(x, y);
 S_supp = benhamou_sinuosity(x_supp, y_supp);
 S_quarters = benhamou_sinuosity(x, y, true);
 S_quarters_supp = benhamou_sinuosity(x_supp, y_supp, true);
-px = daq.px(:);
-py = daq.py(:);
+px = a2p_data.dq(1).px(:);
+py = a2p_data.dq(1).py(:);
 N = numel(px);
 
 % Quarters splitting
@@ -54,13 +54,15 @@ hold off;
 
 save_plot_with_title_as_filename('benhamou_sinuosity', 'x_y', savepath);
 %% define variables
-time = daq.t;                  % Time points
-dff = dat.ts(1, :);                    % Example dFF data
-time_kin = daq.t_supp;        
-fwd = daq.bvf; % Example forward velocity data
-rot = daq.bvy_deg; % Example rotational velocity data
-side = daq.bvs_deg;
-sample_rate = 1/(max(daq.t)/length(daq.t)); %samples per second
+time = a2p_data.dq(1).t;                  % Time points
+dff = a2p_data.roi.ts(1, :);                    % Example dFF data
+time_kin = a2p_data.dq(2).t;        
+fwd = a2p_data.dq(1).bvf; % Example forward velocity data
+fwd_supp = a2p_data.dq(2).bvf;
+rot = a2p_data.dq(1).bvy_deg; % Example rotational velocity data
+rot_supp = a2p_data.dq(2).bvy_deg;
+side = a2p_data.dq(1).bvs_deg;
+sample_rate = 1/(max(time)/length(time)); %samples per second
 
 %% all 3 (fwd, rot, dff) on one plot
 % Create the figure and subplots
@@ -77,7 +79,7 @@ grid on;
 
 % Subplot 2: Forward Velocity
 subplot(3, 1, 2);  % Second subplot
-plot(time_kin, smooth(daq.bvf_supp), 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
+plot(time_kin, smooth(fwd_supp), 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
 xlabel('Time (s)');
 ylabel('Forward Velocity (mm/s)');
 title('Forward Velocity');
@@ -86,7 +88,7 @@ ylim([-5 20]);
 
 % Subplot 3: Rotational Velocity
 subplot(3, 1, 3);  % Third subplot
-plot(time_kin, smooth(daq.bvy_deg_supp), 'r', 'LineWidth', 1.5);  % Plot rotational velocity in blue
+plot(time_kin, smooth(rot_supp), 'r', 'LineWidth', 1.5);  % Plot rotational velocity in blue
 xlabel('Time (s)');
 ylabel('Rotational Velocity (deg/s)');
 title('Rotational Velocity');
@@ -103,6 +105,8 @@ save_plot_with_title_as_filename('fwd_rot', 'dff_separate', savepath);
 
 %% flat path colored by dff (dots with non-linear scaling)
 cmap = jet(100);
+ball_px = a2p_data.dq(1).pxb;
+ball_py = a2p_data.dq(1).pyb;
 
 % Non-linear scaling options for dff (choose one):
 % Option 1: Square root scaling (compresses high values)
@@ -126,9 +130,9 @@ figure
 hold on
 
 % Plot as scatter points instead of lines
-scatter(daq.pxb, daq.pyb, 10, cmap(dff_norm, :), 'filled', 'MarkerEdgeColor', 'none');
-min_value = min([daq.pxb(:); daq.pyb(:)]);
-max_value = max([daq.pxb(:); daq.pyb(:)]);
+scatter(ball_px, ball_py, 10, cmap(dff_norm, :), 'filled', 'MarkerEdgeColor', 'none');
+min_value = min([ball_px(:); ball_py(:)]);
+max_value = max([ball_px(:); ball_py(:)]);
 xlim([min_value max_value]);
 ylim([min_value max_value]);
 %axis equal; % (optional: keep aspect ratio square)
@@ -162,22 +166,21 @@ set(c, 'YTickLabel', arrayfun(@(x) sprintf('%.3f', x), actual_values, 'UniformOu
 % end
 
 % Start point
-plot(daq.pxb(1), daq.pyb(1), 'r.', 'MarkerSize', 20)
+plot(ball_px(1), ball_py(1), 'r.', 'MarkerSize', 20)
 
 title("DFF colored,cue flat path - dots")
 save_plot_with_title_as_filename('x_color_powerscale', 'y_color_powerscale', savepath);
 %% now interactively plot dff and yaw velocity
-trajectory_region_selector(daq, dff, jump)
+%trajectory_region_selector(a2p_data, dff, jump)
 
 %% aligned to motion on plotting dff, forward vel, rot vel (all aligned)
 preN = round(sample_rate);
 offN = 0;
 min_run_len = round(sample_rate);
-motion = daq.motion.moving_or_not(:);
+motion = a2p_data.dq(1).motion.moving_or_not(:);
 fluo = dff';
-for_vel = daq.bvf(:);
-rot_speed = abs(daq.bvy_deg(:)); % rotational velocity in degrees/sec
-tt = daq.t(:); % your time vector
+rot_speed = abs(rot); % rotational velocity in degrees/sec
+t = a2p_data.dq(1).t(:); % your time vector
 
 d = diff([0; motion; 0]);
 onsets = find(d == 1);
@@ -201,11 +204,11 @@ for i=1:numel(onsets)
     t_end   = offsets(i) + offN;
     if t_start < 1 || t_end > numel(fluo), continue; end
     idx_epoch = t_start:t_end;
-    t_epoch = tt(idx_epoch);
-    t_onset = tt(onsets(i));
+    t_epoch = t(idx_epoch);
+    t_onset = t(onsets(i));
     t_rel = t_epoch - t_onset;
     fluo_cell{end+1}    = fluo(idx_epoch);
-    forvel_cell{end+1}  = for_vel(idx_epoch);
+    forvel_cell{end+1}  = fwd(idx_epoch);
     rotsel_cell{end+1}  = rot_speed(idx_epoch);
     t_cell{end+1}       = t_rel;
 end
@@ -288,12 +291,7 @@ save_plot_with_title_as_filename('movement_onset', 'variables', savepath);
 preN = 1*round(sample_rate);    % how many samples to show before motion offset
 min_run_len = round(sample_rate); % 1 second off
 offN = 0;     % set >0 if you want more after next offset
-
-motion = daq.motion.moving_or_not(:);
-fluo   = dff';
-for_vel  = daq.bvf(:);
-rot_speed  = abs(daq.bvy_deg(:));    % <--- rotational velocity in deg/s
-tt     = daq.t(:);
+rot_speed  = abs(rot);    % <--- rotational velocity in deg/s
 
 % Find all motion on (onsets) and off (offsets)
 d = diff([0; motion; 0]);
@@ -325,10 +323,10 @@ for i = 1:numel(offsets)
     t_end = my_onsets(i) - 1 + offN; % epoch ends at just before the next movement bout, or can add post points
     t_end = min(t_end,numel(fluo));  % don't run off end
     idx_epoch = t_start:t_end;
-    t_offset = tt(offsets(i));
-    t_rel = tt(idx_epoch) - t_offset; % time relative to offset (offset=0)
+    t_offset = t(offsets(i));
+    t_rel = t(idx_epoch) - t_offset; % time relative to offset (offset=0)
     fluo_cell{end+1}  = fluo(idx_epoch);
-    behav_cell{end+1} = for_vel(idx_epoch);
+    behav_cell{end+1} = fwd(idx_epoch);
     rot_cell{end+1}   = rot_speed(idx_epoch);
     t_cell{end+1}     = t_rel;
 end
@@ -499,12 +497,6 @@ offN = 2*round(sample_rate);
 min_run_len = 0.5*round(sample_rate);
 min_inbetween_len = round(sample_rate);
 
-motion = daq.motion.moving_or_not(:);
-fluo = dff';
-for_vel = daq.bvf(:);
-rot_speed = abs(daq.bvy_deg(:));
-tt = daq.t(:);
-
 %% Find bouts
 d = diff([0; motion; 0]);
 onsets = find(d == 1);
@@ -559,11 +551,11 @@ for g = 1:2
         t_end   = curr_onsets(i) + offN;
         if t_start < 1 || t_end > numel(fluo), continue; end
         idx_epoch = t_start:t_end;
-        t_epoch = tt(idx_epoch);
-        t_onset = tt(curr_onsets(i));
+        t_epoch = t(idx_epoch);
+        t_onset = t(curr_onsets(i));
         t_rel = t_epoch - t_onset;
         fluo_cell{end+1}    = fluo(idx_epoch);
-        forvel_cell{end+1}  = for_vel(idx_epoch);
+        forvel_cell{end+1}  = fwd(idx_epoch);
         rotsel_cell{end+1}  = rot_speed(idx_epoch);
         t_cell{end+1}       = t_rel;
     end
@@ -644,11 +636,11 @@ for g = 1:2
         t_end = curr_offsets(i) + offN;
         if t_start < 1 || t_end > numel(fluo), continue; end
         idx_epoch = t_start:t_end;
-        t_epoch = tt(idx_epoch);
-        t_offset = tt(curr_offsets(i));
+        t_epoch = t(idx_epoch);
+        t_offset = t(curr_offsets(i));
         t_rel = t_epoch - t_offset;
         fluo_cell{end+1}    = fluo(idx_epoch);
-        forvel_cell{end+1}  = for_vel(idx_epoch);
+        forvel_cell{end+1}  = fwd(idx_epoch);
         rotsel_cell{end+1}  = rot_speed(idx_epoch);
         t_cell{end+1}       = t_rel;
     end
@@ -726,9 +718,9 @@ window_N = round(window_s * sample_rate);
 
 % Ensure column vectors
 dff = dff(:);
-bvf = daq.bvf(:);
-rots = abs(daq.bvy_deg(:)); % rotational speed (deg/s)
-tt = daq.t(:);
+bvf = fwd(:);
+rots = abs(rot(:)); % rotational speed (deg/s)
+t = t(:);
 
 dff_epochs = {};
 bvf_epochs = {};
@@ -741,8 +733,8 @@ for i = 1:numel(locs)
     idx_end   = idx_c + window_N;
     if idx_start < 1 || idx_end > length(dff), continue, end
     idx_win = idx_start:idx_end;
-    t0 = tt(idx_c);
-    t_epoch = tt(idx_win) - t0;
+    t0 = t(idx_c);
+    t_epoch = t(idx_win) - t0;
     dff_epochs{end+1}  = dff(idx_win);
     bvf_epochs{end+1}  = bvf(idx_win);
     rots_epochs{end+1} = rots(idx_win);
