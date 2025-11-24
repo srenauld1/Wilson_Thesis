@@ -9,8 +9,16 @@ end
 %% determine the kinematic variables
 time = a2p_data.dq(1).t;
 time_supp = a2p_data.dq(2).t;
-visual_heading = a2p_data.dq(1).vh;
-visual_pattern_velocity = a2p_data.dq(1).vvy;
+if isfield(a2p_data.dq, 'vho')
+    visual_heading = a2p_data.dq(1).vho;
+else
+    visual_heading = a2p_data.dq(1).vh;
+end
+if isfield(a2p_data.dq, 'vvyo')
+    visual_pattern_velocity = a2p_data.dq(1).vvyo;
+else
+    visual_pattern_velocity = a2p_data.dq(1).vvy;
+end
 ball_forward_velocity = a2p_data.dq(1).bvf;
 ball_forward_velocity_supp = a2p_data.dq(2).bvf;
 ball_yaw_velocity = a2p_data.dq(1).bvy_deg;
@@ -24,8 +32,10 @@ if split
     label_cw  = 'Back-to-Front';
     label_ccw = 'Front-to-Back';
 else
-    label_cw  = 'Clockwise';
-    label_ccw = 'Counterclockwise';
+    % changed bc bright bar was opposite, may need to change when
+    % exmamining dark bar
+    label_cw  = 'Counterclockwise';
+    label_ccw = 'Clockwise';
 end
 
 %% Plot the dff and pattern
@@ -995,4 +1005,7 @@ end
     hold off;
     
     save_plot_with_title_as_filename(label_cw, label_ccw, savepath)
+
+
 end
+

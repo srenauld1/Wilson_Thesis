@@ -25,6 +25,7 @@ lplc4=0;
 visual = 0;
 box=0;
 split = 0;
+all_8=0;
 %% load in daq and ts
 % Define the base folder path
 baseFolder = '/Users/sophiarenauld/stacks/'; % Change this to the desired directory
@@ -69,6 +70,9 @@ if contains(base_path, 'an4')
 elseif contains(base_path, 'LPLC4')
     an4_project = 1;  
     visual = 1;
+elseif contains(base_path, 'lplc4')
+    an4_project = 1;  
+    visual = 1;
 elseif contains(base_path, 'LC22')
     an4_project = 1;  
     visual = 1;
@@ -108,6 +112,11 @@ elseif contains(base_path, 'splitgrating')
 %     visual = 1;
 elseif contains(base_path, 'dbar')
     visual = 1;
+end
+
+if contains(base_path, 'all') 
+    all_8 = 1;
+    visual = 0;
 end
 % Define the directory for the stimulus
 stim_directory = fullfile(base_path, 'smr_analysis');
@@ -152,53 +161,21 @@ if visual
     [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split);
 end
 
+if all_8
+     eight_visual_pattern_analysis(a2p_data, savepath, box, split)
+end
+
 if ves041
     
     %% basic velocity and dff plotting
     plotting_ves041(a2p_data, jump, savepath)
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
+end
+if ~ visual
     save_fly_data(a2p_data, savepath)
 else
     save_fly_data(a2p_data, dff_motion, savepath)
 end
 
 
-
-
-%% adjust variables
-fields = fieldnames(a2p_data);
-% old nomenclature
-% patterns = {'byv','bfv','bsv','byv_supp','bfv_supp','bsv_supp', 'vy', 'vy_supp', 'vyv', 'vyv_supp'};
-% replacements = {'bvy','bvf','bvs','bvy_supp','bvf_supp','bvs_supp', 'vh', 'vh_supp', 'vvy', 'vvy_supp'};
-
-% for i = 1:numel(fields)
-%     oldname = fields{i};
-%     newname = oldname;
-%     for p = 1:numel(patterns)
-%         % Only do replacement if matches exactly (for _supp and such)
-%         if strcmp(oldname, patterns{p})
-%             newname = replacements{p};
-%             break % stop after first exact match
-%         end
-%     end
-%     if ~strcmp(oldname, newname)
-%         a2p_data.(newname) = a2p_data.(oldname);
-%         a2p_data = rmfield(a2p_data, oldname);
-%     end
-% end
-% 
-% if exist('ts','var')
-%     if iscell(ts) && numel(ts)==1
-%         ts = ts{1};
-%     end
-% end
-% 
-% if exist('ts','var')
-%     dat{1,1}.ts = ts;
-% end
-% 
-% % Assume dat is a 1x1 cell containing a struct
-% if iscell(dat) && numel(dat)==1 && isstruct(dat{1})
-%     dat = dat{1};
-% end
