@@ -2,9 +2,9 @@ function eight_visual_pattern_analysis(a2p_data, savepath, box, split)
 %% calculate normalized dff if exists 2 rois
 a=size(a2p_data.roi.ts);
 if a(1)>1
-    dff = a2p_data.roi.ts(1,:);
+    dff = a2p_data.roi.ts(2,:)-a2p_data.roi.ts(1,:);
 else
-    dff = a2p_data.roi.ts(2,:);
+    dff = a2p_data.roi.ts(1,:);
 end
 %% determine the kinematic variables
 time = a2p_data.dq(1).t;
@@ -57,7 +57,7 @@ title('Pattern and DFF');
 
 % Optional: Add legend
 legend('Pattern', 'dff');
-save_plot_with_title_as_filename('Pattern', 'dff', savepath);
+%save_plot_with_title_as_filename('Pattern', 'dff', savepath);
 %% variables
 % frequency
 freq = time(end)/length(time);
@@ -104,14 +104,14 @@ idx_3_down = idx_3 & (visual_pattern_velocity < -0.1);
 idx_4_up = idx_4 & (visual_pattern_velocity > 0.1);
 idx_4_down = idx_4 & (visual_pattern_velocity < -0.1);
 
-idx_1_up = keep_runs_min_length(idx_1_up, 5);
-idx_1_down = keep_runs_min_length(idx_1_down, 5);
-idx_2_down = keep_runs_min_length(idx_2_down, 5);
-idx_2_up = keep_runs_min_length(idx_2_up, 5);
-idx_3_up = keep_runs_min_length(idx_3_up, 5);
-idx_3_down = keep_runs_min_length(idx_3_down, 5);
-idx_4_up = keep_runs_min_length(idx_4_up, 5);
-idx_4_down = keep_runs_min_length(idx_4_down, 5);
+idx_1_up = keep_runs_min_length(idx_1_up, remove_if_shorter_than);
+idx_1_down = keep_runs_min_length(idx_1_down, remove_if_shorter_than);
+idx_2_down = keep_runs_min_length(idx_2_down, remove_if_shorter_than);
+idx_2_up = keep_runs_min_length(idx_2_up, remove_if_shorter_than);
+idx_3_up = keep_runs_min_length(idx_3_up, remove_if_shorter_than);
+idx_3_down = keep_runs_min_length(idx_3_down, remove_if_shorter_than);
+idx_4_up = keep_runs_min_length(idx_4_up, remove_if_shorter_than);
+idx_4_down = keep_runs_min_length(idx_4_down, remove_if_shorter_than);
 
 % code
 % -pi to -pi/2 = split, -pi/2 to 0 is vgrating, 0-pi/2 is left eye, pi/2 to
@@ -129,11 +129,40 @@ plot(t(idx_4_up),   heading(idx_4_up),   'm.', 'DisplayName', 'Right eye F2B');
 plot(t(idx_4_down), heading(idx_4_down), 'mo', 'DisplayName', 'Right eye B2F');
 legend; hold off;
 
+totalspeed = a2p_data.dq(1).totalspeed;
+
+all_idx = {idx_1_up, idx_1_down, idx_2_up, idx_2_down, ...
+           idx_3_up, idx_3_down, idx_4_up, idx_4_down};
+all_labels = {'F2B', 'B2F', 'CW', 'CCW', ...
+              'Left eye F2B', 'Left eye B2F', 'Right eye F2B', 'Right eye B2F'};
+
+mean_bout_speed = cell(size(all_idx)); % one cell per presentation type
+
+for idx = 1:numel(all_idx)
+    mask = all_idx{idx};
+    z = [0; mask(:); 0];
+    d = diff(z);
+    run_starts = find(d == 1);
+    run_ends   = find(d == -1) - 1;
+    mean_this = nan(1, length(run_starts));
+    for i = 1:length(run_starts)
+        bout_idx = run_starts(i) : run_ends(i);
+        mean_this(i) = mean(totalspeed(bout_idx));
+    end
+    mean_bout_speed{idx} = mean_this;
+    % mean_this is now a vector, each element is the average totalspeed for one bout of this condition
+end
+
+% Example: For idx_1_up (first condition), see mean_bout_speed{1}
+% disp('Mean bout speed for F2B:')
+% disp(mean_bout_speed{1})
+
 %% loop for all
 % Assume you have:
 % - t: time vector
 % - dff: dff vector (same length as t)
 % - idx_1_up, idx_1_down, ..., idx_4_down: 8 logical masks (same length)
+speed_cutoff = 3;   % Define cutoff
 all_idx = {idx_1_up, idx_1_down, idx_2_up, idx_2_down, ...
            idx_3_up, idx_3_down, idx_4_up, idx_4_down};
 all_labels = {'F2B', 'B2F', 'CW', 'CCW', ...
@@ -146,16 +175,21 @@ win_pts = round(win_sec / dt);
 figure('Name','DFF Segments by Heading Quadrant & Slope','Position',[100 200 1200 800]);
 n_panels = 8;
 
+
+
 for ax_idx = 1:n_panels
     mask = all_idx{ax_idx};
     z = [0; mask(:); 0];
     d = diff(z);
     run_starts = find(d == 1);
     run_ends   = find(d == -1) - 1;
+    
+    % Get mean speeds for this group (computed as shown previously)
+    mean_this = mean_bout_speed{ax_idx};
 
     dff_segs = {};
-    rel_start_lines = [];
-    rel_end_lines = [];
+    seg_colors = {};
+    
     for i = 1:length(run_starts)
         center_idx = round((run_starts(i) + run_ends(i))/2);
         seg_idx = (center_idx-win_pts):(center_idx+win_pts);
@@ -163,41 +197,55 @@ for ax_idx = 1:n_panels
             continue
         end
         dff_segs{end+1} = dff(seg_idx);
-
-        % Calculate times (in seconds) relative to segment center for run start/end
-        rel_start = (run_starts(i) - center_idx) * dt;
-        rel_end   = (run_ends(i)   - center_idx) * dt;
-        rel_start_lines(end+1) = rel_start;
-        rel_end_lines(end+1) = rel_end;
+        if mean_this(i) > speed_cutoff
+            seg_colors{end+1} = [0 0.7 0];   % green for fast
+        else
+            seg_colors{end+1} = [0.7 0 0];   % red for slow
+        end
     end
 
     if isempty(dff_segs)
         mean_dff = [];
-        t_rel = linspace(-win_sec, win_sec, 2*win_pts+1); % fallback
+        t_rel = linspace(-win_sec, win_sec, 2*win_pts+1);
     else
-        t_rel = t(1:length(dff_segs{1})) - t(win_pts+1); % window centered to zero
+        t_rel = t(1:length(dff_segs{1})) - t(win_pts+1);
         dff_mat = cell2mat(dff_segs');
-        mean_dff = mean(dff_mat, 2, 'omitnan');
+        mean_dff = mean(dff_mat, 1, 'omitnan');
     end
 
     subplot(4,2,ax_idx); hold on;
+    % Plot each segment with its assigned color
     for i = 1:length(dff_segs)
-        plot(t_rel, dff_segs{i}, 'Color', [0.5 0.7 0.9 0.4], 'LineWidth', 1);
+        plot(t_rel, dff_segs{i}, 'Color', [seg_colors{i} 0.5], 'LineWidth', 1.2);
     end
-    % if ~isempty(mean_dff)
-    %     plot(t_rel, mean_dff, 'b', 'LineWidth', 3, 'DisplayName', 'Mean DFF');
-    % end
+    % Add mean line from -1 to 1s (all trials pooled)
+    if ~isempty(mean_dff)
+        idx_line = (t_rel >= -1) & (t_rel <= 1);
+        plot(t_rel(idx_line), mean_dff(idx_line), '-', 'Color', [0.2 0.3 0.9], 'LineWidth', 3);
+    end
     xline(1, 'k--', 'LineWidth', 1.1);
     xline(-1,   'k--', 'LineWidth', 1.1);
+    if ax_idx==1
+        % Add dummy plots for legend
+        h_fast = plot(nan, nan, '-', 'Color', [0 0.7 0 0.7], 'LineWidth', 2);
+        h_slow = plot(nan, nan, '-', 'Color', [0.7 0 0 0.7], 'LineWidth', 2);
+        h_mean = plot(nan, nan, '-', 'Color', [0.2 0.3 0.9], 'LineWidth', 3);
+        legend([h_fast h_slow h_mean], ...
+            {sprintf('Fast (>%.2f)', speed_cutoff),...
+             sprintf('Slow (<%.2f)', speed_cutoff),...
+             'Mean DFF'},...
+             'Location','best')
+    end
+
     xlabel('Time (s)');
     ylabel('DFF');
     title(all_labels{ax_idx});
     hold off;
 end
 
-sgtitle('DFF Based on Pattern Motion (optic lobe)');
-save_plot_with_title_as_filename('all8', 'optic_lobe', savepath)
-    %% now plotting all at once
+sgtitle('DFF Based on Pattern Motion & Bout Avg Speed');
+save_plot_with_title_as_filename('all8', 'optic', savepath)
+%% now plotting all at once
 
 % Assumes you have 'time', 'dff', 'ball_forward_velocity_supp', 'ball_yaw_velocity_supp' (vectors)
 % and idx_1_up ... idx_4_down (logical masks)
@@ -251,7 +299,7 @@ ax = findall(gcf, 'Type', 'axes');
 linkaxes(ax, 'x');
 
 
-save_plot_with_title_as_filename('multi_heading', 'patch_optic_lobe', savepath)
+save_plot_with_title_as_filename('multi_heading', 'patch_optic', savepath)
 
 
 end

@@ -26,6 +26,7 @@ visual = 0;
 box=0;
 split = 0;
 all_8=0;
+do_pause = 0;
 %% load in daq and ts
 % Define the base folder path
 baseFolder = '/Users/sophiarenauld/stacks/'; % Change this to the desired directory
@@ -91,6 +92,8 @@ elseif contains(base_path, 'cmllpo1')
     an4_project = 1;  
 elseif contains(base_path, 'LC33')
     visual = 1;
+elseif contains(base_path, 'lc33')
+    visual = 1;
 else
     an4_project = 0;  
 end
@@ -112,12 +115,20 @@ elseif contains(base_path, 'splitgrating')
 %     visual = 1;
 elseif contains(base_path, 'dbar')
     visual = 1;
+elseif contains(base_path, 'bar')
+    visual = 1;
 end
 
 if contains(base_path, 'all') 
     all_8 = 1;
     visual = 0;
+elseif contains(base_path, 'pauses')
+     visual = 0;
+     do_pause = 1;
+elseif contains(base_path, 'cl')
+     visual = 0;
 end
+
 % Define the directory for the stimulus
 stim_directory = fullfile(base_path, 'smr_analysis');
 
@@ -162,8 +173,12 @@ if visual
 end
 
 if all_8
-     eight_visual_pattern_analysis(a2p_data, savepath, box, split)
+      eight_visual_pattern_analysis(a2p_data, savepath, box, split)
 end
+if do_pause
+      process_pause_data(a2p_data, savepath, box, split)
+end
+
 
 if ves041
     
@@ -172,6 +187,7 @@ if ves041
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
 end
+
 if ~ visual
     save_fly_data(a2p_data, savepath)
 else

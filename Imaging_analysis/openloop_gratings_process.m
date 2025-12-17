@@ -27,13 +27,51 @@ ball_side_velocity = a2p_data.dq(1).bvs;
 ball_side_velocity_supp = a2p_data.dq(2).bvs;
 totalspeed_supp = a2p_data.dq(2).totalspeed;
 
+
+%% cut if necessary
+% Assuming time and all variables are 1D arrays of the same length
+
+% % Set cut-off time
+% t_cut = 100; % Replace 't' with the actual time value you want
+% 
+% % Find indices <= t for dq(1)
+% idx = find(time <= t_cut);
+% 
+% % Find indices <= t for dq(2) (time_supp)
+% idx_supp = find(time_supp <= t_cut);
+% 
+% % Now cut each variable
+% time = time(idx);
+% time_supp = time_supp(idx_supp);
+% 
+% if isfield(a2p_data.dq, 'vho')
+%     visual_heading = a2p_data.dq(1).vho(idx);
+% else
+%     visual_heading = a2p_data.dq(1).vh(idx);
+% end
+% 
+% if isfield(a2p_data.dq, 'vvyo')
+%     visual_pattern_velocity = a2p_data.dq(1).vvyo(idx);
+% else
+%     visual_pattern_velocity = a2p_data.dq(1).vvy(idx);
+% end
+% 
+% ball_forward_velocity = a2p_data.dq(1).bvf(idx);
+% ball_forward_velocity_supp = a2p_data.dq(2).bvf(idx_supp);
+% ball_yaw_velocity = a2p_data.dq(1).bvy_deg(idx);
+% ball_yaw_velocity_supp = a2p_data.dq(2).bvy_deg(idx_supp);
+% ball_side_velocity = a2p_data.dq(1).bvs(idx);
+% ball_side_velocity_supp = a2p_data.dq(2).bvs(idx_supp);
+% totalspeed_supp = a2p_data.dq(2).totalspeed(idx_supp);
+% dff = dff(idx);
+
+
 %% --- LABEL SWITCH ---
 if split
     label_cw  = 'Back-to-Front';
     label_ccw = 'Front-to-Back';
 else
-    % changed bc bright bar was opposite, may need to change when
-    % exmamining dark bar
+    % changed bc bright bar and dark bar were opposite 12.1.2025
     label_cw  = 'Counterclockwise';
     label_ccw = 'Clockwise';
 end
@@ -77,10 +115,10 @@ end
 
     
     positive_slope = zeros(size(visual_heading));
-    positive_slope(visual_heading >= -3.1 & visual_heading <= 0) = 1;
-    % take care of 6hz case
-    if max(visual_pattern_velocity)>2.5
-         positive_slope(visual_heading >= -3.11 & visual_pattern_velocity >= 0) = 1;
+    positive_slope(visual_heading >= -3.1 & visual_pattern_velocity >= 0.02) = 1;
+    % take care of less than 2pi case
+    if max(visual_pattern_velocity)<2.5
+        positive_slope(visual_heading >= -3.1 & visual_heading <= 0) = 1;
     end
     diff_array = diff([0, positive_slope, 0]);
     run_starts = find(diff_array == 1);
@@ -94,9 +132,9 @@ end
     end
     % ccw
     negative_slope = zeros(size(visual_heading));
-    negative_slope(visual_heading >= 0 & visual_heading <= 4) = 1;
-    if max(visual_pattern_velocity)>2.5
-         negative_slope(visual_heading >= -3.11 & visual_pattern_velocity <= 0) = 1;
+    negative_slope(visual_heading >= -3.1 & visual_pattern_velocity <= 0) = 1;
+    if max(visual_pattern_velocity)<2.5
+         negative_slope(visual_heading >= 0 & visual_heading <= 4) = 1;
     end
     diff_array = diff([0, negative_slope, 0]);
     run_starts = find(diff_array == 1);

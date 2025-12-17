@@ -1,11 +1,14 @@
 %% This script is for the purpose of amassing calcium imaging data across flies
 % SMR 8/22/2025
+parent_folder = '/Users/sophiarenauld/stacks';
+pattern = '*LPLC4*splitgrating'; 
+dirs = dir(fullfile(parent_folder, pattern));
+dirs = dirs([dirs.isdir]);
+subfolders = {dirs.name};
 
-% function load_flies_manual.m loads in as many datapoints as you desire
-base_directory = '/Users/sophiarenauld/stacks/';
-batch_data = load_flies_manual(base_directory);
+fly_collection = load_fly_data_structs(parent_folder, subfolders);
 
-% Access the data
+%% Access the data. make structs for forward, pattern, visual etc
 all_dff = batch_data.get_all_dff();  % Cell array of dff from all flies
 forward_vel = batch_data.get_kinematics('bfv_supp');  % Forward velocity from all flies
 all_daq = batch_data.get_all_daq();  % All daq structures
