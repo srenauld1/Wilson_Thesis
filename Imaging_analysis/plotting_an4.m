@@ -12,6 +12,7 @@ yaw = a2p_data.dq(1).bvy_deg;
 side = a2p_data.dq(1).bvs_deg;
 dff = a2p_data.roi.ts(1, :);
 time= a2p_data.dq(1).t;
+time_supp = a2p_data.dq(2).t;
 
 
 %% all 3 one plot

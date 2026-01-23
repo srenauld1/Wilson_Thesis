@@ -652,21 +652,6 @@ set(gcf, 'Color', 'w');
 
 save_plot_with_title_as_filename('scatterplot', 'visual_pattern_pauses_ol_lm', savepath);
 
-%% just record replay
-figure
-hold on
-scatter(visual_pattern_velocity(idx_replay), dff(idx_replay), 20, 'yellow', 'filled', 'DisplayName', 'Replay');
-scatter(visual_pattern_velocity(idx_recording), dff(idx_recording), 20, 'black', 'filled', 'DisplayName', 'Recording');
-
-xlabel('Pattern Velocity');
-ylabel('dF/F');
-title('dF/F vs Visual Pattern Velocity');
-%legend('Location','best')
-grid on
-set(gcf, 'Color', 'w');
-
-save_plot_with_title_as_filename('scatterplot', 'record_replay', savepath);
-
 %% now look at time across closed loop periods
 % Logical mask for included points
 select = ball_forward_velocity > 1;

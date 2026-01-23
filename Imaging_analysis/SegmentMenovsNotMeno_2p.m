@@ -1,4 +1,4 @@
-function [daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(daq, savepath, window, minVel,highThres,lowThres)
+function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres)
 % Performs index by index assignment into menotaxing category based on
 % calculated rho value assigned to that index. Rho is calculated over a
 % window of set length centered on the index including only data points
@@ -28,16 +28,16 @@ function [daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMen
 Meno_chunks = {}; 
 not_Meno_chunks = {};
 
-total_mov_mm = abs(daq.bfv) + abs(daq.bsv) + abs(daq.byv);        
+total_mov_mm = abs(a2p_data.dq(2).bvf) + abs(a2p_data.dq(2).bvs) + abs(a2p_data.dq(2).bvy);        
 no0vel_idx = find(total_mov_mm >= minVel); 
 
 
 count = 1; 
 
 % find jump idxes 
-daq = compute_absolute_circular_diff_2p(daq);
-daq = detect_local_peaks_2p(daq);
-jump_idx = daq.jump_detected;
+a2p_data = compute_absolute_circular_diff_2p(a2p_data);
+a2p_data = detect_local_peaks_2p(a2p_data);
+jump_idx = a2p_data.jump_detected;
 
 % calculate & assign rho value to each datapoint
 mean_headingVectors = [];
@@ -50,30 +50,30 @@ else
 end
 
 keep_idx = intersect(noJump_idx, no0vel_idx);
-newSampRate = length(daq.t)/max(daq.t);
+newSampRate = length(a2p_data.dq(2).t)/max(a2p_data.dq(2).t);
 
-ts_rm = daq;
+ts_rm = a2p_data;
 % Get the field names of the structure
-fieldNames = fieldnames(daq);
-
-% Loop through each field to check for emptiness, character arrays, and nested structs
-for i = 1:length(fieldNames)
-    field = fieldNames{i};  % Current field name
-    fieldValue = daq.(field);  % Get the value of the current field
-    
-    % Check if the field is empty or if it's a character array or a nested struct
-    if isempty(fieldValue) || ...
-       (ischar(fieldValue)) || ... % For empty character arrays
-       isstruct(fieldValue) || ... % For empty nested structs
-       iscell(fieldValue)
-        ts_rm = rmfield(ts_rm, field);  % Remove the field if the conditions are met
-    else
-        if ~(contains(field, 'supp'))
-            ts_rm.(field) = daq.(field)(:,keep_idx);
-        end
-    end
-
-end
+% fieldNames = fieldnames(a2p_data);
+% 
+% % Loop through each field to check for emptiness, character arrays, and nested structs
+% for i = 1:length(fieldNames)
+%     field = fieldNames{i};  % Current field name
+%     fieldValue = a2p_data.(field);  % Get the value of the current field
+% 
+%     % Check if the field is empty or if it's a character array or a nested struct
+%     if isempty(fieldValue) || ...
+%        (ischar(fieldValue)) || ... % For empty character arrays
+%        isstruct(fieldValue) || ... % For empty nested structs
+%        iscell(fieldValue)
+%         ts_rm = rmfield(ts_rm, field);  % Remove the field if the conditions are met
+%     else
+%         if ~(contains(field, 'supp'))
+%             ts_rm.(field) = a2p_data.(field)(:,keep_idx);
+%         end
+%     end
+% 
+% end
 
 window = window * newSampRate; 
 if window > length(keep_idx)
@@ -82,7 +82,7 @@ end
 window = round(window);
 
 
-total_points = length(ts_rm.vy);
+total_points = length(ts_rm.dq(2).vh);
 mean_headingVectors = nan(2, total_points);
 idx_windows = cell(total_points, 1);
 count = 1;
@@ -94,7 +94,7 @@ for i = 1:total_points
     window_end = min(total_points, i + half_window);
     
     % Get angles for this window
-    angles_flyFor = ts_rm.vy(window_start:window_end);
+    angles_flyFor = ts_rm.dq(2).vh(window_start:window_end);
     
     % Calculate mean vector
     x = cos(angles_flyFor);
@@ -165,12 +165,12 @@ end
 
 % Create 2D path trajectory meno = red not meno = black
 
-notNan_idx = find(~isnan(ts_rm.vy) & ~isnan(ts_rm.bfv) & ~isnan(ts_rm.bsv));
-yawAngPos = rad2deg(ts_rm.vy(notNan_idx));
-fwdAngVel = ts_rm.bfv;
-slideAngVel = ts_rm.bsv(notNan_idx);
+notNan_idx = find(~isnan(ts_rm.dq(2).vh) & ~isnan(ts_rm.dq(2).bvf) & ~isnan(ts_rm.dq(2).bvs));
+yawAngPos = rad2deg(ts_rm.dq(2).vh(notNan_idx));
+fwdAngVel = ts_rm.dq(2).bvf;
+slideAngVel = ts_rm.dq(2).bvs(notNan_idx);
 triggerIdx = triggerIdx(notNan_idx); 
-transition = zeros(size(ts_rm.bsv));
+transition = zeros(size(ts_rm.dq(2).bvs));
 
 % N = keep_idx';
 % V = find(transitions == 1);
@@ -211,21 +211,21 @@ minY = min(yPos);
 maxY = max(yPos);
 
 % summary plots
-time = ts_rm.t;
+time = ts_rm.dq(2).t;
 nMenoTime = time(triggerIdx == 0);
 MenoTime = time(triggerIdx ==1); 
 timeStart = time(1); 
 timeEnd = max(time); 
 nRho = rho(triggerIdx == 0); 
 
-mAngle = -ts_rm.vy(triggerIdx ==1);
+mAngle = -ts_rm.dq(2).vh(triggerIdx ==1);
 mRho = rho(triggerIdx == 1); 
 
 figure(77);clf;
 set(gcf,'color','w','renderer','painters')
 h(1) =  subplot(2,1,1);
 hold on
-a = plot(daq.t, daq.vy,'k');
+a = plot(a2p_data.dq(2).t, a2p_data.dq(2).vh,'k');
 b = plot(MenoTime(MenoTime > timeStart & MenoTime < timeEnd),mAngle(MenoTime > timeStart & MenoTime < timeEnd),'r');
 try
     b.XData(abs(diff(b.XData)) > 20) = nan;
@@ -256,18 +256,18 @@ save_plot_with_title_as_filename('rho', 'heading', savepath);
 
 % plot the 2D path trajectory
 figure(88);clf;
-patch('XData',ts_rm.px(triggerIdx == 0),'YData',ts_rm.py(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+patch('XData',ts_rm.dq(2).px(triggerIdx == 0),'YData',ts_rm.dq(2).py(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
 hold on
-patch('XData',ts_rm.px(triggerIdx == 1),'YData',ts_rm.py(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-patch('XData',ts_rm.px(1),'YData',ts_rm.py(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
-patch('XData',ts_rm.px(transition == 1),'YData',ts_rm.py(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
+patch('XData',ts_rm.dq(2).px(triggerIdx == 1),'YData',ts_rm.dq(2).py(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+patch('XData',ts_rm.dq(2).px(1),'YData',ts_rm.dq(2).py(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
+patch('XData',ts_rm.dq(2).px(transition == 1),'YData',ts_rm.dq(2).py(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
 set(gcf,'color','w');
 xlabel('mm')
-xlim([min(min(ts_rm.px),min(ts_rm.py)),max(max(ts_rm.px),max(ts_rm.py))])
-ylim([min(min(ts_rm.px),min(ts_rm.py)),max(max(ts_rm.px),max(ts_rm.py))])
+xlim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
+ylim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
 % Add the jump detected points
-patch('XData', daq.px(daq.jump_detected == 1), ...
-      'YData', daq.py(daq.jump_detected == 1), ...
+patch('XData', a2p_data.dq(2).px(a2p_data.jump_detected == 1), ...
+      'YData', a2p_data.dq(2).py(a2p_data.jump_detected == 1), ...
       'EdgeColor', 'bl', ...
       'FaceColor', 'none', ...
       'LineStyle', 'none', ...
@@ -276,26 +276,30 @@ patch('XData', daq.px(daq.jump_detected == 1), ...
 title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
 save_plot_with_title_as_filename('menotaxis', 'path', savepath);
 
-% % plot the 2D path trajectory - ball
-% figure(89);clf;
-% patch('XData',ts_rm.px_ball(triggerIdx == 0),'YData',ts_rm.py_ball(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-% hold on
-% patch('XData',ts_rm.px_ball(triggerIdx == 1),'YData',ts_rm.py_ball(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-% patch('XData',ts_rm.px_ball(1),'YData',ts_rm.py_ball(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
-% patch('XData',ts_rm.px_ball(transition == 1),'YData',ts_rm.py_ball(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
-% set(gcf,'color','w');
-% xlabel('mm')
-% xlim([min(min(ts_rm.px_ball),min(ts_rm.py_ball)),max(max(ts_rm.px_ball),max(ts_rm.py_ball))])
-% ylim([min(min(ts_rm.px_ball),min(ts_rm.py_ball)),max(max(ts_rm.px_ball),max(ts_rm.py_ball))])
-% % Add the jump detected points
-% patch('XData', daq.px(daq.jump_detected == 1), ...
-%       'YData', daq.py(daq.jump_detected == 1), ...
-%       'EdgeColor', 'bl', ...
-%       'FaceColor', 'none', ...
-%       'LineStyle', 'none', ...
-%       'Marker', '.', ...
-%       'MarkerSize', 10);
-% title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
-% save_plot_with_title_as_filename('menotaxis_ball', 'path', savepath);
+% Add menotaxis struct to a2p_data
+menotaxis_struct = struct();
+menotaxis_struct.is_menotaxing   = zeros(size(a2p_data.dq(2).t)); % always same length as original time
+% Map triggerIdx (which may have had subsetting of indices) back to dq(2).t indices:
+notNan_idx = find(~isnan(ts_rm.dq(2).vh) & ~isnan(ts_rm.dq(2).bvf) & ~isnan(ts_rm.dq(2).bvs));
+menotaxis_struct.is_menotaxing(notNan_idx) = triggerIdx;  % Now matches 2p time vector
+
+% Save parameters
+menotaxis_struct.calc_window   = window/newSampRate; % seconds, as originally passed
+menotaxis_struct.window_pts    = window;             % in points
+menotaxis_struct.minVel        = minVel;
+menotaxis_struct.highThres     = highThres;
+menotaxis_struct.lowThres      = lowThres;
+
+% Optionally, also save rho for each point, and whatever else you like
+menotaxis_struct.rho           = nan(size(a2p_data.dq(2).t));
+menotaxis_struct.rho(notNan_idx) = rho(:);
+
+% Save chunks and indices if desired:
+menotaxis_struct.Meno_chunks      = Meno_chunks;
+menotaxis_struct.not_Meno_chunks  = not_Meno_chunks;
+menotaxis_struct.valid_indices    = notNan_idx; % which indices in data were considered
+
+% Attach to data
+a2p_data.menotaxis = menotaxis_struct;
 
 end

@@ -5,7 +5,7 @@ function plotting_ves041(a2p_data, jump, savepath)
 close all
 
 % menotaxis code
-%[daq, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(daq, savepath, 10, 5,0.88,0.88);
+[a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, 10, 5,0.88,0.88);
 
 %% benhamou_sinuosity(x, y)
 % tuen x and y into columns

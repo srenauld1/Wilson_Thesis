@@ -1,4 +1,4 @@
-function eight_visual_pattern_analysis(a2p_data, savepath, box, split)
+function a2p_data = eight_visual_pattern_analysis(a2p_data, savepath, box, split)
 %% calculate normalized dff if exists 2 rois
 a=size(a2p_data.roi.ts);
 if a(1)>1
@@ -174,7 +174,8 @@ win_pts = round(win_sec / dt);
 
 figure('Name','DFF Segments by Heading Quadrant & Slope','Position',[100 200 1200 800]);
 n_panels = 8;
-
+dff_min = min(dff(:));
+dff_max = max(dff(:));
 
 
 for ax_idx = 1:n_panels
@@ -236,7 +237,7 @@ for ax_idx = 1:n_panels
              'Mean DFF'},...
              'Location','best')
     end
-
+    ylim([dff_min dff_max]);
     xlabel('Time (s)');
     ylabel('DFF');
     title(all_labels{ax_idx});
@@ -300,6 +301,20 @@ linkaxes(ax, 'x');
 
 
 save_plot_with_title_as_filename('multi_heading', 'patch_optic', savepath)
+
+% Save the logical masks for each category for later batch analysis
+a2p_data.visual_pattern_idx.F2B            = idx_1_up;
+a2p_data.visual_pattern_idx.B2F            = idx_1_down;
+a2p_data.visual_pattern_idx.CW             = idx_2_up;
+a2p_data.visual_pattern_idx.CCW            = idx_2_down;
+a2p_data.visual_pattern_idx.LeftEye_F2B    = idx_3_up;
+a2p_data.visual_pattern_idx.LeftEye_B2F    = idx_3_down;
+a2p_data.visual_pattern_idx.RightEye_F2B   = idx_4_up;
+a2p_data.visual_pattern_idx.RightEye_B2F   = idx_4_down;
+
+% Add labels so you can retrieve in order
+a2p_data.visual_pattern_idx.labels = {'F2B','B2F','CW','CCW',...
+                                      'LeftEye_F2B','LeftEye_B2F','RightEye_F2B','RightEye_B2F'};
 
 
 end
