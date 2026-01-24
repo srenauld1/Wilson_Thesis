@@ -158,7 +158,7 @@ if LPLC4
     elseif entry_code ==1
         a2p_data = process_pause_data(a2p_data, savepath, box, split, 1);
     elseif entry_code == 2
-        a2p_data = process_pause_data(a2p_data, savepath, box, split, 1);
+        a2p_data = process_pause_data(a2p_data, savepath, box, split, 0);
     elseif entry_code == 3
         a2p_data = process_bar_mp_data(a2p_data, savepath, box, split);
     elseif entry_code==4
