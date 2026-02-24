@@ -2,7 +2,7 @@
 % SMR 8/22/2025
 parent_folder = '/Users/sophiarenauld/stacks';
 %pattern = input('What string to screen for? (EX: ''*LPLC4*_bar_final''): ', 's');
-pattern = '*lplc4*8_final';
+pattern = '*LC33*_complete';
 dirs = dir(fullfile(parent_folder, pattern));
 dirs = dirs([dirs.isdir]);
 subfolders = {dirs.name};
@@ -16,7 +16,8 @@ analysis_input = input('What sort of analysis? 0=single pattern roation, 1=8 pat
 
 if analysis_input == 0
 % flies to skip for the bright bar
-to_flip = {'x20251001_13_1', 'x20250904_3_1', 'x20250812_5_1', 'x20250630_2_1'};
+to_flip = {'x20251031_13_1', 'x20251114_12_1'};
+% LPLC4 {'x20251001_13_1', 'x20250904_3_1', 'x20250812_5_1', 'x20250630_2_1'};
 % --- Compute global range ---
 fly_ids = fieldnames(fly_collection);
 n_flies = numel(fly_ids);
@@ -126,7 +127,7 @@ for panel = 1:2
     
     legend(h_legend, fly_ids, 'Location', 'best', 'Box', 'off', 'Interpreter', 'none');
 end
-save_plot_with_title_as_filename('cw_bar', 'ccw_bar','/Users/sophiarenauld/stacks/LPLC4_crunch')
+save_plot_with_title_as_filename('cw_bar', 'ccw_bar','/Users/sophiarenauld/stacks/LC33_crunch')
 
 %% now analyze 8 pattern things
 

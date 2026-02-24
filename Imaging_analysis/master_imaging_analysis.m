@@ -13,8 +13,8 @@
 % chopped up by the specific optostim going on
 % [exptData, exptMeta] = plotExpt_sliced_opto_velocity(expData, exptMeta, savepath);
 
-close all
-clear all
+%close all
+%clear all
 
 %% initialize variables
 neck = 0;
@@ -75,7 +75,6 @@ elseif contains(base_path, 'lplc4')
     LPLC4 = 1;
 elseif contains(base_path, 'LC22')
     an4_project = 1;  
-    visual = 1;
 elseif contains(base_path, 'LT51')
     an4_project = 1;  
     visual = 1;
@@ -152,7 +151,8 @@ end
 
 %% LPLC4 specific
 if LPLC4
-    entry_code = input('Analyze LPLC4 trial: (0=dark, 1 = replay only, 2 = full closed loop gamut, 3 = bright bar with stars, 4=open loop, 5=all 8 gratings) = ');
+    entry_code = input(['Analyze LPLC4 trial: (0=dark, 1 = replay only, 2 = full closed loop gamut, 3 = bright bar with stars, 4=open loop, ' ...
+        '5=all 8 gratings, 6= f2bb2f bar) = ']);
     if entry_code == 0 
         plotting_an4(a2p_data, jump, savepath)
     elseif entry_code ==1
@@ -166,6 +166,8 @@ if LPLC4
         visual = 1;
     elseif entry_code==5
         a2p_data = eight_visual_pattern_analysis(a2p_data, savepath, box, split);
+    elseif entry_code == 6
+        a2p_data = openloop_bar_bidirectional_process(a2p_data, savepath, box, split);
     end
 end
 

@@ -204,7 +204,7 @@ end
 
 figure; hold on
 plot(a2p_data.dq(1).t, replay, 'r', 'LineWidth',1.5)
-plot(a2p_data.dq(1).t, visual_pattern_velocity, 'b')
+plot(a2p_data.dq(1).t, visual_heading, 'b')
 xlabel('Time (s)');
 legend('Replay','Visual Pattern Velocity');
 title('Replay (red) and Pattern Velocity (blue)');
@@ -252,7 +252,9 @@ end
 
 figure; hold on
 plot(a2p_data.dq(1).t, recording, 'r', 'LineWidth',1.5)
-plot(a2p_data.dq(1).t, visual_pattern_velocity, 'b')
+plot(a2p_data.dq(1).t, replay, 'y', 'LineWidth',1.5)
+plot(a2p_data.dq(1).t, visual_heading, 'b')
+
 xlabel('Time (s)');
 legend('Recording','Visual Pattern Velocity');
 title('Recording (red) and Pattern Velocity (blue)');
@@ -701,5 +703,67 @@ title('dF/F vs Forward Velocity (blue darkens as t increases)');
 set(gcf, 'Color', 'w');
 
 save_plot_with_title_as_filename('cl_scatterplot', 'time', savepath)
+
+%% === Overlay record/replay epochs, mean and all single trials ===
+% (average and all single trial traces)
+
+% Find contiguous recording intervals
+recording_mask = a2p_data.recording(:) > 0;
+replay_mask    = a2p_data.replay(:)    > 0;
+time           = a2p_data.dq(1).t(:);
+dff            = a2p_data.roi.ts(1,:)';
+
+% Helper: extract segments given binary mask
+function [dff_segs, t_segs] = extract_segments(mask, dff, time)
+    mask_padded = [0; mask; 0];
+    dmask = diff(mask_padded);
+    seg_start = find(dmask == 1);
+    seg_end   = find(dmask == -1) - 1;
+    dff_segs = {};
+    t_segs   = {};
+    for i = 1:length(seg_start)
+        idxs = seg_start(i):seg_end(i);
+        dff_segs{end+1} = dff(idxs);
+        t_segs{end+1}   = time(idxs) - time(idxs(1));  % align to 0
+    end
+end
+
+[rec_dffs, rec_times] = extract_segments(recording_mask, dff, time);
+[rep_dffs, rep_times] = extract_segments(replay_mask, dff, time);
+
+% --- Crop all to the shortest segment ---
+if isempty(rec_dffs) || isempty(rep_dffs)
+    disp('No record or replay epochs detected!');
+else
+    minlen = min([cellfun(@length, [rec_dffs, rep_dffs])]);
+    for i=1:length(rec_dffs), rec_dffs{i} = rec_dffs{i}(1:minlen); rec_times{i} = rec_times{i}(1:minlen); end
+    for i=1:length(rep_dffs), rep_dffs{i} = rep_dffs{i}(1:minlen); rep_times{i} = rep_times{i}(1:minlen); end
+
+    tvec = rec_times{1};  % all are the same now
+
+    rec_mat = cell2mat(rec_dffs');
+    rep_mat = cell2mat(rep_dffs');
+
+    avg_rec = mean(rec_mat,1);
+    avg_rep = mean(rep_mat,1);
+
+    figure;
+    hold on
+    % plot single trial rec in gray
+    for i = 1:size(rec_mat,1), plot(tvec, rec_mat(i,:), 'Color',[.4 .4 .4 .3],'LineWidth',1); end
+    % plot single trial rep in yellow
+    for i = 1:size(rep_mat,1), plot(tvec, rep_mat(i,:), 'Color',[.8 .8 0 .3],'LineWidth',1); end
+    % plot means
+    plot(tvec, avg_rec, 'k-', 'LineWidth', 2.5, 'DisplayName','Record mean');
+    plot(tvec, avg_rep, 'Color', [1 .85 0], 'LineWidth',2.5, 'DisplayName','Replay mean');
+
+    xline(0, 'k--');
+    xlabel('Time from epoch start (s)');
+    ylabel('dF/F');
+    legend({'Record trials','Replay trials','Record mean','Replay mean'});
+    title('Overlay of Record and Replay Epochs');
+    set(gcf,'Color','w');
+    save_plot_with_title_as_filename('record_vs_replay', 'overlay', savepath)
+end
 
 end

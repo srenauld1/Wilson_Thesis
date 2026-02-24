@@ -1,4 +1,4 @@
-function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres)
+function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump)
 % Performs index by index assignment into menotaxing category based on
 % calculated rho value assigned to that index. Rho is calculated over a
 % window of set length centered on the index including only data points
@@ -25,25 +25,31 @@ function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = Segme
 % bData_interp: downsampled behaviour data, used to assign correct category
 % to 1000Hz sampled data in Group_Meno_notMeno_ephys.m
 
+% sophia switched minvel to be minfwd vel
+
 Meno_chunks = {}; 
 not_Meno_chunks = {};
 
-total_mov_mm = abs(a2p_data.dq(2).bvf) + abs(a2p_data.dq(2).bvs) + abs(a2p_data.dq(2).bvy);        
-no0vel_idx = find(total_mov_mm >= minVel); 
+total_mov_mm = abs(a2p_data.dq(2).bvf) + abs(a2p_data.dq(2).bvs) + abs(a2p_data.dq(2).bvy);
+
+
+no0vel_idx = find(a2p_data.dq(2).bvf >= 5); 
 
 
 count = 1; 
-
-% find jump idxes 
-a2p_data = compute_absolute_circular_diff_2p(a2p_data);
-a2p_data = detect_local_peaks_2p(a2p_data);
-jump_idx = a2p_data.jump_detected;
+if jump
+    % find jump idxes 
+    a2p_data = compute_absolute_circular_diff_2p(a2p_data);
+    a2p_data = detect_local_peaks_2p(a2p_data);
+    jump_idx = a2p_data.jump_detected;
+else
+    jump_idx = zeros(size(a2p_data.dq(1).bvf));
 
 % calculate & assign rho value to each datapoint
 mean_headingVectors = [];
 
 all_idx =  no0vel_idx;
-if isempty(jump_idx)
+if sum(jump_idx)==0
     noJump_idx = all_idx;
 else
     noJump_idx = all_idx(~ismember(all_idx, jump_idx));
@@ -80,6 +86,7 @@ if window > length(keep_idx)
     window = length(keep_idx); 
 end
 window = round(window);
+window = 10
 
 
 total_points = length(ts_rm.dq(2).vh);
@@ -266,13 +273,15 @@ xlabel('mm')
 xlim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
 ylim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
 % Add the jump detected points
-patch('XData', a2p_data.dq(2).px(a2p_data.jump_detected == 1), ...
-      'YData', a2p_data.dq(2).py(a2p_data.jump_detected == 1), ...
-      'EdgeColor', 'bl', ...
-      'FaceColor', 'none', ...
-      'LineStyle', 'none', ...
-      'Marker', '.', ...
-      'MarkerSize', 10);
+if jump
+    patch('XData', a2p_data.dq(2).px(a2p_data.jump_detected == 1), ...
+          'YData', a2p_data.dq(2).py(a2p_data.jump_detected == 1), ...
+          'EdgeColor', 'bl', ...
+          'FaceColor', 'none', ...
+          'LineStyle', 'none', ...
+          'Marker', '.', ...
+          'MarkerSize', 10);
+end
 title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
 save_plot_with_title_as_filename('menotaxis', 'path', savepath);
 
