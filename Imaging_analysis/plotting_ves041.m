@@ -5,7 +5,7 @@ function plotting_ves041(a2p_data, jump, savepath)
 close all
 
 % menotaxis code
-[a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, 10, 5,0.88,0.88, jump);
+[a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, 10, 1,0.88,0.88, jump);
 
 %% benhamou_sinuosity(x, y)
 % tuen x and y into columns
@@ -813,8 +813,10 @@ figure;
 
 % --- Subplot 1: dF/F ---
 subplot(3,1,1); hold on
-% Plot light yellow boxes where is_menotaxing_on_dff == 1
-meno = is_menotaxing_on_dff(:) & (smooth(fwd(:)) > 2);
+% Plot light yellow boxes where is_menotaxing_on_dff == 1 SEGMENT FWD VEL
+% TOGGLE
+%meno = is_menotaxing_on_dff(:) & (smooth(fwd(:)) > 2);
+meno = is_menotaxing_on_dff(:);
 t = time(:);
 signal = dff(:);
 

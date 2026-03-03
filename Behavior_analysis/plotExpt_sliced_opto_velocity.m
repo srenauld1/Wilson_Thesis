@@ -116,8 +116,11 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
 
                 % opto off fwd and rot
                 pre_opto = (pre_opto_start:segment_indices(1));
+                pre_opto = pre_opto_start : pre_opto_start + numel(segment_indices) - 1;
                 pre_opto_fwd = fwd_vel(pre_opto);
                 pre_opto_rot = abs(angular_vel(pre_opto));
+
+
 
                 % take average for trial
                 average_fwd = mean(opto_on_fwd);
@@ -156,13 +159,13 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         end
 
         average_fwd = mean(opto_averages_fwd);
-        %disp(["OPTO ON FWD AVE:", num2str(average_fwd)])
+        disp(["OPTO ON FWD AVE:", num2str(average_fwd)])
         average_rot = mean(opto_averages_rot);
-        %disp(["OPTO ON ROT AVE:", num2str(average_rot)])
+        disp(["OPTO ON ROT AVE:", num2str(average_rot)])
         average_fwd_no = mean(no_averages_fwd);
-        %disp(["PRE-OPTO FWD AVE:", num2str(average_fwd_no)])
+        disp(["PRE-OPTO FWD AVE:", num2str(average_fwd_no)])
         average_rot_no = mean(no_averages_rot);
-        %disp(["PRE-OPTO ROT AVE:", num2str(average_rot_no)])
+        disp(["PRE-OPTO ROT AVE:", num2str(average_rot_no)])
         % acceleration
         average_fwd_accel = mean(opto_averages_fwdaccel);
         %disp(["OPTO ON FWD ACCELERATION AVE:", num2str(average_fwd_accel)])

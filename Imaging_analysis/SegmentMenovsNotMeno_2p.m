@@ -33,7 +33,7 @@ not_Meno_chunks = {};
 total_mov_mm = abs(a2p_data.dq(2).bvf) + abs(a2p_data.dq(2).bvs) + abs(a2p_data.dq(2).bvy);
 
 
-no0vel_idx = find(a2p_data.dq(2).bvf >= 5); 
+no0vel_idx = find(a2p_data.dq(2).bvf >= 0); 
 
 
 count = 1; 
@@ -43,7 +43,7 @@ if jump
     a2p_data = detect_local_peaks_2p(a2p_data);
     jump_idx = a2p_data.jump_detected;
 else
-    jump_idx = zeros(size(a2p_data.dq(1).bvf));
+    jump_idx = zeros(size(a2p_data.dq(2).bvf));
 
 % calculate & assign rho value to each datapoint
 mean_headingVectors = [];
@@ -86,7 +86,6 @@ if window > length(keep_idx)
     window = length(keep_idx); 
 end
 window = round(window);
-window = 10
 
 
 total_points = length(ts_rm.dq(2).vh);
@@ -119,6 +118,10 @@ triggerIdxRho = schmittTrigger(rho',highThres,lowThres);
 triggerIdx = zeros(size(triggerIdxRho)); 
 triggerIdx(triggerIdxRho == 1) = 1; 
 
+% Only count as menotaxis if forward velocity > 3 mm/s:
+fwd_mask = ts_rm.dq(2).bvf > minVel;  % or >= 3 if you prefer "at least"
+triggerIdx(~fwd_mask) = 0;
+
 
 % connect meno chunks if non meno is shorter than x seconds (optional)
 pastMenoIdx = 1;
@@ -141,6 +144,7 @@ if i > 1
     end
 end
 end
+
 
 % Group meno & not meno data chunks in arrays
 

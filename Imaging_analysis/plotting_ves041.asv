@@ -813,8 +813,10 @@ figure;
 
 % --- Subplot 1: dF/F ---
 subplot(3,1,1); hold on
-% Plot light yellow boxes where is_menotaxing_on_dff == 1
-meno = is_menotaxing_on_dff(:) & (smooth(fwd(:)) > 2);
+% Plot light yellow boxes where is_menotaxing_on_dff == 1 SEGMENT FWD VEL
+% TOGGLE
+%meno = is_menotaxing_on_dff(:) & (smooth(fwd(:)) > 2);
+meno = is_menotaxing_on_dff(:)
 t = time(:);
 signal = dff(:);
 
