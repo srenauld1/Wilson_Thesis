@@ -49,6 +49,6 @@ function save_fly_data(a2p_data, varargin)
     end
 
     % Save the data
-    save(full_filepath, 'fly_data');
+    save(full_filepath, 'fly_data', '-v7.3');
     fprintf('Fly data saved: %s\n', full_filepath);
 end

@@ -57,7 +57,7 @@ title('Pattern and DFF');
 
 % Optional: Add legend
 legend('Pattern', 'dff');
-%save_plot_with_title_as_filename('Pattern', 'dff', savepath);
+save_plot_with_title_as_filename('Pattern', 'dff', savepath);
 %% variables
 % frequency
 freq = time(end)/length(time);
@@ -118,16 +118,18 @@ idx_4_down = keep_runs_min_length(idx_4_down, remove_if_shorter_than);
 % pi is right eye
 % up is cw/f2b, down is ccw/b2f
 
-figure; hold on;
-plot(t(idx_1_up),   heading(idx_1_up),   'r.', 'DisplayName', 'F2B');
-plot(t(idx_1_down), heading(idx_1_down), 'ro', 'DisplayName', 'B2F');
-plot(t(idx_2_up),   heading(idx_2_up),   'g.', 'DisplayName', 'CW');
-plot(t(idx_2_down), heading(idx_2_down), 'go', 'DisplayName', 'CCW');
-plot(t(idx_3_up),   heading(idx_3_up),   'b.', 'DisplayName', 'Left eye F2B');
-plot(t(idx_3_down), heading(idx_3_down), 'bo', 'DisplayName', 'Left eye B2F');
-plot(t(idx_4_up),   heading(idx_4_up),   'm.', 'DisplayName', 'Right eye F2B');
-plot(t(idx_4_down), heading(idx_4_down), 'mo', 'DisplayName', 'Right eye B2F');
-legend; hold off;
+
+% UNCOMMENT TO TROUBLESHOOT CATEGORIZATION
+% figure; hold on;
+% plot(t(idx_1_up),   heading(idx_1_up),   'r.', 'DisplayName', 'F2B');
+% plot(t(idx_1_down), heading(idx_1_down), 'ro', 'DisplayName', 'B2F');
+% plot(t(idx_2_up),   heading(idx_2_up),   'g.', 'DisplayName', 'CW');
+% plot(t(idx_2_down), heading(idx_2_down), 'go', 'DisplayName', 'CCW');
+% plot(t(idx_3_up),   heading(idx_3_up),   'b.', 'DisplayName', 'Left eye F2B');
+% plot(t(idx_3_down), heading(idx_3_down), 'bo', 'DisplayName', 'Left eye B2F');
+% plot(t(idx_4_up),   heading(idx_4_up),   'm.', 'DisplayName', 'Right eye F2B');
+% plot(t(idx_4_down), heading(idx_4_down), 'mo', 'DisplayName', 'Right eye B2F');
+% legend; hold off;
 
 totalspeed = a2p_data.dq(1).totalspeed;
 

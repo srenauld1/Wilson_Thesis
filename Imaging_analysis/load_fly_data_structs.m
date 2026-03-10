@@ -37,7 +37,7 @@ for k = 1:numel(subfolders)
                 end
             end
             if ~found
-                warning('No fly_data struct found in %s', mat_path);
+                print('No fly_data struct found in %s', mat_path);
                 continue
             end
         end

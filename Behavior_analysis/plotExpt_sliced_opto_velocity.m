@@ -32,17 +32,31 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
     on_off = 0;
 
     %% define variables
-    opto=exptData.optoStim;
-    time = exptData.t;
     % define angular velocity
-    angular_vel = exptData.angularVelocity_raw(:, 1:30:end);
-    fwd_vel = exptData.forwardVelocity_raw(:, 1:30:end);
+    angular_vel = exptData.angularVelocity_raw;
+    fwd_vel = exptData.forwardVelocity_raw;
+    n_angular = size(angular_vel, 2);
+
+    % original time vector
+    % Original opto and its time base
+    opto = exptData.optoStim;    % [1 x N] or [N x 1]
+    t_opto = exptData.t;     % [1 x N] or [N x 1]
     
+    % Target time points (upsampled), matching angularVelocity_raw
+    n_angular = size(exptData.angularVelocity_raw, 2);
+    time_up = linspace(t_opto(1), t_opto(end), n_angular);
+    
+    % Upsample opto using nearest neighbor (step-wise, no interpolation)
+    opto_up = interp1(t_opto(:), opto(:), time_up(:), 'nearest', 0);
+    % opto_up is now [n_angular x 1] or [1 x n_angular]
+
+    time = time_up;
+    opto = opto_up';
 
     %% chop up by opto blocks
     if checkOpto
         % Find the change points in the opto signal
-        change_points = [1, find(diff(exptData.optoStim) ~= 0) + 1, length(exptData.optoStim)];
+        change_points = [1; find(diff(opto(:)) ~= 0) + 1; length(opto)];
         % Initialize cell arrays to store segments of velocity
         velocity_segments_optoon = {};  % Velocity when opto is 1
         velocity_segments_optooff = {};  % Velocity when opto is 0
@@ -78,8 +92,8 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
 
         %% now chop up with preface & plot
         % Define the number of timepoints to include before opto-on
-        pre_opto_points = 1000;
-        post_opto_points = 1000;
+        pre_opto_points = 1000*30;
+        post_opto_points = 1000*30;
 
 
         % Initialize cell arrays to store segments of velocity
@@ -282,7 +296,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
                 still_pre_opto{end+1} = fwdvelocity_segments_optoon_extra{i};
                 ave_still{end+1} = fwdvelocity_segments_optoon_trimmed{i};
                 still_pre_opto_rot{end+1} = rotvel_segments_optoon_extra{i};
-                ave_still_rot{end+1} = rotvel_segments_optoon_trimmed{i};
+                ave_still_rot{end+1} = abs(rotvel_segments_optoon_trimmed{i});
                 
             else
                 moving_pre_opto{end+1} = fwdvelocity_segments_optoon_extra{i};
@@ -368,13 +382,13 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         ylabel('Rotational speed (deg/s)');
         title('Moving pre-opto');
         hold off;
-        
+   
         % Subplot 2: Speed
         subplot(2, 1, 2);  % Create the second subplot (2 rows, 1 column, position 2)
         hold on;
         % Plot each raw "optoon" speed segment in lighter blue
         for i = 1:length(still_pre_opto_rot)
-            plot(time(1:length(still_pre_opto_rot{i})), still_pre_opto_rot{i}, 'Color', [1 0.5 0.5], 'LineWidth', 1);  % Lighter blue
+            plot(time(1:length(still_pre_opto_rot{i})), abs(still_pre_opto_rot{i}), 'Color', [1 0.5 0.5], 'LineWidth', 1);  % Lighter blue
             xline(time(opto_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
             xline(time(opto_off_markers(1)), 'k--', 'LineWidth', 1.5);
         end

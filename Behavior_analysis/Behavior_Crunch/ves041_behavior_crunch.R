@@ -2,6 +2,7 @@
 
 ### BLINDED RUBYACR ###
 library(dplyr)
+library(readxl)
 
 # LOAD IN AND LABEL DATA --------------------------------------------------
 

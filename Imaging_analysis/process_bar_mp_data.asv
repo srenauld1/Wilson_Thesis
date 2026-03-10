@@ -281,8 +281,8 @@ figure; hold on
 % Scatter data
 scatter(ball_forward_velocity(bar_on==1 & select & gain8==1), dff(bar_on==1 & select & gain8==1), 20, 'b', 'filled', 'DisplayName', 'bar on, gain 8');
 scatter(ball_forward_velocity(gain8==1 & select & bar_on ==0), dff(gain8==1 & select & bar_on ==0), 20, 'r', 'filled', 'DisplayName', 'bar off, gain 8');
-scatter(ball_forward_velocity(gain4==1 & select & bar_on ==0), dff(gain4==1 & select & bar_on ==0), 20, 'g', 'filled', 'DisplayName', 'bar off, gain 4');
-scatter(ball_forward_velocity(gain4==1 & select & bar_on ==1), dff(gain4==1 & select & bar_on ==1), 20, 'm', 'filled', 'DisplayName', 'bar on, gain 0.4');
+scatter(ball_forward_velocity(gain4==1 & select & bar_on ==0), dff(gain4==1 & select & bar_on ==0), 20, 'g', 'filled', 'DisplayName', 'gain 4, bar');
+scatter(ball_forward_velocity(gain4==1 & select & bar_on ==1), dff(gain4==1 & select & bar_on ==1), 20, 'm', 'filled', 'DisplayName', 'gain 0.4, no bar');
 % Linear fit for no bar 0.8
 if sum(idx_no_bar8) > 1
     x_run = ball_forward_velocity(idx_no_bar8);
