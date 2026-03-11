@@ -78,7 +78,7 @@ disp(['Save path: ', savepath]);
 plot_flatpath_opto(exptData, savepath)
 
 %% now plot sinuosity
-S = benhamou_sinuosity(exptData.x', exptData.y');
+% S = benhamou_sinuosity(exptData.x', exptData.y');
 
 
 
