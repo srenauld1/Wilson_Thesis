@@ -210,9 +210,9 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         % Plot each raw "optoon" velocity segment in lighter green
         for i = 1:length(fwdvelocity_segments_optoon_extra)
             plot(time(1:length(fwdvelocity_segments_optoon_extra{i})), fwdvelocity_segments_optoon_extra{i}, 'Color', [0.5 1 0.5], 'LineWidth', 1);  % Lighter green
+            xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
+            xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
         end
-        xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
-        xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
         
         % Plot the average velocity for "optoon" in bold green
         plot(time(1:length(average_velocity_optoon)), average_velocity_optoon, 'g', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
@@ -230,9 +230,9 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         % Plot each raw "optoon" speed segment in lighter blue
         for i = 1:length(rotvel_segments_optoon_trimmed)
             plot(time(1:length(rotvel_segments_optoon_trimmed{i})), abs(rotvel_segments_optoon_trimmed{i}), 'Color', [0.5 0.5 1], 'LineWidth', 1);  % Lighter blue
+            xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
+            xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
         end
-        xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
-        xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
         
         % Calculate and plot the average speed for "optoon" in bold blue
         plot(time(1:length(rotvel_segments_optoon_trimmed{1})), average_speed_optoon, 'b', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Speed');
@@ -265,9 +265,8 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         for i = 1:length(fwdvelocity_segments_optoon_trimmed)
             % pre-speed should be definded as the 1 second prior to
             % stimulation
-            opto_points_prespeed_calc = round((pre_opto_points-20000+1)):round(pre_opto_points);
-            pre_speed = mean(fwdvelocity_segments_optoon_trimmed{i}(opto_points_prespeed_calc));
-            pre_speed_rot = mean(rotvel_segments_optoon_trimmed{i}(opto_points_prespeed_calc));
+            pre_speed = mean(fwdvelocity_segments_optoon_trimmed{i}(round((pre_opto_points-20000)):round(pre_opto_points)));
+            pre_speed_rot = mean(rotvel_segments_optoon_trimmed{i}(round((pre_opto_points-20000)):round(pre_opto_points)));
             if pre_speed <minVel
                 %disp("Still")
                 still_pre_opto{end+1} = fwdvelocity_segments_optoon_extra{i};
@@ -341,10 +340,9 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         % Plot each raw "optoon" velocity segment in lighter green
         for i = 1:length(moving_pre_opto_rot)
             plot(time(1:length(moving_pre_opto_rot{i})), abs(moving_pre_opto_rot{i}), 'Color', [0.8, 0.3, 0], 'LineWidth', 1);  % Lighter green
-
+            xline(time(opto_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
+            xline(time(opto_off_markers(1)), 'k--', 'LineWidth', 1.5);
         end
-        xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
-        xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
 
         % Plot the average velocity for "optoon" in bold green
         plot(time(1:length(moving_ave_rot)), moving_ave_rot, 'Color', [1, 0.5, 0], 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
@@ -362,9 +360,9 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         % Plot each raw "optoon" speed segment in lighter blue
         for i = 1:length(still_pre_opto_rot)
             plot(time(1:length(still_pre_opto_rot{i})), abs(still_pre_opto_rot{i}), 'Color', [1 0.5 0.5], 'LineWidth', 1);  % Lighter blue
+            xline(time(opto_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
+            xline(time(opto_off_markers(1)), 'k--', 'LineWidth', 1.5);
         end
-        xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
-        xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
         % Plot the average velocity for "optoon" in bold green
         plot(time(1:length(still_ave_rot)), still_ave_rot, 'r', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
    
@@ -385,9 +383,9 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         % Plot each raw "optoon" velocity segment in lighter green
         for i = 1:length(moving_pre_opto)
             plot(time(1:length(moving_pre_opto{i})), moving_pre_opto{i}, 'Color', [0.75, 0, 0.75], 'LineWidth', 1);  % Lighter green
+            xline(time(opto_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
+            xline(time(opto_off_markers(1)), 'k--', 'LineWidth', 1.5);
         end
-        xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
-        xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
 
         % Plot the average velocity for "optoon" in bold green
         plot(time(1:length(moving_ave)), moving_ave, 'Color', [1 0 1], 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
@@ -405,9 +403,9 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         % Plot each raw "optoon" speed segment in lighter blue
         for i = 1:length(still_pre_opto)
             plot(time(1:length(still_pre_opto{i})), still_pre_opto{i}, 'Color', [1 0.5 0.5], 'LineWidth', 1);  % Lighter blue
+            xline(time(opto_on_markers(1)), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
+            xline(time(opto_off_markers(1)), 'k--', 'LineWidth', 1.5);
         end
-        xline(time(round(opto_on_markers(1))), 'k--', 'LineWidth', 1.5);  % Dashed black line at opto-on marker
-        xline(time(round(opto_off_markers(1))), 'k--', 'LineWidth', 1.5);
         % Plot the average velocity for "optoon" in bold green
         plot(time(1:length(still_ave)), still_ave, 'r', 'LineWidth', 3, 'DisplayName', 'Average Opto-On Velocity');
        
