@@ -81,6 +81,13 @@ disp(['Save path: ', savepath]);
 %% plot flatpath with opto on and off
 plot_flatpath_opto(exptData, savepath)
 
+% <<<<<<< HEAD
+%% now plot sinuosity
+% S = benhamou_sinuosity(exptData.x', exptData.y');
+
+
+
+
 % %% now plot sinuosity
 % S = benhamou_sinuosity(exptData.x', exptData.y');
 % 
@@ -154,3 +161,4 @@ plot_flatpath_opto(exptData, savepath)
 % 
 % fprintf('Mean ON: %.3f, Mean OFF: %.3f\n', mean(sinuosity_on), mean(sinuosity_off));
 % save_plot_with_title_as_filename("sinuosity_opto_on", "opto_off", savepath)
+
