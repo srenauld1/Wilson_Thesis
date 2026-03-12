@@ -25,6 +25,9 @@ lplc4=0;
 visual = 0;
 box=0;
 split = 0;
+all_8=0;
+do_pause = 0;
+LPLC4=0;
 %% load in daq and ts
 % Define the base folder path
 baseFolder = '/Users/sophiarenauld/stacks/'; % Change this to the desired directory
@@ -67,8 +70,9 @@ end
 if contains(base_path, 'an4')
     an4_project = 1;  
 elseif contains(base_path, 'LPLC4')
-    an4_project = 1;  
-    visual = 1;
+    LPLC4 = 1;
+elseif contains(base_path, 'lplc4')
+    LPLC4 = 1;
 elseif contains(base_path, 'LC22')
     an4_project = 1;  
     visual = 1;
@@ -87,28 +91,13 @@ elseif contains(base_path, 'cmllpo1')
     an4_project = 1;  
 elseif contains(base_path, 'LC33')
     visual = 1;
+elseif contains(base_path, 'lc33')
+    visual = 1;
 else
     an4_project = 0;  
 end
 
-if contains(base_path, 'box')
-    box=1;
-    visual = 1; 
-elseif contains(base_path, 'olgrating')
-    visual = 1; 
-elseif contains(base_path, 'vgrating')
-    visual = 1; 
-    split=0;
-elseif contains(base_path, 'hgrating')
-    visual = 1; 
-elseif contains(base_path, 'splitgrating')
-    visual = 1;
-    split=1;
-% elseif contains(base_path, 'bbar')
-%     visual = 1;
-elseif contains(base_path, 'dbar')
-    visual = 1;
-end
+
 % Define the directory for the stimulus
 stim_directory = fullfile(base_path, 'smr_analysis');
 
@@ -140,65 +129,52 @@ if neck
     % NOT ADJUSTED FOR NEW A2P
     plotting_neck(a2p_data, dat, savepath)
 end
-
 if an4_project % this includes all other visual cells
-  
-    plotting_an4(a2p_data, jump, savepath)
-    %lm_velocity(a2p_data, dat, savepath)
-    
+    plotting_an4(a2p_data, jump, savepath)  %lm_velocity(a2p_data, dat, savepath)
 end
 if visual
     plotting_an4(a2p_data, jump, savepath)
-    [a2p_data, dff_motion] =  (a2p_data, savepath, box, split);
+    [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split);
 end
-
+if all_8
+      eight_visual_pattern_analysis(a2p_data, savepath, box, split)
+end
+if do_pause
+      a2p_data = process_pause_data(a2p_data, savepath, box, split);
+end
 if ves041
     
     %% basic velocity and dff plotting
     plotting_ves041(a2p_data, jump, savepath)
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
+end
+
+%% LPLC4 specific
+if LPLC4
+    entry_code = input('Analyze LPLC4 trial: (0=dark, 1 = replay only, 2 = full closed loop gamut, 3 = bright bar with stars, 4=open loop, 5=all 8 gratings) = ');
+    if entry_code == 0 
+        plotting_an4(a2p_data, jump, savepath)
+    elseif entry_code ==1
+        a2p_data = process_pause_data(a2p_data, savepath, box, split, 1);
+    elseif entry_code == 2
+        a2p_data = process_pause_data(a2p_data, savepath, box, split, 0);
+    elseif entry_code == 3
+        a2p_data = process_bar_mp_data(a2p_data, savepath, box, split);
+    elseif entry_code==4
+        [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split);
+        visual = 1;
+    elseif entry_code==5
+        a2p_data = eight_visual_pattern_analysis(a2p_data, savepath, box, split);
+    end
+end
+
+%% save data
+
+if ~ visual
     save_fly_data(a2p_data, savepath)
 else
     save_fly_data(a2p_data, dff_motion, savepath)
 end
 
 
-
-
-%% adjust variables
-fields = fieldnames(a2p_data);
-% old nomenclature
-% patterns = {'byv','bfv','bsv','byv_supp','bfv_supp','bsv_supp', 'vy', 'vy_supp', 'vyv', 'vyv_supp'};
-% replacements = {'bvy','bvf','bvs','bvy_supp','bvf_supp','bvs_supp', 'vh', 'vh_supp', 'vvy', 'vvy_supp'};
-
-% for i = 1:numel(fields)
-%     oldname = fields{i};
-%     newname = oldname;
-%     for p = 1:numel(patterns)
-%         % Only do replacement if matches exactly (for _supp and such)
-%         if strcmp(oldname, patterns{p})
-%             newname = replacements{p};
-%             break % stop after first exact match
-%         end
-%     end
-%     if ~strcmp(oldname, newname)
-%         a2p_data.(newname) = a2p_data.(oldname);
-%         a2p_data = rmfield(a2p_data, oldname);
-%     end
-% end
-% 
-% if exist('ts','var')
-%     if iscell(ts) && numel(ts)==1
-%         ts = ts{1};
-%     end
-% end
-% 
-% if exist('ts','var')
-%     dat{1,1}.ts = ts;
-% end
-% 
-% % Assume dat is a 1x1 cell containing a struct
-% if iscell(dat) && numel(dat)==1 && isstruct(dat{1})
-%     dat = dat{1};
-% end

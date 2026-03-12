@@ -133,7 +133,7 @@ save_plot_with_title_as_filename('cw_bar', 'ccw_bar','/Users/sophiarenauld/stack
 
 elseif analysis_input == 1
 % PARAMS: Update as needed
-to_flip = {'x20251118_4_1', '20251121_3_1'}; % flies to flip for right-eye perspective
+to_flip = {'x20251118_4', '20251121_3'}; % flies to flip for right-eye perspective
 idx_labels = {'F2B','B2F','CW','CCW','LeftEye_F2B','LeftEye_B2F','RightEye_F2B','RightEye_B2F'};
 
 fly_ids = fieldnames(fly_collection);
@@ -247,16 +247,13 @@ end
 linkaxes(link_axes,'x');
 sgtitle('Multi-Fly: Visual Pattern Category dF/F; All Bouts, Per-Fly Mean, Grand Mean')
 
-% Create invisible axes in the far right
-ax_legend = axes('Position',[0.92 0.5 0.01 0.01],'Visible','off');
-hold(ax_legend, 'on')
+Create dummy lines in the right color for the legend
+subplot(4,2,1); hold on
+h_legend = gobjects(n_flies,1);
 for f = 1:n_flies
-    plot(ax_legend, nan, nan, '-', 'Color', fly_colors(f,:), 'LineWidth', 2);
+    h_legend(f) = plot(nan, nan, '-', 'Color', fly_colors(f,:), 'LineWidth', 2);
 end
-h = findall(ax_legend,'Type','line');
-legend(ax_legend, h, fly_ids, ...
-    'Location', 'eastoutside', ...
-    'Interpreter', 'none', ...
-    'Box', 'off');
+legend(h_legend, fly_ids, 'Location', 'northeastoutside', 'Interpreter', 'none', 'Box', 'off');
+
 
 end
