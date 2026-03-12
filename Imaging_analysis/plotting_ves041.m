@@ -1,60 +1,8 @@
 
 %% function
-function plotting_ves041(a2p_data, jump, savepath)
+function a2p_data = plotting_ves041(a2p_data, jump, savepath)
 
 close all
-
-% menotaxis code
-[a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, 10, 1,0.88,0.88, jump);
-
-%% benhamou_sinuosity(x, y)
-% tuen x and y into columns
-x = a2p_data.dq(1).pxb';
-y =a2p_data.dq(1).pyb';
-x_supp = a2p_data.dq(2).pxb';
-y_supp =a2p_data.dq(2).pyb';
-ball_px = a2p_data.dq(2).pxb;
-ball_py = a2p_data.dq(2).pyb;
-S = benhamou_sinuosity(x, y);
-S_supp = benhamou_sinuosity(x_supp, y_supp);
-S_quarters = benhamou_sinuosity(x, y, true);
-S_quarters_supp = benhamou_sinuosity(x_supp, y_supp, true);
-px = a2p_data.dq(2).pxb(:);
-py = a2p_data.dq(2).pyb(:);
-N = numel(px);
-
-% Quarters splitting
-quarters = round(linspace(1, N+1, 5)); % Edges for the 4 quarters
-
-% Choose 4 colors (default lines)
-colrs = lines(4);
-
-figure; hold on;
-legtxt = cell(1,4);
-for q = 1:4
-    idx = quarters(q):(quarters(q+1)-1);
-    plot(px(idx), py(idx), '-', 'Color', colrs(q,:), 'LineWidth', 2);
-    % Prepare legend text
-    legtxt{q} = sprintf('Q%d: S = %.2f', q, S_quarters_supp(q));
-    % Annotate the middle of the segment
-    mididx = idx(1) + floor(numel(idx)/2);
-    text(px(mididx), py(mididx), sprintf('%.2f', S_quarters_supp(q)), ...
-         'Color', colrs(q,:), 'FontWeight','bold', 'FontSize', 10, 'VerticalAlignment','bottom');
-end
-
-xlabel('x'); ylabel('y'); axis equal
-legend(legtxt,'Location','best');
-title(['Trajectory split in quarters (whole S = ' sprintf('%.2f', S) ')']);
-
-% Also display the S value in top-right corner
-xl = xlim; yl = ylim;
-text(xl(2), yl(2), sprintf('S = %.2f', S), ...
-    'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', ...
-    'FontWeight', 'bold', 'FontSize', 12, 'BackgroundColor', 'w', 'EdgeColor', 'k');
-
-hold off;
-
-save_plot_with_title_as_filename('benhamou_sinuosity', 'x_y', savepath);
 %% define variables
 time = a2p_data.dq(1).t;                  % Time points
 dff = a2p_data.roi.ts(1, :);                    % Example dFF data
@@ -105,68 +53,68 @@ sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
 
 save_plot_with_title_as_filename('fwd_rot', 'dff_separate', savepath);
 
-%% flat path colored by dff (dots with non-linear scaling)
-cmap = jet(100);
-ball_px = a2p_data.dq(2).pxb;
-ball_py = a2p_data.dq(2).pyb;
-
-% Non-linear scaling options for dff (choose one):
-% Option 1: Square root scaling (compresses high values)
-dff_scaled = sqrt((dff - min(dff)) / (max(dff) - min(dff)));
-%dff_scaled = ((dff - min(dff)) / (max(dff) - min(dff)));
-
-% Option 2: Logarithmic scaling (for positive values)
-% dff_scaled = log((dff - min(dff) + 1)) / log(max(dff) - min(dff) + 1);
-
-% Option 3: Power scaling (enhances small differences)
-% dff_scaled = ((dff - min(dff)) / (max(dff) - min(dff))).^0.5;
-
-% Option 4: Sigmoid scaling (S-curve)
-% dff_norm_temp = (dff - min(dff)) / (max(dff) - min(dff));
-% dff_scaled = 1 ./ (1 + exp(-10 * (dff_norm_temp - 0.5)));
-
-% Convert scaled values to colormap indices
-dff_norm = round(dff_scaled * (length(cmap) - 1)) + 1;
-
-figure
-hold on
-
-% Plot as scatter points instead of lines
-scatter(ball_px, ball_py, 10, cmap(dff_norm, :), 'filled', 'MarkerEdgeColor', 'none');
-min_value = min([ball_px(:); ball_py(:)]);
-max_value = max([ball_px(:); ball_py(:)]);
-xlim([min_value max_value]);
-ylim([min_value max_value]);
-
-% Create colorbar with actual DFF values
-c = colorbar;
-caxis([1 100])  % Set colorbar limits to match normalized range
-yticks = get(c, 'YTick');  % Get current tick positions
-
-% Convert normalized values back to actual DFF values using inverse transformation
-% For square root scaling:
-actual_scaled = (yticks - 1) / 99;  % Convert back to 0-1 range
-actual_values = (actual_scaled.^2) * (max(dff) - min(dff)) + min(dff);
-
-% For logarithmic scaling (uncomment if using log scaling):
-% actual_scaled = (yticks - 1) / 99;
-% actual_values = (exp(actual_scaled * log(max(dff) - min(dff) + 1)) - 1) + min(dff);
-
-ylabel(c, 'DFF')
-set(c, 'YTickLabel', arrayfun(@(x) sprintf('%.3f', x), actual_values, 'UniformOutput', false))
-
-% Add jump points
-% if jump
-%     plot(daq.px(logical(daq.jump_detected)), ...
-%          daq.py(logical(daq.jump_detected)), ...
-%          'm.', 'MarkerSize', 15)  % Adjust color and size as needed
-% end
-
-% Start point
-plot(ball_px(1), ball_py(1), 'r.', 'MarkerSize', 20)
-
-title("DFF colored,cue flat path - dots")
-save_plot_with_title_as_filename('x_color_powerscale', 'y_color_powerscale', savepath);
+% %% flat path colored by dff (dots with non-linear scaling)
+% cmap = jet(100);
+% ball_px = a2p_data.dq(2).pxb;
+% ball_py = a2p_data.dq(2).pyb;
+% 
+% % Non-linear scaling options for dff (choose one):
+% % Option 1: Square root scaling (compresses high values)
+% dff_scaled = sqrt((dff - min(dff)) / (max(dff) - min(dff)));
+% %dff_scaled = ((dff - min(dff)) / (max(dff) - min(dff)));
+% 
+% % Option 2: Logarithmic scaling (for positive values)
+% % dff_scaled = log((dff - min(dff) + 1)) / log(max(dff) - min(dff) + 1);
+% 
+% % Option 3: Power scaling (enhances small differences)
+% % dff_scaled = ((dff - min(dff)) / (max(dff) - min(dff))).^0.5;
+% 
+% % Option 4: Sigmoid scaling (S-curve)
+% % dff_norm_temp = (dff - min(dff)) / (max(dff) - min(dff));
+% % dff_scaled = 1 ./ (1 + exp(-10 * (dff_norm_temp - 0.5)));
+% 
+% % Convert scaled values to colormap indices
+% dff_norm = round(dff_scaled * (length(cmap) - 1)) + 1;
+% 
+% figure
+% hold on
+% 
+% % Plot as scatter points instead of lines
+% scatter(ball_px, ball_py, 10, cmap(dff_norm, :), 'filled', 'MarkerEdgeColor', 'none');
+% min_value = min([ball_px(:); ball_py(:)]);
+% max_value = max([ball_px(:); ball_py(:)]);
+% xlim([min_value max_value]);
+% ylim([min_value max_value]);
+% 
+% % Create colorbar with actual DFF values
+% c = colorbar;
+% caxis([1 100])  % Set colorbar limits to match normalized range
+% yticks = get(c, 'YTick');  % Get current tick positions
+% 
+% % Convert normalized values back to actual DFF values using inverse transformation
+% % For square root scaling:
+% actual_scaled = (yticks - 1) / 99;  % Convert back to 0-1 range
+% actual_values = (actual_scaled.^2) * (max(dff) - min(dff)) + min(dff);
+% 
+% % For logarithmic scaling (uncomment if using log scaling):
+% % actual_scaled = (yticks - 1) / 99;
+% % actual_values = (exp(actual_scaled * log(max(dff) - min(dff) + 1)) - 1) + min(dff);
+% 
+% ylabel(c, 'DFF')
+% set(c, 'YTickLabel', arrayfun(@(x) sprintf('%.3f', x), actual_values, 'UniformOutput', false))
+% 
+% % Add jump points
+% % if jump
+% %     plot(daq.px(logical(daq.jump_detected)), ...
+% %          daq.py(logical(daq.jump_detected)), ...
+% %          'm.', 'MarkerSize', 15)  % Adjust color and size as needed
+% % end
+% 
+% % Start point
+% plot(ball_px(1), ball_py(1), 'r.', 'MarkerSize', 20)
+% 
+% title("DFF colored,cue flat path - dots")
+% save_plot_with_title_as_filename('x_color_powerscale', 'y_color_powerscale', savepath);
 %% now interactively plot dff and yaw velocity
 %trajectory_region_selector(a2p_data, dff, jump)
 

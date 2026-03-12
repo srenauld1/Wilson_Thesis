@@ -123,6 +123,9 @@ a2p_data = process_fictrac_panels_2p(a2p_data, vel_on, vel_off, jump);
 %% now here i will have a function to extract saccades - REMOVED
 % [a2p_data, saccade_both] = find_saccades_2p(a2p_data, yaw_information_right,yaw_information_left, forvel_cutoff, 0);
 % [a2p_data, saccade_both_supp] = find_saccades_2p(a2p_data, yaw_information_right_supp,yaw_information_left_supp, forvel_cutoff, 1);
+
+
+
 %% plot basic variables
 if neck
     % NOT ADJUSTED FOR NEW A2P
@@ -142,9 +145,33 @@ if do_pause
       a2p_data = process_pause_data(a2p_data, savepath, box, split);
 end
 if ves041
+    %% calculate sinuosity and menotaxis
+    % menotaxis code
+    % window in seconds to look at heading
+    window = 15;
+    % minVel, minimum forward velocity to qualify
+    minVel = 1;
+    % high thresh is rho to count as menotaxis
+    highThres = 0.88;
+    % low thresh is rho to come out of menotaxis
+    lowThres = 0.7;
+    [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump);
     
+    a2p_data = plot_flat_path_colored(a2p_data, 'rho', savepath);
+
+    % sinuosity
+    window_sec = 30; % desired window in seconds
+    dt = median(diff(a2p_data.dq(2).t)); % or your timebase
+    window_pts = round(window_sec / dt);
+    a2p_data = add_sinuosity_sliding(a2p_data, window_pts);
+
+    a2p_data = plot_flat_path_colored(a2p_data, 'sinuosity', savepath);
+
+    % plot dff
+    a2p_data = plot_flat_path_colored(a2p_data, 'dff', savepath);
+
     %% basic velocity and dff plotting
-    plotting_ves041(a2p_data, jump, savepath)
+    a2p_data = plotting_ves041(a2p_data, jump, savepath);
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
 end
@@ -178,5 +205,8 @@ if ~ visual
 else
     save_fly_data(a2p_data, dff_motion, savepath)
 end
+
+
+
 
 

@@ -29,6 +29,9 @@ function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = Segme
 
 Meno_chunks = {}; 
 not_Meno_chunks = {};
+triggerIdx = [];
+rho = [];
+ts_rm = [];
 
 total_mov_mm = abs(a2p_data.dq(2).bvf) + abs(a2p_data.dq(2).bvs) + abs(a2p_data.dq(2).bvy);
 
@@ -44,6 +47,7 @@ if jump
     jump_idx = a2p_data.jump_detected;
 else
     jump_idx = zeros(size(a2p_data.dq(2).bvf));
+end
 
 % calculate & assign rho value to each datapoint
 mean_headingVectors = [];
@@ -88,7 +92,7 @@ end
 window = round(window);
 
 
-total_points = length(ts_rm.dq(2).vh);
+total_points = length(ts_rm.dq(2).bh);
 mean_headingVectors = nan(2, total_points);
 idx_windows = cell(total_points, 1);
 count = 1;
@@ -100,7 +104,7 @@ for i = 1:total_points
     window_end = min(total_points, i + half_window);
     
     % Get angles for this window
-    angles_flyFor = ts_rm.dq(2).vh(window_start:window_end);
+    angles_flyFor = ts_rm.dq(2).bh(window_start:window_end);
     
     % Calculate mean vector
     x = cos(angles_flyFor);
@@ -176,8 +180,8 @@ end
 
 % Create 2D path trajectory meno = red not meno = black
 
-notNan_idx = find(~isnan(ts_rm.dq(2).vh) & ~isnan(ts_rm.dq(2).bvf) & ~isnan(ts_rm.dq(2).bvs));
-yawAngPos = rad2deg(ts_rm.dq(2).vh(notNan_idx));
+notNan_idx = find(~isnan(ts_rm.dq(2).bh) & ~isnan(ts_rm.dq(2).bvf) & ~isnan(ts_rm.dq(2).bvs));
+yawAngPos = rad2deg(ts_rm.dq(2).bh(notNan_idx));
 fwdAngVel = ts_rm.dq(2).bvf;
 slideAngVel = ts_rm.dq(2).bvs(notNan_idx);
 triggerIdx = triggerIdx(notNan_idx); 
@@ -229,14 +233,14 @@ timeStart = time(1);
 timeEnd = max(time); 
 nRho = rho(triggerIdx == 0); 
 
-mAngle = -ts_rm.dq(2).vh(triggerIdx ==1);
+mAngle = -ts_rm.dq(2).bh(triggerIdx ==1);
 mRho = rho(triggerIdx == 1); 
 
 figure(77);clf;
 set(gcf,'color','w','renderer','painters')
 h(1) =  subplot(2,1,1);
 hold on
-a = plot(a2p_data.dq(2).t, a2p_data.dq(2).vh,'k');
+a = plot(a2p_data.dq(2).t, a2p_data.dq(2).bh,'k');
 b = plot(MenoTime(MenoTime > timeStart & MenoTime < timeEnd),mAngle(MenoTime > timeStart & MenoTime < timeEnd),'r');
 try
     b.XData(abs(diff(b.XData)) > 20) = nan;
@@ -293,7 +297,7 @@ save_plot_with_title_as_filename('menotaxis', 'path', savepath);
 menotaxis_struct = struct();
 menotaxis_struct.is_menotaxing   = zeros(size(a2p_data.dq(2).t)); % always same length as original time
 % Map triggerIdx (which may have had subsetting of indices) back to dq(2).t indices:
-notNan_idx = find(~isnan(ts_rm.dq(2).vh) & ~isnan(ts_rm.dq(2).bvf) & ~isnan(ts_rm.dq(2).bvs));
+notNan_idx = find(~isnan(ts_rm.dq(2).bh) & ~isnan(ts_rm.dq(2).bvf) & ~isnan(ts_rm.dq(2).bvs));
 menotaxis_struct.is_menotaxing(notNan_idx) = triggerIdx;  % Now matches 2p time vector
 
 % Save parameters
