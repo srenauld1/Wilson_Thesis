@@ -75,18 +75,11 @@ disp(['Save path: ', savepath]);
 [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel);
 
 %% plot velocity data split up by opto chunks
-% using raw data alone
+% using raw d
 [exptData,  exptMeta, fwdvelocity_segments_optoon_trimmed, rotvel_segments_optoon_trimmed] = plotExpt_sliced_opto_velocity(exptData, exptMeta, savepath);
 
 %% plot flatpath with opto on and off
 plot_flatpath_opto(exptData, savepath)
-
-% <<<<<<< HEAD
-%% now plot sinuosity
-% S = benhamou_sinuosity(exptData.x', exptData.y');
-
-
-
 
 % %% now plot sinuosity
 % S = benhamou_sinuosity(exptData.x', exptData.y');
@@ -161,4 +154,3 @@ plot_flatpath_opto(exptData, savepath)
 % 
 % fprintf('Mean ON: %.3f, Mean OFF: %.3f\n', mean(sinuosity_on), mean(sinuosity_off));
 % save_plot_with_title_as_filename("sinuosity_opto_on", "opto_off", savepath)
-

@@ -9,16 +9,18 @@ close all
 
 %% benhamou_sinuosity(x, y)
 % tuen x and y into columns
-x = a2p_data.dq(1).px';
-y =a2p_data.dq(1).py';
-x_supp = a2p_data.dq(2).px';
-y_supp =a2p_data.dq(2).py';
+x = a2p_data.dq(1).pxb';
+y =a2p_data.dq(1).pyb';
+x_supp = a2p_data.dq(2).pxb';
+y_supp =a2p_data.dq(2).pyb';
+ball_px = a2p_data.dq(2).pxb;
+ball_py = a2p_data.dq(2).pyb;
 S = benhamou_sinuosity(x, y);
 S_supp = benhamou_sinuosity(x_supp, y_supp);
 S_quarters = benhamou_sinuosity(x, y, true);
 S_quarters_supp = benhamou_sinuosity(x_supp, y_supp, true);
-px = a2p_data.dq(1).px(:);
-py = a2p_data.dq(1).py(:);
+px = a2p_data.dq(2).pxb(:);
+py = a2p_data.dq(2).pyb(:);
 N = numel(px);
 
 % Quarters splitting
@@ -33,10 +35,10 @@ for q = 1:4
     idx = quarters(q):(quarters(q+1)-1);
     plot(px(idx), py(idx), '-', 'Color', colrs(q,:), 'LineWidth', 2);
     % Prepare legend text
-    legtxt{q} = sprintf('Q%d: S = %.2f', q, S_quarters(q));
+    legtxt{q} = sprintf('Q%d: S = %.2f', q, S_quarters_supp(q));
     % Annotate the middle of the segment
     mididx = idx(1) + floor(numel(idx)/2);
-    text(px(mididx), py(mididx), sprintf('%.2f', S_quarters(q)), ...
+    text(px(mididx), py(mididx), sprintf('%.2f', S_quarters_supp(q)), ...
          'Color', colrs(q,:), 'FontWeight','bold', 'FontSize', 10, 'VerticalAlignment','bottom');
 end
 
@@ -79,7 +81,7 @@ grid on;
 
 % Subplot 2: Forward Velocity
 subplot(3, 1, 2);  % Second subplot
-plot(time_kin, smooth(fwd_supp), 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
+plot(time_kin, fwd_supp, 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
 xlabel('Time (s)');
 ylabel('Forward Velocity (mm/s)');
 title('Forward Velocity');
@@ -88,7 +90,7 @@ ylim([-5 20]);
 
 % Subplot 3: Rotational Velocity
 subplot(3, 1, 3);  % Third subplot
-plot(time_kin, smooth(rot_supp), 'r', 'LineWidth', 1.5);  % Plot rotational velocity in blue
+plot(time_kin, rot_supp, 'r', 'LineWidth', 1.5);  % Plot rotational velocity in blue
 xlabel('Time (s)');
 ylabel('Rotational Velocity (deg/s)');
 title('Rotational Velocity');
@@ -105,8 +107,8 @@ save_plot_with_title_as_filename('fwd_rot', 'dff_separate', savepath);
 
 %% flat path colored by dff (dots with non-linear scaling)
 cmap = jet(100);
-ball_px = a2p_data.dq(1).pxb;
-ball_py = a2p_data.dq(1).pyb;
+ball_px = a2p_data.dq(2).pxb;
+ball_py = a2p_data.dq(2).pyb;
 
 % Non-linear scaling options for dff (choose one):
 % Option 1: Square root scaling (compresses high values)
@@ -135,11 +137,6 @@ min_value = min([ball_px(:); ball_py(:)]);
 max_value = max([ball_px(:); ball_py(:)]);
 xlim([min_value max_value]);
 ylim([min_value max_value]);
-%axis equal; % (optional: keep aspect ratio square)
-% Alternative: Plot as individual dots with plot()
-% for i = 1:length(daq.px)
-%     plot(daq.px(i), daq.py(i), '.', 'Color', cmap(dff_norm(i), :), 'MarkerSize', 15)
-% end
 
 % Create colorbar with actual DFF values
 c = colorbar;
@@ -815,7 +812,6 @@ figure;
 subplot(3,1,1); hold on
 % Plot light yellow boxes where is_menotaxing_on_dff == 1 SEGMENT FWD VEL
 % TOGGLE
-%meno = is_menotaxing_on_dff(:) & (smooth(fwd(:)) > 2);
 meno = is_menotaxing_on_dff(:);
 t = time(:);
 signal = dff(:);
@@ -846,7 +842,7 @@ hold off
 subplot(3,1,2); hold on
 % Upsample/interpolate meno to time_kin if needed
 meno_kin = interp1(t, double(meno), time_kin(:), 'nearest', 0);
-signal = smooth(fwd_supp(:));
+signal = fwd_supp(:);
 tk = time_kin(:);
 
 yl = [min(signal) max(signal)];
@@ -871,7 +867,7 @@ hold off
 
 % --- Subplot 3: Rotational Velocity ---
 subplot(3,1,3); hold on
-signal = smooth(rot_supp(:));
+signal = rot_supp(:);
 tk = time_kin(:);
 
 yl = [min(signal) max(signal)];
