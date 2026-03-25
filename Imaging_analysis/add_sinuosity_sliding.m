@@ -2,7 +2,7 @@ function a2p_data = add_sinuosity_sliding(a2p_data, window)
 % Add pointwise sinuosity to a2p_data using a sliding window.
 % Input:
 %   a2p_data - struct with fields x and y (both nx1 or 1xn)
-%   window   - number of points in the window (should be odd for symmetric)
+%   window   - number of POINTS in the window (should be odd for symmetric)
 %
 % Output:
 %   a2p_data.sinuosity - [n x 1] vector with sliding window sinuosity

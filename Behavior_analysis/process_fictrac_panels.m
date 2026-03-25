@@ -1,7 +1,7 @@
 % process_fictrac_panels.m
 %
 % Function that adjusts the exptData from behavior trials on the behavior
-% patio to make sure all things are the same dimentions, re-center the G4
+% patio to make sure all things are the same dimensions, re-center the G4
 % panels, detect jumps, and overly smooths fictrac data for finding peaks
 %
 % INPUTS:
@@ -27,21 +27,15 @@
 
 
 function [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel)
-    
-    % reset counters
-    n = 0;
+
     
     % set number of sublots based on number of expt variables
     checkG4 = contains(exptMeta.exptCond,'g4','IgnoreCase',true);
-    checkFicTrac = contains(exptMeta.exptCond,'fictrac','IgnoreCase',true);
-    checkOpto = contains(exptMeta.exptCond,'stim','IgnoreCase',true); %not separate
-    checkPython = contains(exptMeta.exptCond,'jump','IgnoreCase',true); %not separate
-    checkOpenLoop = isfield(exptMeta, 'func');
+    checkOpto = contains(exptMeta.exptCond,'stim','IgnoreCase',true);
     
     %% adjust panel display
     if checkG4
-        if std(exptData.g4displayXPos) %and only if not stationary
-            n = n+1; % update counter
+        if std(exptData.g4displayXPos, 'omitnan') > 0 %and only if not stationary
             
             % pull xpos data for pre-plot processing
             g4Pos_mod = exptData.g4displayXPos;
@@ -61,7 +55,8 @@ function [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel
                 end
 
                 % hide noise caused by data acquisition or motion across sides
-                g4Pos_mod(abs(diff(g4Pos_mod))>2) = nan;
+                jump_mask = [false, abs(diff(g4Pos_mod)) > 2];  % flags the point AFTER the jump
+                g4Pos_mod(jump_mask) = nan;
                 g4Pos_mod(isoutlier(g4Pos_mod)) = nan;
 
                 % else no function used, center but do not remove noise
@@ -74,21 +69,30 @@ function [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel
     %% Behavior variable adjustments
     %downsample time and optoopto and g4
     exptData.t = downsample(exptData.t, 30);
-    exptData.optoStim = downsample(exptData.optoStim, 30);
-    exptData.g4displayXPos = downsample(exptData.g4displayXPos, 30);
+    if checkOpto
+        exptData.optoStim = downsample(exptData.optoStim, 30);
+    end
+    if checkG4
+        exptData.g4displayXPos = downsample(exptData.g4displayXPos, 30);
+    end
 
     %% detect jumps
     exptData = compute_absolute_circular_diff(exptData);
     exptData = detect_local_peaks(exptData);
+    if ~isfield(exptData, 'jump_detected')
+    error('detect_local_peaks did not produce jump_detected field');
+    end
 
     %% add in jump buffer for later calculations
     % Define the padding size on each side
     one_indices = find(exptData.jump_detected == 1);
+
     jump_idx = exptData.jump_detected;
     
     % Define the padding size on each side
     buffer_before_and_after_jump = 2;
-    padding = buffer_before_and_after_jump*60;
+    post_downsample_rate = round(length(exptData.jump_detected) / max(exptData.t));
+    padding = buffer_before_and_after_jump * post_downsample_rate;
     
     % Expand each 1 into a block of ones
     for i = 1:length(one_indices)
@@ -101,6 +105,9 @@ function [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel
     exptData.omit_jump_blocks = jump_idx;
 
     %% create moving not moving binary
+    if ~isfield(exptData, 'totSpeed')
+    error('exptData.totSpeed not found. Is FicTrac data present?');
+    end
     ids_fly_moving = find(exptData.totSpeed >= minVel);
 
     % Create a column for moving/not moving
@@ -126,9 +133,15 @@ function [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel
     
     % Loop through each field and transpose the data
     for i = 1:length(fieldNames)
-        field = fieldNames{i};              % Get the current field name
-        flippedStruct.(field) = exptData.(field)';  % Transpose the data to a row vector
+        field = fieldNames{i};
+        data = exptData.(field);
+        if isnumeric(data) || islogical(data)
+            flippedStruct.(field) = data(:).';   % force row vector
+        else
+            flippedStruct.(field) = data;        % leave structs/cells unchanged
+        end
     end
+
     exptData = flippedStruct;
 
 

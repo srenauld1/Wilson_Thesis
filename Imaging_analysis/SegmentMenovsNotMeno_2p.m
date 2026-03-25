@@ -1,4 +1,4 @@
-function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump)
+function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump, plot)
 % Performs index by index assignment into menotaxing category based on
 % calculated rho value assigned to that index. Rho is calculated over a
 % window of set length centered on the index including only data points
@@ -36,7 +36,7 @@ ts_rm = [];
 total_mov_mm = abs(a2p_data.dq(2).bvf) + abs(a2p_data.dq(2).bvs) + abs(a2p_data.dq(2).bvy);
 
 
-no0vel_idx = find(a2p_data.dq(2).bvf >= 0); 
+no0vel_idx = find(abs(a2p_data.dq(2).bvf) >= 0); 
 
 
 count = 1; 
@@ -123,7 +123,7 @@ triggerIdx = zeros(size(triggerIdxRho));
 triggerIdx(triggerIdxRho == 1) = 1; 
 
 % Only count as menotaxis if forward velocity > 3 mm/s:
-fwd_mask = ts_rm.dq(2).bvf > minVel;  % or >= 3 if you prefer "at least"
+fwd_mask = ts_rm.dq(2).bvf > abs(minVel);  % or >= 3 if you prefer "at least"
 triggerIdx(~fwd_mask) = 0;
 
 
@@ -235,64 +235,65 @@ nRho = rho(triggerIdx == 0);
 
 mAngle = -ts_rm.dq(2).bh(triggerIdx ==1);
 mRho = rho(triggerIdx == 1); 
+if plot
+    figure(77);clf;
+    set(gcf,'color','w','renderer','painters')
+    h(1) =  subplot(2,1,1);
+    hold on
+    a = plot(a2p_data.dq(2).t, a2p_data.dq(2).bh,'k');
+    b = plot(MenoTime(MenoTime > timeStart & MenoTime < timeEnd),mAngle(MenoTime > timeStart & MenoTime < timeEnd),'r');
+    try
+        b.XData(abs(diff(b.XData)) > 20) = nan;
+    catch
+    end
+    ylabel('HD')
+    ylim([0,360])
+    xlim([timeStart,timeEnd])
+    box off
+    h(2) = subplot(2,1,2);
+    hold on
+    c = plot(nMenoTime(nMenoTime > timeStart & nMenoTime < timeEnd),nRho(nMenoTime > timeStart & nMenoTime < timeEnd),'k');
+    try
+        % remove lines connecting cue angle transitions from 0 to 180 & jumps
+        c.XData(abs(diff(c.XData)) > 10) = nan;
+    catch
+    end
+    d = plot(MenoTime(MenoTime > timeStart & MenoTime < timeEnd),mRho(MenoTime > timeStart & MenoTime < timeEnd),'r');
+    try
+        d.XData(abs(diff(d.XData)) > 10) = nan;
+    catch
+    end
+    ylabel('rho')
+    box off
+    xlim([timeStart,timeEnd])
+    linkaxes(h,'x')
+    save_plot_with_title_as_filename('rho', 'heading', savepath);
 
-figure(77);clf;
-set(gcf,'color','w','renderer','painters')
-h(1) =  subplot(2,1,1);
-hold on
-a = plot(a2p_data.dq(2).t, a2p_data.dq(2).bh,'k');
-b = plot(MenoTime(MenoTime > timeStart & MenoTime < timeEnd),mAngle(MenoTime > timeStart & MenoTime < timeEnd),'r');
-try
-    b.XData(abs(diff(b.XData)) > 20) = nan;
-catch
-end
-ylabel('HD')
-ylim([0,360])
-xlim([timeStart,timeEnd])
-box off
-h(2) = subplot(2,1,2);
-hold on
-c = plot(nMenoTime(nMenoTime > timeStart & nMenoTime < timeEnd),nRho(nMenoTime > timeStart & nMenoTime < timeEnd),'k');
-try
-    % remove lines connecting cue angle transitions from 0 to 180 & jumps
-    c.XData(abs(diff(c.XData)) > 10) = nan;
-catch
-end
-d = plot(MenoTime(MenoTime > timeStart & MenoTime < timeEnd),mRho(MenoTime > timeStart & MenoTime < timeEnd),'r');
-try
-    d.XData(abs(diff(d.XData)) > 10) = nan;
-catch
-end
-ylabel('rho')
-box off
-xlim([timeStart,timeEnd])
-linkaxes(h,'x')
-save_plot_with_title_as_filename('rho', 'heading', savepath);
 
-% plot the 2D path trajectory
-figure(88);clf;
-patch('XData',ts_rm.dq(2).px(triggerIdx == 0),'YData',ts_rm.dq(2).py(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-hold on
-patch('XData',ts_rm.dq(2).px(triggerIdx == 1),'YData',ts_rm.dq(2).py(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
-patch('XData',ts_rm.dq(2).px(1),'YData',ts_rm.dq(2).py(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
-patch('XData',ts_rm.dq(2).px(transition == 1),'YData',ts_rm.dq(2).py(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
-set(gcf,'color','w');
-xlabel('mm')
-xlim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
-ylim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
-% Add the jump detected points
-if jump
-    patch('XData', a2p_data.dq(2).px(a2p_data.jump_detected == 1), ...
-          'YData', a2p_data.dq(2).py(a2p_data.jump_detected == 1), ...
-          'EdgeColor', 'bl', ...
-          'FaceColor', 'none', ...
-          'LineStyle', 'none', ...
-          'Marker', '.', ...
-          'MarkerSize', 10);
+    % plot the 2D path trajectory
+    figure(88);clf;
+    patch('XData',ts_rm.dq(2).px(triggerIdx == 0),'YData',ts_rm.dq(2).py(triggerIdx == 0),'EdgeColor','k','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+    hold on
+    patch('XData',ts_rm.dq(2).px(triggerIdx == 1),'YData',ts_rm.dq(2).py(triggerIdx == 1),'EdgeColor','r','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',3);
+    patch('XData',ts_rm.dq(2).px(1),'YData',ts_rm.dq(2).py(1),'EdgeColor','g','FaceColor','none','LineStyle','none','Marker','.', 'MarkerSize',20);
+    patch('XData',ts_rm.dq(2).px(transition == 1),'YData',ts_rm.dq(2).py(transition == 1),'EdgeColor','b','FaceColor','none','LineStyle','none','Marker','o', 'MarkerSize',7);
+    set(gcf,'color','w');
+    xlabel('mm')
+    xlim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
+    ylim([min(min(ts_rm.dq(2).px),min(ts_rm.dq(2).py)),max(max(ts_rm.dq(2).px),max(ts_rm.dq(2).py))])
+    % Add the jump detected points
+    if jump
+        patch('XData', a2p_data.dq(2).px(a2p_data.jump_detected == 1), ...
+              'YData', a2p_data.dq(2).py(a2p_data.jump_detected == 1), ...
+              'EdgeColor', 'bl', ...
+              'FaceColor', 'none', ...
+              'LineStyle', 'none', ...
+              'Marker', '.', ...
+              'MarkerSize', 10);
+    end
+    title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
+    save_plot_with_title_as_filename('menotaxis', 'path', savepath);
 end
-title(['window: ',num2str(window/newSampRate),' highThres: ', num2str(highThres),' lowThres: ', num2str(lowThres)], 'Interpreter', 'none')
-save_plot_with_title_as_filename('menotaxis', 'path', savepath);
-
 % Add menotaxis struct to a2p_data
 menotaxis_struct = struct();
 menotaxis_struct.is_menotaxing   = zeros(size(a2p_data.dq(2).t)); % always same length as original time

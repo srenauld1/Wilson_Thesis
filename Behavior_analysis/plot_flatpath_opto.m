@@ -1,60 +1,66 @@
-function plot_flatpath_opto(daq, savepath, upsampled_x_data, upsampled_y_data)
-% Plot flat path, opto ON in bright, thick RED, OFF in BLACK, start in GREEN
+function plot_flatpath_opto(exptData, savepath)
+% Plot flat path: opto ON = RED, opto OFF = BLACK, start = GREEN
+% Expects exptData as output from process_fictrac_panels:
+%   x, y, optoStim are already aligned at the same length (800K)
 
-if isfield(daq, 'optoStim')
-    % Downsample if needed
-    downsampled_exptData = struct();
-    fields = fieldnames(daq);
-    for i = 1:length(fields)
-        field = fields{i};
-        if isnumeric(daq.(field))
-            downsampled_exptData.(field) = daq.(field)(1:50:end);
-        end
+% Validate required fields
+required_fields = {'x', 'y'};
+for f = required_fields
+    if ~isfield(exptData, f{1})
+        error('plot_flatpath_opto: exptData missing required field: %s', f{1});
     end
-    x = downsampled_exptData.x;
-    y = downsampled_exptData.y;
-    opto_timing = downsampled_exptData.optoStim;
+end
+
+x = exptData.x;
+y = exptData.y;
+
+if isfield(exptData, 'optoStim')
+    opto_timing = exptData.optoStim;
 else
-    x = upsampled_x_data;
-    y = upsampled_y_data;
+    warning('plot_flatpath_opto: No optoStim field found. Plotting all as opto OFF.');
     opto_timing = zeros(size(x));
 end
 
+% Downsample just x, y, opto_timing for plotting performance (800K → 80K)
+ds_factor   = 10;
+x           = x(1:ds_factor:end);
+y           = y(1:ds_factor:end);
+opto_timing = opto_timing(1:ds_factor:end);
+
+% NaN-mask approach: much faster than per-segment loop
+on_mask  = opto_timing ~= 0;
+off_mask = ~on_mask;
+
+x_on  = x;  x_on(off_mask) = NaN;
+y_on  = y;  y_on(off_mask) = NaN;
+x_off = x;  x_off(on_mask) = NaN;
+y_off = y;  y_off(on_mask) = NaN;
+
 figure; hold on;
-h_opto = []; h_noopto = []; h_start = [];
 
-% First plot all opto OFF segments (for background)
-for i = 1:length(x)-1
-    if opto_timing(i) == 0
-        h = plot(x(i:i+1), y(i:i+1), 'k-', 'LineWidth', 1.3); % Black
-        if isempty(h_noopto), h_noopto = h; end
-    end
-end
-
-% Then plot all opto ON segments on top, with thick, bright red line (and circles for visibility)
-for i = 1:length(x)-1
-    if opto_timing(i) ~= 0
-        h = plot(x(i:i+1), y(i:i+1), '-', 'Color', [1 0 0], 'LineWidth', 1.3); % BRIGHT RED, THICK
-        % plot(x(i:i+1), y(i:i+1), 'o', 'Color', [1 0 0], 'MarkerSize', 6, 'MarkerFaceColor', [1 0 0]);
-        if isempty(h_opto), h_opto = h; end
-    end
-end
-
-% Start point in green
-h_start = plot(x(1), y(1), 'go', 'MarkerSize', 5, 'MarkerFaceColor', 'g', 'DisplayName', 'Start');
-%plot jumps
-% jump_idx = find(daq.jump_detected == 1);
-% After all other plotting:
-% h_jump = plot(daq.x(jump_idx), daq.y(jump_idx), 'bo', ...
-%               'MarkerSize', 8, ...
-%               'MarkerFaceColor', 'none', ...        % <-- This keeps the marker hollow
-%               'LineWidth', 2, ...                   % Optional: thicker circle
-%               'DisplayName', 'Jumps');
+h_noopto = plot(x_off, y_off, 'k-', 'LineWidth', 1.3);
+h_opto   = plot(x_on,  y_on,  '-',  'Color', [1 0 0], 'LineWidth', 1.3);
+h_start  = plot(x(1),  y(1),  'go', 'MarkerSize', 5, 'MarkerFaceColor', 'g');
 
 xlabel('X Position');
 ylabel('Y Position');
-title('Flat Path: Opto ON (Red, thick), Opto OFF (Black), Start (Green)');
-legend([h_opto, h_noopto, h_start], {'Opto ON', 'Opto OFF', 'Start'}, 'Location', 'best');
+title('Flat Path: Opto ON (Red), Opto OFF (Black), Start (Green)');
+
+% Build legend only from handles that actually have data
+legend_handles = [];
+legend_labels  = {};
+if any(~isnan(x_on))
+    legend_handles(end+1) = h_opto;
+    legend_labels{end+1}  = 'Opto ON';
+end
+if any(~isnan(x_off))
+    legend_handles(end+1) = h_noopto;
+    legend_labels{end+1}  = 'Opto OFF';
+end
+legend_handles(end+1) = h_start;
+legend_labels{end+1}  = 'Start';
+
+legend(legend_handles, legend_labels, 'Location', 'best');
 
 axis equal; axis tight; grid on; hold off;
 

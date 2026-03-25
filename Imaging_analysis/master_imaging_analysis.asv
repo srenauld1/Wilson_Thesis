@@ -13,8 +13,8 @@
 % chopped up by the specific optostim going on
 % [exptData, exptMeta] = plotExpt_sliced_opto_velocity(expData, exptMeta, savepath);
 
-close all
-clear all
+%close all
+%clear all
 
 %% initialize variables
 neck = 0;
@@ -75,7 +75,6 @@ elseif contains(base_path, 'lplc4')
     LPLC4 = 1;
 elseif contains(base_path, 'LC22')
     an4_project = 1;  
-    visual = 1;
 elseif contains(base_path, 'LT51')
     an4_project = 1;  
     visual = 1;
@@ -124,6 +123,9 @@ a2p_data = process_fictrac_panels_2p(a2p_data, vel_on, vel_off, jump);
 %% now here i will have a function to extract saccades - REMOVED
 % [a2p_data, saccade_both] = find_saccades_2p(a2p_data, yaw_information_right,yaw_information_left, forvel_cutoff, 0);
 % [a2p_data, saccade_both_supp] = find_saccades_2p(a2p_data, yaw_information_right_supp,yaw_information_left_supp, forvel_cutoff, 1);
+
+
+
 %% plot basic variables
 if neck
     % NOT ADJUSTED FOR NEW A2P
@@ -143,16 +145,45 @@ if do_pause
       a2p_data = process_pause_data(a2p_data, savepath, box, split);
 end
 if ves041
+    %% calculate sinuosity and menotaxis
+    % menotaxis code
+    % window in seconds to look at heading
+    window = 15;
+    % minVel, minimum forward velocity to qualify
+    minVel = 1;
+    % high thresh is rho to count as menotaxis
+    highThres = 0.88;
+    % low thresh is rho to come out of menotaxis
+    lowThres = 0.7;
+    [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump, 0);
     
+    a2p_data = plot_flat_path_colored(a2p_data, 'rho', 'data_only', savepath);
+
+    % sinuosity
+    window_sec = 5; % desired window in seconds
+    dt = median(diff(a2p_data.dq(2).t)); % or your timebase
+    window_pts = round(window_sec / dt);
+    a2p_data = add_sinuosity_sliding(a2p_data, window_pts);
+
+    a2p_data = plot_flat_path_colored(a2p_data, 'sinuosity', 'data_only', savepath);
+
+    % plot dff
+    a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath);
+
     %% basic velocity and dff plotting
-    plotting_ves041(a2p_data, jump, savepath)
+    a2p_data = plotting_ves041(a2p_data, jump, savepath);
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
+
+    %% add in the xcorr stuff for behavior / imaging quantification
+    [results_meno_rho, menotaxis_ves041fly] = moving_window_zero_lag_corr(menotaxis_ves041fly, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'rho', 'dff');
+
 end
 
 %% LPLC4 specific
 if LPLC4
-    entry_code = input('Analyze LPLC4 trial: (0=dark, 1 = replay only, 2 = full closed loop gamut, 3 = bright bar with stars, 4=open loop, 5=all 8 gratings) = ');
+    entry_code = input(['Analyze LPLC4 trial: (0=dark, 1 = replay only, 2 = full closed loop gamut, 3 = bright bar with stars, 4=open loop, ' ...
+        '5=all 8 gratings, 6= f2bb2f bar) = ']);
     if entry_code == 0 
         plotting_an4(a2p_data, jump, savepath)
     elseif entry_code ==1
@@ -166,6 +197,8 @@ if LPLC4
         visual = 1;
     elseif entry_code==5
         a2p_data = eight_visual_pattern_analysis(a2p_data, savepath, box, split);
+    elseif entry_code == 6
+        a2p_data = openloop_bar_bidirectional_process(a2p_data, savepath, box, split);
     end
 end
 
@@ -176,5 +209,8 @@ if ~ visual
 else
     save_fly_data(a2p_data, dff_motion, savepath)
 end
+
+
+
 
 

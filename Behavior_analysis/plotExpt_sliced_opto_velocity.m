@@ -14,22 +14,12 @@
 %   this saves 3 files to savepath
 %   returns exptData and exptMeta 
 % Original: 10/31/2024 - SMR (plotExptpatternsliced)
-%           3/19/2025 - SMR adjusted to only plot closed loop data
+%           3/19/2025 - SMR adjusted to only plot closed loop data]=
+%           3/25/2026 - SMR adjusted to account for minor errors using LLM
 
-function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments_optoon_extra] = plotExpt_sliced_opto_velocity(exptData,exptMeta, savepath)
-    
-    % reset counters
-    n = 0;
-    minVel =3;
-    
+function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments_optoon_extra] = plotExpt_sliced_opto_velocity(exptData,exptMeta, savepath, minVel)  
     % set number of sublots based on number of expt variables
-    checkEphys = contains(exptMeta.exptCond,'ephys','IgnoreCase',true);
-    checkIInj = contains(exptMeta.exptCond,'inj','IgnoreCase',true);
-    checkG4 = contains(exptMeta.exptCond,'g4','IgnoreCase',true);
-    checkFicTrac = contains(exptMeta.exptCond,'fictrac','IgnoreCase',true);
     checkOpto = contains(exptMeta.exptCond,'stim','IgnoreCase',true); %not separate
-    checkPython = contains(exptMeta.exptCond,'jump','IgnoreCase',true); %not separate
-    checkOpenLoop = isfield(exptMeta, 'func');
 
     %% define variables
     % define angular velocity
@@ -114,9 +104,19 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
                 opto_on_fwd = fwd_vel(segment_indices);
                 opto_on_rot = abs(angular_vel(segment_indices));
 
+                % look at the sampling rate
+                rate = round(length(angular_vel) / max(time));  % <-- round here
+                pre_opto_points = rate;
+                post_opto_points = rate;
+
                 % opto off fwd and rot
-                pre_opto = pre_opto_start : pre_opto_start + numel(segment_indices) - 1;
-                pre_opto = round(pre_opto);
+                pre_opto_start = max(1, segment_indices(1) - pre_opto_points);
+                pre_opto = pre_opto_start : segment_indices(1) - 1;
+                
+                if isempty(pre_opto)
+                    continue  % skip this segment, no pre-opto baseline available
+                end
+                
                 pre_opto_fwd = fwd_vel(pre_opto);
                 pre_opto_rot = abs(angular_vel(pre_opto));
 
@@ -154,7 +154,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
                 
                 % Record the exact point where opto switches on for plotting
                 opto_on_markers(end+1) = segment_indices(1) - pre_opto_start + 1;
-                opto_off_markers(end+1) = segment_indices(end)-segment_indices(1)+pre_opto_points;% Relative position within segment
+                opto_off_markers(end+1) = segment_indices(end)-segment_indices(1)+pre_opto_points +1;% Relative position within segment
             end
         end
 
@@ -219,7 +219,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         
         % Customize the first subplot
         xlabel('Time (s)');
-        ylabel('Forward Velocit (mm/s)');
+        ylabel('Forward Velocity (mm/s)');
         title('Opto-On Forward Velocity');
         legend('Average Opto-On Forward Velocity');
         hold off;
@@ -265,7 +265,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         for i = 1:length(fwdvelocity_segments_optoon_trimmed)
             % pre-speed should be definded as the 1 second prior to
             % stimulation
-            opto_points_prespeed_calc = round((pre_opto_points-20000+1)):round(pre_opto_points);
+            opto_points_prespeed_calc = 1 : round(pre_opto_points);
             pre_speed = mean(fwdvelocity_segments_optoon_trimmed{i}(opto_points_prespeed_calc));
             pre_speed_rot = mean(rotvel_segments_optoon_trimmed{i}(opto_points_prespeed_calc));
             if pre_speed <minVel
@@ -395,7 +395,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         
         % Customize the first subplot
         xlabel('Time (s)');
-        ylabel('Forward Velocit (mm/s)');
+        ylabel('Forward Velocity (mm/s)');
         title('Moving pre-opto');
         hold off;
         
