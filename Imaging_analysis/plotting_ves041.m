@@ -1,6 +1,6 @@
 
 %% function
-function a2p_data = plotting_ves041(a2p_data, jump, savepath)
+function a2p_data = plotting_ves041(a2p_data, jump, savepath, odor)
 
 close all
 %% define variables
@@ -13,6 +13,11 @@ rot = a2p_data.dq(1).bvy_deg; % Example rotational velocity data
 rot_supp = a2p_data.dq(2).bvy_deg;
 side = a2p_data.dq(1).bvs_deg;
 sample_rate = 1/(max(time)/length(time)); %samples per second
+
+if odor
+    rot = a2p_data.dq(1).vvy; % Example rotational velocity data
+    rot_supp = a2p_data.dq(2).vvy;
+end
 
 %% all 3 (fwd, rot, dff) on one plot
 % Create the figure and subplots
@@ -43,7 +48,7 @@ xlabel('Time (s)');
 ylabel('Rotational Velocity (deg/s)');
 title('Rotational Velocity');
 grid on;
-ylim([-500 500]);
+%ylim([-500 500]);
 
 % Link the x-axes of all subplots
 linkaxes(findall(gcf, 'Type', 'axes'), 'x');
@@ -835,7 +840,7 @@ xlabel('Time (s)');
 ylabel('Rotational Velocity (deg/s)');
 title('Rotational Velocity');
 grid on;
-ylim([-500 500]);
+%ylim([-500 500]);
 hold off
 
 % --- Link the x-axes of all subplots ---

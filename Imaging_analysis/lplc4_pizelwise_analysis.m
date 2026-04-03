@@ -1,0 +1,74 @@
+%% THIS SCRIPT IS FOR LOOKING AT PIXELWISE CORRELATIONS WITH DIFFERENT BEHAVIORS OR STIMULI
+% SPECIFICALLY FOCUSING ON LPLC4 OPTIC LOBE DATA
+
+% this is using trial 12 from 10/1 as rotational gratings, trial 9 from
+% 10/1 as split, and trial 
+
+%% LOOK AT FWD VEL PIXELWISE CORRELATION (PEARSON) SPLIT
+corr_vol_fwd_split = pixelwise_corr_volume(split_grating_stack, split_grating_a2p.daq(1).bvf, savepath_splitgrating, 'Forward Velocity');
+
+%% LOOK AT PATTERN VELOCITY PIXELWISE CORRELATION (PEARSON) SPLIT
+corr_vol_patternvel_split = pixelwise_corr_volume(split_grating_stack, split_grating_a2p.daq(1).vvy, savepath_splitgrating, 'Pattern Velocity');
+
+%% LOOK AT PATTERN SPEED PIXELWISE CORRELATION (PEARSON) SPLIT
+corr_vol_patternspeed_split = pixelwise_corr_volume(split_grating_stack, abs(split_grating_a2p.daq(1).vvy), savepath_splitgrating, 'Pattern Speed');
+
+%% LOOK AT PATTERN POSITION PIXELWISE CORRELATION (PEARSON) SPLIT
+corr_vol_patternpos_split = pixelwise_corr_volume(split_grating_stack, split_grating_a2p.daq(1).vh, savepath_splitgrating, 'Pattern Location');
+
+%% LOOK AT PATTERN STATE (MOVING, F2B, B2F) AND PIXEL TUNING, SPLIT
+[~, ~] = pixelwise_velocity_tuning_dff(split_grating_stack, split_grating_a2p.daq(1).vvy, 0.5, 0.025, savepath_splitgrating);
+
+%% LOOK AT FWD VEL PIXELWISE CORRELATION (PEARSON) ROT
+corr_vol_fwd_rot = pixelwise_corr_volume(rotgrating_stack, rotgrating_a2p.daq(1).bvf, savepath_rotgrating, 'Forward Velocity');
+
+%% LOOK AT PATTERN VELOCITY PIXELWISE CORRELATION (PEARSON) ROT
+corr_vol_patternvel_rot = pixelwise_corr_volume(rotgrating_stack, rotgrating_a2p.daq(1).vvy, savepath_rotgrating, 'Pattern Velocity');
+
+%% LOOK AT PATTERN SPEED PIXELWISE CORRELATION (PEARSON) ROT
+corr_vol_patternspeed_rot = pixelwise_corr_volume(rotgrating_stack, abs(rotgrating_a2p.daq(1).vvy), savepath_rotgrating, 'Pattern Speed');
+
+%% LOOK AT PATTERN POSITION PIXELWISE CORRELATION (PEARSON) ROT
+corr_vol_patternpos_rot = pixelwise_corr_volume(rotgrating_stack, rotgrating_a2p.daq(1).vh, savepath_rotgrating, 'Pattern Location');
+
+%% LOOK AT PATTERN STATE (MOVING, F2B, B2F) AND PIXEL TUNING, ROT
+[pref_state_vol_SPLIT, pref_amp_vol_SPLIT] = pixelwise_velocity_tuning_dff(rotgrating_stack, rotgrating_a2p.daq(1).vvy, 0.5, 0.025, savepath_rotgrating);
+
+
+
+
+
+
+%% LOOK AT PATTERN POSITION PIXELWISE CORRELATION (PEARSON) BAR
+[pref_pos_vol, pref_amp_vol] = pixelwise_bar_tuning(bar_stack, bar_a2p.daq.vh, 6, savepath_bar, 1, 0.08);
+
+corr_vol_patternpos_rot = pixelwise_corr_volume(bar_stack, bar_a2p.daq.vh, savepath_bar, 'Pattern Location');
+
+
+corr_vol_patternpos_rot = pixelwise_corr_volume(bar_stack, bar_a2p.daq.vvy, savepath_bar, 'Pattern vel');
+
+corr_vol_patternpos_rot = pixelwise_corr_volume(bar_stack, bar_a2p.dat.ts, savepath_bar, 'dff');
+
+%% LOOK AT PATTERN STATE (MOVING, F2B, B2F) AND PIXEL TUNING, SPLIT
+[~, ~] = pixelwise_velocity_tuning_dff(glom_stack, glom_a2p.daq(1).vvy, 0.5, 0.02, glom_savepath);
+corr_vol_fwd_split = pixelwise_corr_volume(glom_stack, glom_a2p.daq(1).bvf, glom_savepath, 'Forward Velocity');
+
+
+%% sand box
+[~, ~] = pixelwise_velocity_tuning_dff(stack, fly_data.daq(1).vyv, 0.5, 0.015, savepath);
+corr_vol_fwd_split = pixelwise_corr_volume(stack, fly_data.daq(1).bvf, savepath, 'Fwd Vel');
+
+corr_vol_patternvel_rot = pixelwise_corr_volume(stack, fly_data.dq(1).vvy, savepath, 'Pattern Velocity');
+
+corr_vol_patternspeed_rot = pixelwise_corr_volume(stack, abs(fly_data.dq(1).vvy), savepath, 'Pattern Speed');
+
+corr_vol_patternspeed_rot = pixelwise_corr_volume(stack, fly_data.roi.ts(1,:), savepath, 'dff');
+
+
+[pref_pos_vol, pref_amp_vol] = pixelwise_bar_tuning(stack, fly_data.dq(1).vh, 6, savepath, 1, 0.08);
+
+stack, bar_phase, nBins, savepath, phase_thresh, tuning_thresh)
+
+
+
+

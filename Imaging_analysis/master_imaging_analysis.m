@@ -98,7 +98,7 @@ else
 end
 if contains(base_path, 'odor')
     odor = 1;  % Set neck to 1 if "neck" is found
-    ves041=0;
+    ves041=1;
 end
 
 
@@ -162,7 +162,7 @@ if ves041
     lowThres = 0.7;
     [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump, 0);
     
-    a2p_data = plot_flat_path_colored(a2p_data, 'rho', 'data_only', savepath);
+    a2p_data = plot_flat_path_colored(a2p_data, 'rho', 'data_only', savepath, odor);
 
     % sinuosity
     window_sec = 5; % desired window in seconds
@@ -170,13 +170,13 @@ if ves041
     window_pts = round(window_sec / dt);
     a2p_data = add_sinuosity_sliding(a2p_data, window_pts);
 
-    a2p_data = plot_flat_path_colored(a2p_data, 'sinuosity', 'data_only', savepath);
+    a2p_data = plot_flat_path_colored(a2p_data, 'sinuosity', 'data_only', savepath, odor);
 
     % plot dff
-    a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath);
+    a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
 
     %% basic velocity and dff plotting
-    a2p_data = plotting_ves041(a2p_data, jump, savepath);
+    a2p_data = plotting_ves041(a2p_data, jump, savepath, odor);
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
 
@@ -185,8 +185,8 @@ if ves041
     [results_meno_fwd, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'fwd', 'dff');
     [results_meno_sinuosity, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'sinuosity', 'dff');
     % plot xcorr for fwd and sinuosity
-    a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath_meno);
-    a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath_meno);
+    a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
+    a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
 
 end
 %% odor section

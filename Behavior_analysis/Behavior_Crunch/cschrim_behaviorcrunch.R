@@ -1,32 +1,33 @@
-### FOR THE ANALYSIS OF BEHAVIOR DATA ###
+### FOR THE ANALYSIS OF CSCHRIM BEHAVIOR DATA ###
 
-### BLINDED RUBYACR ###
+### BLINDED CsChrimson ###
 library(dplyr)
 library(readxl)
 
-savepath = "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysis/Behavior_Crunch/ACR_figures"
-
+savepath = "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysis/Behavior_Crunch/CsChrim_figures"
 
 # LOAD IN AND LABEL DATA --------------------------------------------------
 
-behavior_kin<- read.csv("/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysis/rubyACR pilot data(blinded).csv")
+behavior_kin<- read.csv("/Users/sophiarenauld/Downloads/Chrimson Data(Included) (1).csv")
 
 # from blinding sheet
-# ves041_1_acr <- [3, 5, 8, 15, 22]
-# ves041_2_acr <- [2, 11, 17, 38, 40, 42]
-# ves041_1_gfp <- [1, 13, 16, 19, 27, 30]
-# ves041_2_gfp <- [43, 45]
-# empty_acr <- [4, 9, 26, 31, 35, 37]
+# ves041_1_Chrim <- [2, 7, 16, 19, 21, 26, 45]
+# ves041_2_Chrim <- [1, 14, 18, 24, 29, 40, 44]
+# ves041_1_gfp <- [3, 4, 5, 8, 12, 15, 22, 25, 27, 42 ]
+# ves041_2_gfp <- [30, 35, 43]
+# empty_Chrim <- [6, 10, 17, 20, 23, 31, 34, 39, 46]
 
+
+# right now segmented to be something > 5mm/s, but with 4mm/s we could also have data
 behavior_kin <- behavior_kin %>%
   mutate(
     Fly = as.numeric(as.character(Fly)), # Ensure Fly is numeric for matching
-    genotype = case_when(
-      Fly %in% c(3, 5, 8, 15, 22, 32) ~ "ves041_1_acr",
-      Fly %in% c(2, 11, 17, 38, 40, 42, 47) ~ "ves041_2_acr",
-      Fly %in% c(1, 13, 16, 19, 27, 30) ~ "ves041_1_gfp",
-      Fly %in% c(43, 45, 48, 50, 51) ~ "ves041_2_gfp",
-      Fly %in% c(4, 9, 26, 31, 35, 37) ~ "empty_acr",
+    Genotype = case_when(
+      Fly %in% c(2, 7, 16, 19, 26, 53) ~ "ves041_1_Chrim",
+      Fly %in% c(1, 14, 18, 24, 29, 40) ~ "ves041_2_Chrim",
+      Fly %in% c(3, 5, 8, 12, 15, 25) ~ "ves041_1_gfp",
+      Fly %in% c(35, 43) ~ "ves041_2_gfp",
+      Fly %in% c(6, 17, 20, 39, 50, 54) ~ "empty_Chrim",
       TRUE ~ NA_character_  # Or another default
     )
   )
@@ -40,18 +41,18 @@ library(ggplot2)
 
 behavior_long <- behavior_kin %>%
   pivot_longer(
-    cols = c("Pre.Opto.Forward.Velocity.", "Opto.On.Forward.Velocity"),
+    cols = c("Pre.Opto.Forward.Velocity", "Opto.On.Forward.Velocity"),
     names_to = "Condition",
     values_to = "ForwardVelocity"
   ) %>%
   mutate(
     Condition = recode(Condition,
-                       "Pre.Opto.Forward.Velocity." = "Pre-Opto",
+                       "Pre.Opto.Forward.Velocity" = "Pre-Opto",
                        "Opto.On.Forward.Velocity" = "Opto On"),
     # Fix condition order
     Condition = factor(Condition, levels = c("Pre-Opto", "Opto On")),
     # Fix genotype order - replace with your desired order
-    genotype = factor(genotype, levels = c("ves041_1_acr", "ves041_2_acr", "ves041_1_gfp", "ves041_2_gfp", "empty_acr"))
+    Genotype = factor(Genotype, levels = c("ves041_1_Chrim", "ves041_2_Chrim", "ves041_1_gfp", "ves041_2_gfp", "empty_Chrim"))
   )
 p_fw_vel <- ggplot(behavior_long, aes(x = Condition, y = ForwardVelocity, fill = Condition)) +
   stat_summary(fun = mean, geom = "bar", 
@@ -60,11 +61,11 @@ p_fw_vel <- ggplot(behavior_long, aes(x = Condition, y = ForwardVelocity, fill =
                position = position_dodge(width = 0.7), width = 0.2) +
   geom_line(aes(group = Fly), color = "gray40", alpha = 0.5, linewidth = 0.4) +
   geom_point(aes(group = Fly), size = 1.5, alpha = 0.7, shape = 21, color = "black") +
-  facet_wrap(~ genotype, nrow = 1) +
+  facet_wrap(~ Genotype, nrow = 1) +
   scale_fill_manual(values = c("Pre-Opto" = "blue", "Opto On" = "red")) +
   theme_minimal() +
   labs(
-    title = "Forward Velocity Pre and During RubyACR Opto by genotype",
+    title = "Forward Velocity Pre and During Cs Chrimson Opto by Genotype",
     x = "Condition",
     y = "Forward Velocity (mean ± SE)",
     fill = "Condition"
@@ -95,7 +96,7 @@ behavior_long <- behavior_kin %>%
     # Fix condition order
     Condition = factor(Condition, levels = c("Pre-Opto", "Opto On")),
     # Fix genotype order - replace with your desired order
-    genotype = factor(genotype, levels = c("ves041_1_acr", "ves041_2_acr", "ves041_1_gfp", "ves041_2_gfp", "empty_acr"))
+    Genotype = factor(Genotype, levels = c("ves041_1_Chrim", "ves041_2_Chrim", "ves041_1_gfp", "ves041_2_gfp", "empty_Chrim"))
   )
 p_rot_sp <- ggplot(behavior_long, aes(x = Condition, y = RotationalSpeed, fill = Condition)) +
   stat_summary(fun = mean, geom = "bar", 
@@ -104,11 +105,11 @@ p_rot_sp <- ggplot(behavior_long, aes(x = Condition, y = RotationalSpeed, fill =
                position = position_dodge(width = 0.7), width = 0.2) +
   geom_line(aes(group = Fly), color = "gray40", alpha = 0.5, linewidth = 0.4) +
   geom_point(aes(group = Fly), size = 1.5, alpha = 0.7, shape = 21, color = "black") +
-  facet_wrap(~ genotype, nrow = 1) +
+  facet_wrap(~ Genotype, nrow = 1) +
   scale_fill_manual(values = c("Pre-Opto" = "blue", "Opto On" = "red")) +
   theme_minimal() +
   labs(
-    title = "Rotational Speed Pre and During RubyACR Opto by genotype",
+    title = "Rotational Speed Pre and During Cs Chrimson Opto by Genotype",
     x = "Condition",
     y = "Rotational Speed (mean ± SE)",
     fill = "Condition"
@@ -141,7 +142,7 @@ behavior_long <- behavior_kin %>%
     # Fix condition order
     Condition = factor(Condition, levels = c("Pre-Opto", "Opto On")),
     # Fix genotype order - replace with your desired order
-    genotype = factor(genotype, levels = c("ves041_1_acr", "ves041_2_acr", "ves041_1_gfp", "ves041_2_gfp", "empty_acr"))
+    Genotype = factor(Genotype, levels = c("ves041_1_Chrim", "ves041_2_Chrim", "ves041_1_gfp", "ves041_2_gfp", "empty_Chrim"))
   )
 p_fwd_acc <- ggplot(behavior_long, aes(x = Condition, y = ForwardAcceleration, fill = Condition)) +
   stat_summary(fun = mean, geom = "bar", 
@@ -150,11 +151,11 @@ p_fwd_acc <- ggplot(behavior_long, aes(x = Condition, y = ForwardAcceleration, f
                position = position_dodge(width = 0.7), width = 0.2) +
   geom_line(aes(group = Fly), color = "gray40", alpha = 0.5, linewidth = 0.4) +
   geom_point(aes(group = Fly), size = 1.5, alpha = 0.7, shape = 21, color = "black") +
-  facet_wrap(~ genotype, nrow = 1) +
+  facet_wrap(~ Genotype, nrow = 1) +
   scale_fill_manual(values = c("Pre-Opto" = "blue", "Opto On" = "red")) +
   theme_minimal() +
   labs(
-    title = "Forward Acceleration Pre and During RubyACR Opto by genotype",
+    title = "Forward Acceleration Pre and During Cs Chrimson Opto by Genotype",
     x = "Condition",
     y = "Forward Acceleration (mean ± SE)",
     fill = "Condition"
@@ -174,18 +175,18 @@ ggsave(
 # ROTATIONAL ACCELERATION -------------------------------------------------
 behavior_long <- behavior_kin %>%
   pivot_longer(
-    cols = c("Pre.Opto.Rotational.Acceleration.", "Opto.On.Rotational.Acceleration"),
+    cols = c("Pre.Opto.Rotational.Acceleration", "Opto.On.Rotational.Acceleration"),
     names_to = "Condition",
     values_to = "RotationalAcceleration"
   ) %>%
   mutate(
     Condition = recode(Condition,
-                       "Pre.Opto.Rotational.Acceleration." = "Pre-Opto",
+                       "Pre.Opto.Rotational.Acceleration" = "Pre-Opto",
                        "Opto.On.Rotational.Acceleration" = "Opto On"),
     # Fix condition order
     Condition = factor(Condition, levels = c("Pre-Opto", "Opto On")),
     # Fix genotype order - replace with your desired order
-    genotype = factor(genotype, levels = c("ves041_1_acr", "ves041_2_acr", "ves041_1_gfp", "ves041_2_gfp", "empty_acr"))
+    Genotype = factor(Genotype, levels = c("ves041_1_Chrim", "ves041_2_Chrim", "ves041_1_gfp", "ves041_2_gfp", "empty_Chrim"))
   )
 p_rot_acc <- ggplot(behavior_long, aes(x = Condition, y = RotationalAcceleration, fill = Condition)) +
   stat_summary(fun = mean, geom = "bar", 
@@ -194,11 +195,11 @@ p_rot_acc <- ggplot(behavior_long, aes(x = Condition, y = RotationalAcceleration
                position = position_dodge(width = 0.7), width = 0.2) +
   geom_line(aes(group = Fly), color = "gray40", alpha = 0.5, linewidth = 0.4) +
   geom_point(aes(group = Fly), size = 1.5, alpha = 0.7, shape = 21, color = "black") +
-  facet_wrap(~ genotype, nrow = 1) +
+  facet_wrap(~ Genotype, nrow = 1) +
   scale_fill_manual(values = c("Pre-Opto" = "blue", "Opto On" = "red")) +
   theme_minimal() +
   labs(
-    title = "Rotational Acceleration Pre and During RubyACR Opto by genotype",
+    title = "Rotational Acceleration Pre and During Cs Chrimson Opto by Genotype",
     x = "Condition",
     y = "Rotational Acceleration (mean ± SE)",
     fill = "Condition"
@@ -215,105 +216,48 @@ ggsave(
   dpi = 300
 )
 
-# Un-blinded Data ----------------------------------------------------------
-behavior_kin_unblinded<- read.csv("/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysis/rubyACR pilot data(2 second stim).csv")
+# SANDBOX -----------------------------------------------------------------
+# rot speed stats
 
-# Gather data into long format
-behavior_long_unblinded <- behavior_kin_unblinded %>%
-  pivot_longer(
-    cols = c("Pre.Opto.Forward.Velocity", "Opto.On..Forward.Velocity"),
-    names_to = "Condition",
-    values_to = "ForwardVelocity"
-  ) %>%
+library(lme4)
+library(lmerTest)
+library(emmeans)
+
+# Fit model with Condition * genotype interaction, Fly as random effect
+model <- lmer(RotationalSpeed ~ Condition * Genotype + (1|Fly), data = behavior_long)
+summary(model)
+
+# Get estimated marginal means
+emm <- emmeans(model, ~ Condition * Genotype)
+
+# Option 1: Compare opto response (interaction) between all genotype pairs
+# This directly asks "do genotypes differ in how they respond to opto?"
+contrast(emm, interaction = "pairwise", by = "Condition", adjust = "bonferroni")
+
+# Option 2: Compare genotypes within each condition separately
+emmeans(model, pairwise ~ Genotype | Condition, adjust = "bonferroni")
+
+# Option 3: Compare conditions within each genotype (like paired t-tests)
+emmeans(model, pairwise ~ Condition | Genotype, adjust = "bonferroni")
+
+
+
+
+# probably not this
+library(rstatix)
+
+# Compute delta per fly
+delta_data <- behavior_kin %>%
   mutate(
-    Condition = recode(Condition,
-                       "Pre.Opto.Forward.Velocity" = "Pre-Opto",
-                       "Opto.On..Forward.Velocity" = "Opto On")
+    delta = Opto.On.Rotational.Speed - Pre.Opto.Rotational.Speed,
+    genotype = factor(Genotype, levels = c("ves041_1_Chrim", "ves041_2_Chrim", 
+                                           "ves041_1_gfp", "ves041_2_gfp", "empty_Chrim"))
   )
 
-# Bar plot: mean with error bars (SE) for each genotype and condition
-ggplot(behavior_long_unblinded, aes(x = Genotype, y = ForwardVelocity, fill = Condition)) +
-  stat_summary(fun = mean, geom = "bar", 
-               position = position_dodge(width = 0.7), color = "black", width=0.6, alpha = 0.8) +
-  stat_summary(fun.data = mean_se, geom = "errorbar", 
-               position = position_dodge(width = 0.7), width=0.2) +
-  theme_minimal() +
-  labs(
-    title = "UNBLINDED PILOT: Forward Speed Pre and During Opto by genotype",
-    x = "Genotype",
-    y = "Forward Velocity (mean ± SE)",
-    fill = "Condition"
-  )
+# One-way ANOVA
+delta_data %>% anova_test(delta ~ genotype)
 
-# Gather data into long format
-behavior_long_unblinded <- behavior_kin_unblinded %>%
-  pivot_longer(
-    cols = c("Pre.Opto.Rotational.Speed", "Opto.On.Rotational.Speed"),
-    names_to = "Condition",
-    values_to = "RotationalSpeed"
-  ) %>%
-  mutate(
-    Condition = recode(Condition,
-                       "Pre.Opto.Rotational.Speed" = "Pre-Opto",
-                       "Opto.On.Rotational.Speed" = "Opto On")
-  )
-
-# Bar plot: mean with error bars (SE) for each genotype and condition
-ggplot(behavior_long_unblinded, aes(x = Genotype, y = RotationalSpeed, fill = Condition)) +
-  stat_summary(fun = mean, geom = "bar", 
-               position = position_dodge(width = 0.7), color = "black", width=0.6, alpha = 0.8) +
-  stat_summary(fun.data = mean_se, geom = "errorbar", 
-               position = position_dodge(width = 0.7), width=0.2) +
-  theme_minimal() +
-  labs(
-    title = "UNBLINDED PILOT: Rotational Speed Pre and During Opto by genotype",
-    x = "genotype",
-    y = "Rotational Speed (mean ± SE)",
-    fill = "Condition"
-  )
-
-
-
-# Pooled Data -------------------------------------------------------------
-
-pooled_behavior <- read_xlsx("/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysis/pooled_ves041behavior.xlsx")
-
-
-
-# Gather data into long format
-behavior_long <- pooled_behavior %>%
-  pivot_longer(
-    cols = c("Pre Opto Forward Velocity", "Opto On Forward Velocity"),
-    names_to = "Condition",
-    values_to = "ForwardVelocity"
-  ) %>%
-  mutate(
-    Condition = recode(Condition,
-                       "Pre Opto Forward Velocity" = "Pre-Opto",
-                       "Opto On Forward Velocity" = "Opto On")
-  )
-
-# Bar plot: mean with error bars (SE) for each genotype and condition
-ggplot(behavior_long, aes(x = Genotype, y = ForwardVelocity, fill = Condition)) +
-  stat_summary(fun = mean, geom = "bar", 
-               position = position_dodge(width = 0.7), color = "black", width=0.6, alpha = 0.8) +
-  stat_summary(fun.data = mean_se, geom = "errorbar", 
-               position = position_dodge(width = 0.7), width=0.2) +
-  theme_minimal() +
-  labs(
-    title = "Forward Speed Pre and During Opto by genotype",
-    x = "genotype",
-    y = "Forward Velocity (mean ± SE)",
-    fill = "Condition"
-  )
-
-
-
-
-
-
-
-
-
-
-
+# Post-hoc pairwise comparisons
+delta_tukey <- delta_data %>%
+  tukey_hsd(delta ~ genotype)
+print(delta_tukey)

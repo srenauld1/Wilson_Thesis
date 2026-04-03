@@ -4,7 +4,7 @@ a=size(a2p_data.roi.ts);
 if a(1)>1
     dff = a2p_data.roi.ts(1,:)-a2p_data.roi.ts(2,:) ;
 else
-    dff = a2p_data.roi.ts(1,:);
+    dff = a2p_data.roi.ts(2,:);
 end
 %% determine the kinematic variables
 time = a2p_data.dq(1).t;
@@ -879,8 +879,7 @@ end
     
 %% now plotting the dff and kinematics with shaded visual motion
     % Create the figure and subplots
-    [ball_forward_velocity_supp,winsize] = smoothdata(ball_forward_velocity_supp,"gaussian", 20);
-    winsize
+    
     figure;
     % Subplot 1: dFF
     subplot(3, 1, 1);  % First subplot

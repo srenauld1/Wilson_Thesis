@@ -1,4 +1,4 @@
-function a2p_data = plot_flat_path_colored(a2p_data, color_option, scale_option, savepath)
+function a2p_data = plot_flat_path_colored(a2p_data, color_option, scale_option, savepath, odor)
 % Flat path colored by chosen variable
 % scale_option - 'whole_range' or 'data_only'
 
@@ -21,23 +21,43 @@ cmap = [cmap1; cmap2];
 % ---------------- Select variable to color by ----------------
 if strcmp(color_option, 'dff')
     color_scale = a2p_data.roi.ts(:);
-    ball_px = a2p_data.dq(1).pxb(:);
-    ball_py = a2p_data.dq(1).pyb(:);
+    if odor
+        ball_px = a2p_data.dq(1).px(:);
+        ball_py = a2p_data.dq(1).py(:);
+    else
+        ball_px = a2p_data.dq(1).pxb(:);
+        ball_py = a2p_data.dq(1).pyb(:);
+    end
 
 elseif strcmp(color_option, 'rho')
     color_scale = a2p_data.menotaxis.rho(:);
-    ball_px = a2p_data.dq(2).pxb(:);
-    ball_py = a2p_data.dq(2).pyb(:);
+    if odor
+        ball_px = a2p_data.dq(2).px(:);
+        ball_py = a2p_data.dq(2).py(:);
+    else
+        ball_px = a2p_data.dq(2).pxb(:);
+        ball_py = a2p_data.dq(2).pyb(:);
+    end
 
 elseif strcmp(color_option, 'sinuosity')
     color_scale = a2p_data.sinuosity(:);
-    ball_px = a2p_data.dq(2).pxb(:);
-    ball_py = a2p_data.dq(2).pyb(:);
+    if odor
+        ball_px = a2p_data.dq(2).px(:);
+        ball_py = a2p_data.dq(2).py(:);
+    else
+        ball_px = a2p_data.dq(2).pxb(:);
+        ball_py = a2p_data.dq(2).pyb(:);
+    end
 
 elseif strcmp(color_option, 'fwd')
     color_scale = a2p_data.dq(2).bvf(:);
-    ball_px = a2p_data.dq(2).pxb(:);
-    ball_py = a2p_data.dq(2).pyb(:);
+    if odor
+        ball_px = a2p_data.dq(2).px(:);
+        ball_py = a2p_data.dq(2).py(:);
+    else
+        ball_px = a2p_data.dq(2).pxb(:);
+        ball_py = a2p_data.dq(2).pyb(:);
+    end
 
 elseif strcmp(color_option, 'crosscorr')
     % ---------- 1. Choose which xcorr set ----------
@@ -105,11 +125,21 @@ elseif strcmp(color_option, 'crosscorr')
     color_scale = results_struct.(data_fn)(:);
     a2p_data.xcorr_answer = color_scale;  % store for later use
 
-    ball_px = a2p_data.dq(1).pxb(:);
-    ball_py = a2p_data.dq(1).pyb(:);
+    if odor
+        ball_px = a2p_data.dq(1).px(:);
+        ball_py = a2p_data.dq(1).py(:);
+    else
+        ball_px = a2p_data.dq(1).pxb(:);
+        ball_py = a2p_data.dq(1).pyb(:);
+    end
+
+
 else
     error('Unknown color_option: %s', color_option);
 end
+
+
+
 
 % ---------------- Clip extremes at N·sigma (keep all points) ----------------
 mu = mean(color_scale, 'omitnan');
@@ -154,7 +184,7 @@ if use_whole_range
     scatter(pxb_f, pyb_f, 10, cdata, 'filled', 'MarkerEdgeColor', 'none');
     colormap(cmap);
     c = colorbar;
-    caxis([-1 1]);
+    caxis([-0.3 0.3]);
     ylabel(c, [color_option ' (r)']);
 else
     scatter(pxb_f, pyb_f, 10, cmap(color_inds,:), 'filled', 'MarkerEdgeColor', 'none');

@@ -314,7 +314,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         moving_preopto_rot_acceleration_ave = mean(cell2mat(moving_preopto_rot_acceleration));
         disp(["MOVING PRE-OPTO ROT ACCELERATION AVE:", num2str(moving_preopto_rot_acceleration_ave)])
 
-        percent_moving = length(moving_pre_opto) / (length(still_pre_opto)+length(moving_pre_opto));
+        percent_moving = length(moving_pre_opto) / (length(still_pre_opto)+length(moving_pre_opto))*100;
         disp(["MOVING PERCENTAGE:", num2str(percent_moving)])
 
         % take average fwd

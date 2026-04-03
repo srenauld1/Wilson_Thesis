@@ -1,10 +1,12 @@
 function corr_vol = pixelwise_corr_volume(stack, var, savepath, var_name)
-% PIXELWISE_CORR_VOLUME
-%   corr_vol = pixelwise_corr_volume(stack, var, savepath, var_name)
+% PIXELWISE_CORR_VOLUME_DFF
+%   corr_vol = pixelwise_corr_volume_dff(stack, var, savepath, var_name)
+%
+% Same as pixelwise_corr_volume, but uses dF/F instead of raw brightness.
 %
 % Inputs:
 %   stack    : [nx x ny x nz x nt] imaging data
-%   var      : [nt x 1] (or 1 x nt) time series to correlate with (e.g. fwd velocity)
+%   var      : [nt x 1] (or 1 x nt) time series to correlate with
 %   savepath : folder where figure will be saved (optional, can be [])
 %   var_name : string/name of var for labels (optional)
 %
@@ -32,23 +34,31 @@ end
 
 % ----- Reshape and convert to double -----
 stack_d = double(stack);                 % avoid integer overflow
-V = reshape(stack_d, [], nt);            % [nVoxels x nt], nVoxels = nx*ny*nz
+V = reshape(stack_d, [], nt);            % [nVoxels x nt]
 
 % Optionally handle NaNs: ignore voxels with all NaNs
 allNaN = all(isnan(V), 2);
 V(allNaN,:) = 0;   % temporary; will set r to NaN later for these voxels
 
-% ----- Demean -----
-V = V - mean(V, 2, 'omitnan');           % subtract mean over time for each voxel
-v = var - mean(var, 'omitnan');          % demean variable
+% ----- Compute dF/F for each voxel using 5th percentile as F0 -----
+F0 = prctile(V, 5, 2);                   % [nVoxels x 1], 5th percentile over time
+
+% avoid division by zero (or extremely small baseline)
+F0_safe = F0;
+F0_safe(F0_safe == 0) = eps;
+
+V_dff = (V - F0) ./ F0_safe;             % [nVoxels x nt], dF/F
+
+% ----- Demean dF/F and variable -----
+V_dff = V_dff - mean(V_dff, 2, 'omitnan');
+v     = var - mean(var, 'omitnan');
 
 % ----- Compute Pearson correlation for each voxel -----
-% r = sum(V.*v,2) / sqrt(sum(V.^2,2)*sum(v.^2))
-numerator   = V * v;                     % [nVoxels x 1]
-denom_vox   = sqrt(sum(V.^2, 2));        % [nVoxels x 1]
+numerator   = V_dff * v;                 % [nVoxels x 1]
+denom_vox   = sqrt(sum(V_dff.^2, 2));    % [nVoxels x 1]
 denom_var   = sqrt(sum(v.^2));           % scalar
 denominator = denom_vox * denom_var;     % [nVoxels x 1]
-r = numerator ./ denominator;           % [nVoxels x 1]
+r = numerator ./ denominator;            % [nVoxels x 1]
 
 % Handle degenerate cases (zero variance)
 r(denominator == 0) = NaN;
@@ -58,23 +68,23 @@ r(allNaN) = NaN;
 corr_vol = reshape(r, [nx ny nz]);
 
 % ----- Plot each z-plane -----
-figure('Name',['Pixelwise corr with ' var_name], 'Color','w');
+figure('Name',['Pixelwise dF/F corr with ' var_name], 'Color','w');
 nCols = ceil(sqrt(nz));
 nRows = ceil(nz / nCols);
 
 for z = 1:nz
     subplot(nRows, nCols, z);
-    imagesc(corr_vol(:,:,z), [-0.2 0.2]);  % fix scale to [-1 1]
+    imagesc(corr_vol(:,:,z), [-0.2 0.2]);  % adjust as desired
     axis image off;
     title(sprintf('z = %d', z));
-    colormap(gca, jet);               % per-axes colormap
+    colormap(gca, jet);
     colorbar;
 end
 
-sgtitle(sprintf('Pixelwise correlation with %s', var_name));
+sgtitle(sprintf('Pixelwise dF/F correlation with %s', var_name));
 
 % ----- Save figure if requested -----
 if ~isempty(savepath)
-    save_plot_with_title_as_filename(['corr_with_' var_name], 'volume', savepath);
+    save_plot_with_title_as_filename(['dff_corr_with_' var_name], 'volume', savepath);
 end
 end

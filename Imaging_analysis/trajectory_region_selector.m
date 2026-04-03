@@ -104,22 +104,23 @@ function trajectory_region_selector(daq, dff, jump, varargin)
             
             % Find corresponding time windows in both datasets
             dff_time_mask = time_dff_full >= time_min & time_dff_full <= time_max;
-            supp_time_mask = daq.t_supp >= time_min & daq.t_supp <= time_max;
+            supp_time_mask = daq(2).t >= time_min & daq(2).t <= time_max;
             
             % Extract data based on time alignment
             region_dff = dff_plot(dff_time_mask);
             region_time_dff = time_dff_full(dff_time_mask);
-            region_time_supp = daq.t_supp(supp_time_mask);
+            region_time_supp = daq(2).t(supp_time_mask);
             
             % Handle different field names for yaw velocity
-            if isfield(daq, 'bvy_deg_supp')
-                region_bvy_deg = daq.bvy_deg_supp(supp_time_mask);
-            elseif isfield(daq, 'bvy_supp')
-                region_bvy_deg = daq.bvy_supp(supp_time_mask);
+            if isfield(daq, 'bvy_deg')
+                region_bvy_deg = daq(2).bvy_deg(supp_time_mask);
+            elseif isfield(daq, 'bvf')
+                region_bvy_deg = daq(2).bvf(supp_time_mask);
             else
                 error('Neither daq.bvy_deg_supp nor daq.bvy_supp found');
             end
             
+            region_bvy_deg = daq(2).bvf(supp_time_mask);
             % Store region info
             regions{region_num} = struct('type', 'polygon', 'vertices', vertices, 'color', color, ...
                 'time_range', [time_min, time_max]);
@@ -291,7 +292,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
                     sorted_dff = selected_points{i}.dff(sort_idx_dff);
                     
                     h_dff = plot(sorted_time_dff, sorted_dff, ...
-                        'o-', 'Color', base_color, 'LineWidth', 2, ...
+                        'Color', base_color, 'LineWidth', 1.3, ...
                         'MarkerSize', 5, 'MarkerFaceColor', base_color);
                     
                     dff_handles = [dff_handles, h_dff];
@@ -333,7 +334,7 @@ function trajectory_region_selector(daq, dff, jump, varargin)
                     sorted_bvy_deg = selected_points{i}.bvy_deg(sort_idx_supp);
                     
                     h_bvy = plot(sorted_time_supp, sorted_bvy_deg, ...
-                        's--', 'Color', bvy_color, 'LineWidth', 1.5, ...
+                       'Color', bvy_color, 'LineWidth', 1.3, ...
                         'MarkerSize', 4, 'MarkerFaceColor', bvy_color);
                     
                     bvy_handles = [bvy_handles, h_bvy];

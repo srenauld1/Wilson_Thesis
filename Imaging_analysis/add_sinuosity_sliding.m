@@ -7,8 +7,8 @@ function a2p_data = add_sinuosity_sliding(a2p_data, window)
 % Output:
 %   a2p_data.sinuosity - [n x 1] vector with sliding window sinuosity
 
-    x = a2p_data.dq(2).pxb(:); % or a2p_data.x(:)
-    y = a2p_data.dq(2).pyb(:); % or a2p_data.y(:)
+    x = a2p_data.dq(2).px(:); 
+    y = a2p_data.dq(2).py(:);
     N = numel(x);
 
     halfwin = floor(window / 2);

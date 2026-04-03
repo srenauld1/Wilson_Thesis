@@ -1,0 +1,224 @@
+function corr_vol = pixelwise_corr_volume(stack, var, savepath, var_name)
+% PIXELWISE_CORR_VOLUME
+%   corr_vol = pixelwise_corr_volume(stack, var, savepath, var_name)
+%
+% Inputs:
+%   stack    : [nx x ny x nz x nt] imaging data
+%   var      : [nt x 1] (or 1 x nt) time series to correlate with (e.g. fwd velocity)
+%   savepath : folder where figure will be saved (optional, can be [])
+%   var_name : string/name of var for labels (optional)
+%
+% Output:
+%   corr_vol : [nx x ny x nz] correlation coefficient for each voxel
+
+if nargin < 4 || isempty(var_name)
+    var_name = 'variable';
+end
+if nargin < 3
+    savepath = [];
+end
+
+% ----- Basic checks -----
+sz = size(stack);
+if numel(sz) ~= 4
+    error('stack must be 4D: [x y z t].');
+end
+nx = sz(1); ny = sz(2); nz = sz(3); nt = sz(4);
+
+var = var(:);  % column vector
+if numel(var) ~= nt
+    error('Length of var (%d) must match number of frames/volumes in stack (%d).', numel(var), nt);
+end
+
+% ----- Reshape and convert to double -----
+stack_d = double(stack);                 % avoid integer overflow
+V = reshape(stack_d, [], nt);            % [nVoxels x nt], nVoxels = nx*ny*nz
+
+% Optionally handle NaNs: ignore voxels with all NaNs
+allNaN = all(isnan(V), 2);
+V(allNaN,:) = 0;   % temporary; will set r to NaN later for these voxels
+
+% ----- Demean -----
+V = V - mean(V, 2, 'omitnan');           % subtract mean over time for each voxel
+v = var - mean(var, 'omitnan');          % demean variable
+
+% ----- Compute Pearson correlation for each voxel -----
+% r = sum(V.*v,2) / sqrt(sum(V.^2,2)*sum(v.^2))
+numerator   = V * v;                     % [nVoxels x 1]
+denom_vox   = sqrt(sum(V.^2, 2));        % [nVoxels x 1]
+denom_var   = sqrt(sum(v.^2));           % scalar
+denominator = denom_vox * denom_var;     % [nVoxels x 1]
+r = numerator ./ denominator;           % [nVoxels x 1]
+
+% Handle degenerate cases (zero variance)
+r(denominator == 0) = NaN;
+r(allNaN) = NaN;
+
+% ----- Reshape back to [nx x ny x nz] -----
+corr_vol = reshape(r, [nx ny nz]);
+
+% ----- Plot each z-plane -----
+figure('Name',['Pixelwise corr with ' var_name], 'Color','w');
+nCols = ceil(sqrt(nz));
+nRows = ceil(nz / nCols);
+
+for z = 1:nz
+    subplot(nRows, nCols, z);
+    imagesc(corr_vol(:,:,z), [-0.2 0.2]);  % fix scale to [-1 1]
+    axis image off;
+    title(sprintf('z = %d', z));
+    colormap(gca, jet);               % per-axes colormap
+    colorbar;
+end
+
+sgtitle(sprintf('Pixelwise correlation with %s', var_name));
+
+% ----- Save figure if requested -----
+if ~isempty(savepath)
+    save_plot_with_title_as_filename(['corr_with_' var_name], 'volume', savepath);
+end
+end
+
+function [pref_state_vol, pref_amp_vol] = pixelwise_velocity_tuning_dff( ...
+            stack, vel, vel_thresh, diff_thresh, savepath)
+% PIXELWISE_VELOCITY_TUNING_DFF
+%
+%   Compute voxel-wise preferred velocity state from volumetric imaging and
+%   a 1D velocity time series, using dF/F (baseline = 5th percentile).
+%
+%   Velocity states:
+%       1 = still           (abs(vel) <= vel_thresh)
+%       2 = moving positive ( vel  > vel_thresh)
+%       3 = moving negative ( vel  < -vel_thresh)
+%
+%   For each voxel:
+%       - Compute mean dF/F in each of the 3 states.
+%       - Pick the state with highest mean as "preferred".
+%       - Keep only voxels where (max - min) across states >= diff_thresh.
+%
+% Inputs:
+%   stack       : [nx x ny x nz x nt] imaging data (raw fluorescence)
+%   vel         : [nt x 1] or [1 x nt] velocity trace
+%   vel_thresh  : scalar, threshold for still vs moving
+%   diff_thresh : scalar, min (max-min) dF/F range across states to be considered tuned
+%   savepath    : directory to save the tuning maps figure (optional, [] to skip)
+%
+% Outputs:
+%   pref_state_vol : [nx x ny x nz] preferred state index (1=still,2=pos,3=neg, NaN=untuned)
+%   pref_amp_vol   : [nx x ny x nz] mean dF/F in that preferred state
+
+if nargin < 5
+    savepath = [];
+end
+
+% ------------ Basic checks ------------
+sz = size(stack);
+if numel(sz) ~= 4
+    error('stack must be 4D: [x y z t].');
+end
+[nx, ny, nz, nt] = deal(sz(1), sz(2), sz(3), sz(4));
+
+vel = vel(:);
+if numel(vel) ~= nt
+    error('Length of vel (%d) must match # of frames in stack (%d).', numel(vel), nt);
+end
+
+% ------------ Compute dF/F per voxel (F0 = 5th percentile) ------------
+stack_d = double(stack);                     % [nx x ny x nz x nt]
+F0 = prctile(stack_d, 5, 4);                 % [nx x ny x nz]
+F0(F0 == 0 | isnan(F0)) = eps;              % avoid /0
+dff = bsxfun(@rdivide, bsxfun(@minus, stack_d, F0), F0);  % [nx x ny x nz x nt]
+
+% ------------ Define velocity states ------------
+state_still = abs(vel) <= vel_thresh;
+state_pos   = vel >  vel_thresh;
+state_neg   = vel < -vel_thresh;
+
+% Ensure mutual exclusivity
+% (if boundaries overlap due to ==, still wins)
+state_pos(state_still) = false;
+state_neg(state_still) = false;
+
+% ------------ Reshape dF/F to [nVox x nt] ------------
+V = reshape(dff, [], nt);                    % [nVox x nt]
+nVox = size(V,1);
+
+% ------------ Mean dF/F per voxel for each state ------------
+nStates = 3;
+tuning = nan(nVox, nStates);                % col 1: still, 2: pos, 3: neg
+
+% State 1: still
+idx = state_still;
+if any(idx)
+    tuning(:,1) = mean(V(:,idx), 2, 'omitnan');
+end
+
+% State 2: positive
+idx = state_pos;
+if any(idx)
+    tuning(:,2) = mean(V(:,idx), 2, 'omitnan');
+end
+
+% State 3: negative
+idx = state_neg;
+if any(idx)
+    tuning(:,3) = mean(V(:,idx), 2, 'omitnan');
+end
+
+% ------------ Preferred state and amplitude ------------
+[pref_amp, pref_state] = max(tuning, [], 2);  % over columns = states
+
+% Tuning strength across states
+tuning_range = max(tuning, [], 2, 'omitnan') - min(tuning, [], 2, 'omitnan');
+allNaN = all(isnan(tuning), 2);
+
+% Mask: must have data & range >= diff_thresh
+tuned_mask = ~allNaN & (tuning_range >= diff_thresh);
+
+pref_amp(~tuned_mask)   = NaN;
+pref_state(~tuned_mask) = NaN;
+
+% Reshape volumes
+pref_state_vol = reshape(pref_state, [nx ny nz]);
+pref_amp_vol   = reshape(pref_amp,   [nx ny nz]);
+
+% ------------ Plot: preferred velocity state per z-plane ------------
+figure('Name','Pixelwise preferred velocity state (dF/F)','Color','w');
+nCols = ceil(sqrt(nz));
+nRows = ceil(nz / nCols);
+
+% Categorical colormap: 1=still(gray), 2=positive(red), 3=negative(blue)
+state_colors = [0.5 0.5 0.5;   % still
+                1.0 0.0 0.0;   % pos
+                0.0 0.0 1.0];  % neg
+
+for z = 1:nz
+    subplot(nRows, nCols, z);
+    plane_states = pref_state_vol(:,:,z);    % 1,2,3 or NaN
+
+    % Background black for untuned
+    set(gca, 'Color', 'k');
+
+    % imagesc with indices 1..3; use AlphaData to hide NaNs
+    imagesc(plane_states, [1 nStates]);
+    axis image off;
+
+    % Build colormap: black for NaN handled via AlphaData, so we only need state colors
+    colormap(gca, state_colors);
+
+    % Hide NaNs by alpha
+    alphaMask = ~isnan(plane_states);
+    set(get(gca,'Children'), 'AlphaData', alphaMask);
+
+    c = colorbar;
+    c.Ticks      = 1:3;
+    c.TickLabels = {'still','pos','neg'};
+    title(sprintf('z = %d', z));
+end
+
+sgtitle(sprintf('Pixelwise preferred velocity state (dF/F, Δrange >= %.3f)', diff_thresh));
+
+if ~isempty(savepath)
+    save_plot_with_title_as_filename('vel_tuning_dff', 'volume', savepath);
+end
+end
