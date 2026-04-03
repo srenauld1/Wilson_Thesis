@@ -236,12 +236,16 @@ for k = 1:nTrials
     post_Y_mat(k,:) = post_Y_cells{k}(1:min_post_L);
 end
 
+% this is where the mean is calculated! this is where you may want to
+% change things to do displacement or average
 mean_pre_X  = mean(pre_X_mat,  1, 'omitnan');
 mean_pre_Y  = mean(pre_Y_mat,  1, 'omitnan');
 mean_opto_X = mean(opto_X_mat, 1, 'omitnan');
 mean_opto_Y = mean(opto_Y_mat, 1, 'omitnan');
 mean_post_X = mean(post_X_mat, 1, 'omitnan');
 mean_post_Y = mean(post_Y_mat, 1, 'omitnan');
+
+
 
 % Plot means: pre = black, opto = bright red, post = blue
 h_mean_pre  = plot(mean_pre_X,  mean_pre_Y,  'k-',             'LineWidth', 3);
