@@ -15,8 +15,8 @@ function trajectory_region_selector(daq, dff, jump, varargin)
         time_dff_full = daq.t(moving_mask);
         original_indices = find(moving_mask);
     else
-        px = daq.px;
-        py = daq.py;
+        px = daq.pxb;
+        py = daq.pyb;
         dff_plot = dff;
         time_dff_full = daq.t;
         original_indices = (1:length(px))';
@@ -293,7 +293,10 @@ function trajectory_region_selector(daq, dff, jump, varargin)
                     
                     h_dff = plot(sorted_time_dff, sorted_dff, ...
                         'Color', base_color, 'LineWidth', 1.3, ...
+                        'LineStyle', '-', ...                % <--- force solid
                         'MarkerSize', 5, 'MarkerFaceColor', base_color);
+                    
+
                     
                     dff_handles = [dff_handles, h_dff];
                     legend_entries{end+1} = sprintf('Region %d DFF (n=%d)', i, selected_points{i}.dff_count);
@@ -334,7 +337,8 @@ function trajectory_region_selector(daq, dff, jump, varargin)
                     sorted_bvy_deg = selected_points{i}.bvy_deg(sort_idx_supp);
                     
                     h_bvy = plot(sorted_time_supp, sorted_bvy_deg, ...
-                       'Color', bvy_color, 'LineWidth', 1.3, ...
+                        'Color', bvy_color, 'LineWidth', 1.3, ...
+                        'LineStyle', '-', ...                % <--- force solid
                         'MarkerSize', 4, 'MarkerFaceColor', bvy_color);
                     
                     bvy_handles = [bvy_handles, h_bvy];

@@ -14,8 +14,8 @@ end
 x = exptData.x;
 y = exptData.y;
 
-if isfield(exptData, 'optoStim')
-    opto_timing = exptData.optoStim;
+if isfield(exptData, 'optoStim_ds')
+    opto_timing = exptData.optoStim_ds;
 else
     warning('plot_flatpath_opto: No optoStim field found. Plotting all as opto OFF.');
     opto_timing = zeros(size(x));

@@ -68,12 +68,12 @@ function [exptData, exptMeta] = process_fictrac_panels(exptData,exptMeta, minVel
     end
     %% Behavior variable adjustments
     %downsample time and optoopto and g4
-    exptData.t = downsample(exptData.t, 30);
+    exptData.t_ds = downsample(exptData.t, 30);
     if checkOpto
-        exptData.optoStim = downsample(exptData.optoStim, 30);
+        exptData.optoStim_ds = downsample(exptData.optoStim, 30);
     end
     if checkG4
-        exptData.g4displayXPos = downsample(exptData.g4displayXPos, 30);
+        exptData.g4displayXPos_ds = downsample(exptData.g4displayXPos, 30);
     end
 
     %% detect jumps

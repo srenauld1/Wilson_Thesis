@@ -26,7 +26,7 @@ minVel = 3; % minimum total velocity to be count as moving
 
 %% load in exptData and exptMeta
 % Define the base folder path
-baseFolder = '/Volumes/Neurobio/wilsonlab/Sophia/behavior/'; % Change this to the desired directory
+baseFolder = '/Users/sophiarenauld/Downloads'; % Change this to the desired directory
 
 % Prompt the user to select a file from the base folder
 [fileName, pathName] = uigetfile('*.mat', 'Select Processed Behavior Data', baseFolder);
@@ -95,14 +95,15 @@ disp(['Save path: ', savepath]);
 plot_flatpath_opto(exptData, savepath)
 
 %% now plot flatpath collapsed over whole trial
-plot_flatpath_aligned_opto(exptData, savepath)
+exptData = plot_flatpath_aligned_opto(exptData, savepath);
 
 %% save expt data
 %% save processed exptData and exptMeta
-save_filename = fullfile(savepath, [fname, '_processed.mat']);
+save_filename = fullfile(savepath, [fname_parts{1}, '_processed_final.mat']);
 
 try
-    save(save_filename, 'exptData', 'exptMeta');
+    save_filename = fullfile(savepath, [fname_parts{1}, '_processed_final.mat']);
+    save(save_filename, 'exptData', '-v7.3');
     disp(['Saved processed data to: ', save_filename]);
 catch ME
     warning('Could not save processed data to %s.\nError: %s', ...

@@ -8,14 +8,14 @@ savepath = "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysi
 
 # LOAD IN AND LABEL DATA --------------------------------------------------
 
-behavior_kin<- read.csv("/Users/sophiarenauld/Downloads/Chrimson Data(Included) (1).csv")
+behavior_kin<- read.csv("/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysis/Chrimson_Data_final.csv")
 
 # from blinding sheet
-# ves041_1_Chrim <- [2, 7, 16, 19, 21, 26, 45]
-# ves041_2_Chrim <- [1, 14, 18, 24, 29, 40, 44]
-# ves041_1_gfp <- [3, 4, 5, 8, 12, 15, 22, 25, 27, 42 ]
-# ves041_2_gfp <- [30, 35, 43]
-# empty_Chrim <- [6, 10, 17, 20, 23, 31, 34, 39, 46]
+# ves041_1_Chrim <- [2, 7, 16, 19, 21, 26, 53, 58, 65, 70, 72, 74, 77, 79, 81, 85]
+# ves041_2_Chrim <- [1, 14, 18, 24, 29, 40, 44, 66, 73, 75, 80, 90, 100, 102, 105]
+# ves041_1_gfp <- [3, 4, 5, 8, 12, 15, 25, 27, 69, 99, 102, 103]
+# ves041_2_gfp <- [35, 52, 59, 63, 89, 93]
+# empty_Chrim <- [6, 17, 20, 23, 31, 34, 39, 46, 50, 54, 57, 62, 84, 87, 88, 91, 96]
 
 
 # right now segmented to be something > 5mm/s, but with 4mm/s we could also have data
@@ -23,11 +23,11 @@ behavior_kin <- behavior_kin %>%
   mutate(
     Fly = as.numeric(as.character(Fly)), # Ensure Fly is numeric for matching
     Genotype = case_when(
-      Fly %in% c(2, 7, 16, 19, 26, 53) ~ "ves041_1_Chrim",
-      Fly %in% c(1, 14, 18, 24, 29, 40) ~ "ves041_2_Chrim",
-      Fly %in% c(3, 5, 8, 12, 15, 25) ~ "ves041_1_gfp",
-      Fly %in% c(35, 43) ~ "ves041_2_gfp",
-      Fly %in% c(6, 17, 20, 39, 50, 54) ~ "empty_Chrim",
+      Fly %in% c(2, 7, 16, 19, 21, 26, 53, 58, 65, 70, 72, 74, 77, 79, 81, 85) ~ "ves041_1_Chrim",
+      Fly %in% c(1, 14, 18, 24, 29, 40, 44, 66, 73, 75, 80, 90, 100, 102, 105) ~ "ves041_2_Chrim",
+      Fly %in% c(3, 4, 5, 8, 12, 15, 25, 27, 69, 99, 101, 103) ~ "ves041_1_gfp",
+      Fly %in% c(35, 52, 59, 63, 89, 93) ~ "ves041_2_gfp",
+      Fly %in% c(6, 17, 20, 23, 31, 34, 39, 46, 50, 54, 57, 62, 84, 87, 88, 91, 96) ~ "empty_Chrim",
       TRUE ~ NA_character_  # Or another default
     )
   )

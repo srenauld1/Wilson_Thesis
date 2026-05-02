@@ -80,6 +80,7 @@ ggsave(
   dpi = 300
 )
 
+
 # ROTATIONAL SPEED -----------------------------------------------------------
 
 behavior_long <- behavior_kin %>%
@@ -123,8 +124,6 @@ ggsave(
   height = 9,
   dpi = 300
 )
-
-
 
 
 # FORWARD ACCELERATION -----------------------------------------------------------
@@ -231,12 +230,15 @@ behavior_long_unblinded <- behavior_kin_unblinded %>%
                        "Opto.On..Forward.Velocity" = "Opto On")
   )
 
-# Bar plot: mean with error bars (SE) for each genotype and condition
-ggplot(behavior_long_unblinded, aes(x = Genotype, y = ForwardVelocity, fill = Condition)) +
+p_fw_vel <- ggplot(behavior_long_unblinded, aes(x = Condition, y = ForwardVelocity, fill = Condition)) +
   stat_summary(fun = mean, geom = "bar", 
-               position = position_dodge(width = 0.7), color = "black", width=0.6, alpha = 0.8) +
+               position = position_dodge(width = 0.7), color = "black", width = 0.6, alpha = 0.5) +
   stat_summary(fun.data = mean_se, geom = "errorbar", 
-               position = position_dodge(width = 0.7), width=0.2) +
+               position = position_dodge(width = 0.7), width = 0.2) +
+  geom_line(aes(group = Fly), color = "gray40", alpha = 0.5, linewidth = 0.4) +
+  geom_point(aes(group = Fly), size = 1.5, alpha = 0.7, shape = 21, color = "black") +
+  facet_wrap(~ Genotype, nrow = 1) +
+  scale_fill_manual(values = c("Pre-Opto" = "blue", "Opto On" = "red")) +
   theme_minimal() +
   labs(
     title = "UNBLINDED PILOT: Forward Speed Pre and During Opto by genotype",
@@ -244,6 +246,24 @@ ggplot(behavior_long_unblinded, aes(x = Genotype, y = ForwardVelocity, fill = Co
     y = "Forward Velocity (mean ± SE)",
     fill = "Condition"
   )
+p_fw_vel
+
+ggsave(
+  filename = "unblinded_forward_velocity_plot.png",
+  plot = p_fw_vel,
+  path = savepath,
+  width = 12,
+  height = 9,
+  dpi = 300
+)
+
+
+# Option 1: Compare opto response (interaction) between all genotype pairs
+# This directly asks "do genotypes differ in how they respond to opto?"
+contrast(emm, interaction = "pairwise", by = "Condition", adjust = "bonferroni")
+
+
+# rotation!! unblinded!!
 
 # Gather data into long format
 behavior_long_unblinded <- behavior_kin_unblinded %>%
@@ -258,19 +278,23 @@ behavior_long_unblinded <- behavior_kin_unblinded %>%
                        "Opto.On.Rotational.Speed" = "Opto On")
   )
 
-# Bar plot: mean with error bars (SE) for each genotype and condition
-ggplot(behavior_long_unblinded, aes(x = Genotype, y = RotationalSpeed, fill = Condition)) +
+p_rot_vel <- ggplot(behavior_long_unblinded, aes(x = Condition, y = RotationalSpeed, fill = Condition)) +
   stat_summary(fun = mean, geom = "bar", 
-               position = position_dodge(width = 0.7), color = "black", width=0.6, alpha = 0.8) +
+               position = position_dodge(width = 0.7), color = "black", width = 0.6, alpha = 0.5) +
   stat_summary(fun.data = mean_se, geom = "errorbar", 
-               position = position_dodge(width = 0.7), width=0.2) +
+               position = position_dodge(width = 0.7), width = 0.2) +
+  geom_line(aes(group = Fly), color = "gray40", alpha = 0.5, linewidth = 0.4) +
+  geom_point(aes(group = Fly), size = 1.5, alpha = 0.7, shape = 21, color = "black") +
+  facet_wrap(~ Genotype, nrow = 1) +
+  scale_fill_manual(values = c("Pre-Opto" = "blue", "Opto On" = "red")) +
   theme_minimal() +
   labs(
     title = "UNBLINDED PILOT: Rotational Speed Pre and During Opto by genotype",
-    x = "genotype",
+    x = "Genotype",
     y = "Rotational Speed (mean ± SE)",
     fill = "Condition"
   )
+p_rot_vel
 
 
 

@@ -1,0 +1,280 @@
+%% ANALYZE HEAT BARRIER DATA
+% April 28, 2026
+
+%% SETUP
+
+baseFolder = '/Users/sophiarenauld/stacks/';  % change if needed
+savepath   = '/Users/sophiarenauld/stacks/20260427-8_ves041_fly3_heat_80mm_otherside_L';
+
+%% LOAD DATA
+
+% --- FicTrac data ---
+ftFile = uigetfile_full('*_ficTracData.mat', 'Select FicTrac Data', baseFolder);
+if isempty(ftFile), return; end
+load(ftFile, 'ftData');   % adjust if file contains different var names
+
+% --- Virmen data ---
+vmFile = uigetfile_full('*virmenData.mat', 'Select Virmen Data', baseFolder);
+if isempty(vmFile), return; end
+load(vmFile);   % adjust if needed
+
+% --- Imaging data ---
+imFile = uigetfile_full('*_or_z0z1_s_.mat', 'Select IMAGING Data', baseFolder);
+if isempty(imFile), return; end
+imaging_data = load(imFile);   % keep as struct
+
+%% COMMON LABELS
+
+% Time / signals
+time_dff = daqVolumeTime.daqVolumeTime{1,1};          % imaging time
+dff      = imaging_data.roi.ts;
+
+time_kin = seconds(vmData.Seconds{1,1});              % kinematic time (duration -> double)
+fwd_vel = vmData.vel_for(:);                         % forward velocity
+rot_vel = vmData.vel_yaw(:);                         % yaw / rotational velocity
+
+% Assume column vectors
+time_dff = time_dff(:);
+time_kin = time_kin(:);
+
+tmax_kin = max(time_kin);
+
+mask = time_dff <= tmax_kin;
+
+time_dff_clipped = time_dff(mask);
+dff_clipped      = dff(mask);   % if dff is same length as time_dff
+
+
+%% QUICK CHECK PLOTS (OPTIONAL)
+
+figure(1);
+plot(time_kin, fwd_vel);
+xlabel('Time (s)');
+ylabel('Forward velocity (FicTrac)');
+title('FicTrac forward velocity (smoothed)');
+
+figure(2);
+plot(ftData.pos_for{1,1}, ftData.pos_side{1,1});
+xlabel('Forward position');
+ylabel('Side position');
+title('FicTrac trajectory');
+
+figure; hold on;
+plot(time_dff_clipped, dff_clipped*5);
+plot(ftData.seconds{1,1}, ftData.fwVel{1,1}, 'k');
+plot(ftData.seconds{1,1}, ftData.yawVel{1,1}, 'r');
+xlabel('Time (s)');
+ylabel('Signal');
+legend({'dF/F (×5)','fwVel','yawVel'});
+title('Imaging vs FicTrac signals');
+grid on; hold off;
+
+%% FLAT PATH: HEAT ON/OFF IN VM SPACE
+
+figure(5);
+
+x = vmData.pos_x{1,1};
+y = vmData.pos_y{1,1};
+
+% Heat may be stored as cell in table — extract to numeric vector
+heat = vmData.heat;
+if iscell(heat)
+    heat = cell2mat(heat);
+end
+heat = heat(:);
+
+heat_on  = heat > 0;
+heat_off = ~heat_on;
+
+hold on;
+h_off = plot(x(heat_off), y(heat_off), 'k.', 'MarkerSize', 2);
+h_on  = plot(x(heat_on),  y(heat_on),  'r.', 'MarkerSize', 2);
+plot(x(1), y(1), 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'g');  % start point
+
+legend([h_off, h_on], {'Heat off', 'Heat on'}, 'Location', 'best');
+xlabel('X position');
+ylabel('Y position');
+title('Flat path — heat on (red) vs off (black)');
+axis equal; grid on;
+hold off;
+
+%% ALIGN IMAGING, KINEMATICS, AND HEAT
+
+
+if iscell(heat)
+    heat = cell2mat(heat);
+end
+heat = heat(:);
+heat_on  = heat > 0;
+heat_off = ~heat_on;
+
+% Make sure time vectors are column
+time_dff = time_dff(:);
+time_kin = time_kin(:);
+
+% Require heat and time_kin to match in length
+if numel(heat) ~= numel(time_kin)
+    error('Length of vmData.heat (%d) must match length of time_kin (%d).', ...
+          numel(heat), numel(time_kin));
+end
+
+% Clip dF/F to the kinematic time range
+tmin = min(time_kin);
+tmax = max(time_kin);
+
+mask_dff_overlap = (time_dff >= tmin) & (time_dff <= tmax);
+time_dff_clipped = time_dff(mask_dff_overlap);
+dff_clipped      = dff(mask_dff_overlap);
+
+%% FIND CONTIGUOUS HEAT-ON SEGMENTS ON KINEMATIC TIME BASE
+
+h = heat_on(:);
+
+diff_array = diff([0; h; 0]);          % pad with zeros at ends
+run_starts = find(diff_array ==  1);   % indices where heat turns on
+run_ends   = find(diff_array == -1) - 1;
+
+if numel(run_starts) ~= numel(run_ends)
+    error('Mismatch between heat-on run starts and ends.');
+end
+
+% Optional: minimum run length (in samples) to keep
+remove_if_shorter_than = 1;
+for i = 1:numel(run_starts)
+    run_length = run_ends(i) - run_starts(i) + 1;
+    if run_length < remove_if_shorter_than
+        h(run_starts(i):run_ends(i)) = 0;
+    end
+end
+
+% Recompute runs after pruning short ones
+diff_array = diff([0; h; 0]);
+run_starts = find(diff_array ==  1);
+run_ends   = find(diff_array == -1) - 1;
+
+% Convert index runs to time intervals on kinematic time base
+t_heat_start = time_kin(run_starts);
+t_heat_end   = time_kin(run_ends);
+
+%% PREPARE KINEMATIC SIGNALS (CLIP TO SAME TIME WINDOW)
+
+mask_kin_overlap = (time_kin >= tmin) & (time_kin <= tmax);
+time_kin_clipped = time_kin(mask_kin_overlap);
+fwd_clipped      = fwd_vel(mask_kin_overlap);
+rot_clipped      = rot_vel(mask_kin_overlap);
+
+%% PLOT: dF/F, FWD, ROT WITH HEAT-ON SHADING
+
+figure;
+
+% ---------- Subplot 1: dF/F ----------
+subplot(3,1,1); hold on;
+
+t       = time_dff_clipped;
+sig_dff = dff_clipped;
+
+yl = [min(sig_dff) max(sig_dff)];
+if yl(1) == yl(2)
+    yl = yl(1) + [-1 1];   % avoid zero-height y-limit
+end
+
+for i = 1:numel(t_heat_start)
+    t1 = t_heat_start(i);
+    t2 = t_heat_end(i);
+
+    % Intersect with dF/F time range
+    tt1 = max(t1, t(1));
+    tt2 = min(t2, t(end));
+    if tt2 > tt1
+        patch([tt1 tt2 tt2 tt1], ...
+              [yl(1) yl(1) yl(2) yl(2)], [1 .8 .8], ...   % light red-ish
+              'EdgeColor','none','FaceAlpha',0.35);
+    end
+end
+
+plot(t, sig_dff, 'b', 'LineWidth', 1.5);
+xlabel('Time (s)');
+ylabel('dF/F');
+title('dF/F (red = heat on)');
+grid on; hold off;
+
+% ---------- Subplot 2: Forward Velocity ----------
+subplot(3,1,2); hold on;
+
+tk      = time_kin_clipped;
+sig_fwd = fwd_clipped;
+
+yl = [min(sig_fwd) max(sig_fwd)];
+if yl(1) == yl(2)
+    yl = yl(1) + [-1 1];
+end
+
+for i = 1:numel(t_heat_start)
+    t1 = t_heat_start(i);
+    t2 = t_heat_end(i);
+
+    tt1 = max(t1, tk(1));
+    tt2 = min(t2, tk(end));
+    if tt2 > tt1
+        patch([tt1 tt2 tt2 tt1], ...
+              [yl(1) yl(1) yl(2) yl(2)], [1 .8 .8], ...
+              'EdgeColor','none','FaceAlpha',0.35);
+    end
+end
+
+plot(tk, sig_fwd, 'k', 'LineWidth', 1.5);
+xlabel('Time (s)');
+ylabel('Forward Velocity (mm/s)');
+title('Forward Velocity');
+grid on;
+ylim([-5 20]);   % adjust as needed
+hold off;
+
+% ---------- Subplot 3: Rotational Velocity ----------
+subplot(3,1,3); hold on;
+
+sig_rot = rot_clipped;
+yl = [min(sig_rot) max(sig_rot)];
+if yl(1) == yl(2)
+    yl = yl(1) + [-1 1];
+end
+
+for i = 1:numel(t_heat_start)
+    t1 = t_heat_start(i);
+    t2 = t_heat_end(i);
+
+    tt1 = max(t1, tk(1));
+    tt2 = min(t2, tk(end));
+    if tt2 > tt1
+        patch([tt1 tt2 tt2 tt1], ...
+              [yl(1) yl(1) yl(2) yl(2)], [1 .8 .8], ...
+              'EdgeColor','none','FaceAlpha',0.35);
+    end
+end
+
+plot(tk, sig_rot, 'r', 'LineWidth', 1.5);
+xlabel('Time (s)');
+ylabel('Rotational Velocity (deg/s)');
+title('Rotational Velocity');
+grid on; hold off;
+
+% --- Link x-axes of all subplots and add title ---
+linkaxes(findall(gcf, 'Type', 'axes'), 'x');
+sgtitle('dF/F, Forward, and Rotational Velocity (shaded = heat on)');
+
+% --- Save figure ---
+if ~isempty(savepath)
+    save_plot_with_title_as_filename('fwd_rot', 'dff_heat_shaded', savepath);
+end
+
+%% HELPER FUNCTION: safe uigetfile + full path
+function fullFilePath = uigetfile_full(pattern, prompt, baseFolder)
+    [fileName, pathName] = uigetfile(pattern, prompt, baseFolder);
+    if isequal(fileName, 0)
+        disp(['User canceled: ' prompt]);
+        fullFilePath = [];
+    else
+        fullFilePath = fullfile(pathName, fileName);
+        disp(['Loaded: ' fullFilePath]);
+    end
+end

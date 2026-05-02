@@ -43,6 +43,9 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
     time = time_up;
     opto = opto_up';
 
+    % initialize container for sliced data
+    exptData.opto_sliced = struct([]);
+
     %% chop up by opto blocks
     if checkOpto
         % Find the change points in the opto signal
@@ -139,6 +142,43 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
                 % Store the extended velocity data for opto-on
                 fwdvelocity_segments_optoon_extra{end+1} = fwd_vel(extended_segment_indices);
                 rotvel_segments_optoon_extra{end+1} = angular_vel(extended_segment_indices);
+
+                % ---------------------------------------------------------------------
+                % Slice ALL exptData time-series fields for this opto segment
+                % ---------------------------------------------------------------------
+                seg_idx = numel(exptData.opto_sliced) + 1;
+                
+                % store indices + time + opto explicitly
+                exptData.opto_sliced(seg_idx).indices = extended_segment_indices(:)';
+                exptData.opto_sliced(seg_idx).time    = time(extended_segment_indices);
+                exptData.opto_sliced(seg_idx).opto    = opto(extended_segment_indices);
+                
+                fn = fieldnames(exptData);
+                for f = 1:numel(fn)
+                    thisField = fn{f};
+                    % skip the container we are building
+                    if strcmp(thisField, 'opto_sliced')
+                        continue;
+                    end
+                
+                    val = exptData.(thisField);
+                
+                    % Only slice 1D vectors that match the length of opto/time
+                    if isnumeric(val) || islogical(val)
+                        s = size(val);
+                        if isvector(val) && numel(val) == numel(time)
+                            exptData.opto_sliced(seg_idx).(thisField) = val(extended_segment_indices);
+                        else
+                            % leave non-matching numeric as-is (e.g. scalars, 2D arrays)
+                            % You can comment this out if you don't want them at all:
+                            % exptData.opto_sliced(seg_idx).(thisField) = val;
+                        end
+                    else
+                        % Non-numeric fields are copied unchanged (meta info, etc.)
+                        exptData.opto_sliced(seg_idx).(thisField) = val;
+                    end
+                end
+                % ---------------------------------------------------------------------
 
                 % for calculating averages
                 opto_averages_fwd(end+1) = average_fwd;
@@ -314,7 +354,7 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
         moving_preopto_rot_acceleration_ave = mean(cell2mat(moving_preopto_rot_acceleration));
         disp(["MOVING PRE-OPTO ROT ACCELERATION AVE:", num2str(moving_preopto_rot_acceleration_ave)])
 
-        percent_moving = length(moving_pre_opto) / (length(still_pre_opto)+length(moving_pre_opto));
+        percent_moving = length(moving_pre_opto) / (length(still_pre_opto)+length(moving_pre_opto))*100;
         disp(["MOVING PERCENTAGE:", num2str(percent_moving)])
 
         % take average fwd

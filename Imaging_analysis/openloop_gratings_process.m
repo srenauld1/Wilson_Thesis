@@ -1,10 +1,10 @@
-function [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split)
+function [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split, LED)
 %% calculate normalized dff if exists 2 rois
 a=size(a2p_data.roi.ts);
 if a(1)>1
     dff = a2p_data.roi.ts(1,:)-a2p_data.roi.ts(2,:) ;
 else
-    dff = a2p_data.roi.ts(2,:);
+    dff = a2p_data.roi.ts(1,:);
 end
 %% determine the kinematic variables
 time = a2p_data.dq(1).t;
@@ -114,31 +114,67 @@ end
     % for 3 Hz
 
     
+    vh  = a2p_data.dq(1).vh;      % heading signal
+    
+    % ------------- POSITIVE SLOPE -----------------
     positive_slope = zeros(size(visual_heading));
-    positive_slope(visual_heading >= -3.1 & visual_pattern_velocity >= 0.02) = 1;
-    % take care of less than 2pi case
-    if max(visual_pattern_velocity)<2.5
-        positive_slope(visual_heading >= -3.1 & visual_heading <= 0) = 1;
+    
+    % --- Case 1: LED == 1, use vh range [1.2, 1.4] ---
+    mask_led  = (LED == 1);
+    mask_pos_vh = mask_led & (vh >= 1.2) & (vh <= 1.4);
+    positive_slope(mask_pos_vh) = 1;
+    
+    % --- Case 2: LED == 0, use original logic ---
+    mask_noled = (LED == 0);
+    mask_pos_orig = mask_noled & (visual_heading >= -3.1 & visual_pattern_velocity >= 0.02);
+    positive_slope(mask_pos_orig) = 1;
+    
+    % handle the < 2π case only on non‑LED samples
+    vpv_noled = visual_pattern_velocity(mask_noled);
+    if ~isempty(vpv_noled) && max(vpv_noled) < 2.5
+        mask_2pi = mask_noled & (visual_heading >= -3.1 & visual_heading <= 0);
+        positive_slope(mask_2pi) = 1;
     end
+    
+    % --- run-length cleanup for positive_slope ---
     diff_array = diff([0, positive_slope, 0]);
     run_starts = find(diff_array == 1);
-    run_ends = find(diff_array == -1) - 1;
+    run_ends   = find(diff_array == -1) - 1;
     
-    for i = 1:length(run_starts)
+    for i = 1:numel(run_starts)
         run_length = run_ends(i) - run_starts(i) + 1;
         if run_length < remove_if_shorter_than
             positive_slope(run_starts(i):run_ends(i)) = 0;
         end
     end
-    % ccw
+    
+    % ------------- NEGATIVE SLOPE -----------------
     negative_slope = zeros(size(visual_heading));
-    negative_slope(visual_heading >= -3.1 & visual_pattern_velocity <= 0) = 1;
-    if max(visual_pattern_velocity)<2.5
-         negative_slope(visual_heading >= 0 & visual_heading <= 4) = 1;
+    
+    % --- Case 1: LED == 1, use vh range [-0.7, -0.5] ---
+    mask_neg_vh = mask_led & (vh >= -0.7) & (vh <= -0.5);
+    negative_slope(mask_neg_vh) = 1;
+    
+    % --- Case 2: LED == 0, use original logic ---
+    mask_neg_orig = mask_noled & (visual_heading >= -3.1 & visual_pattern_velocity <= 0);
+    negative_slope(mask_neg_orig) = 1;
+    
+    if ~isempty(vpv_noled) && max(vpv_noled) < 2.5
+        mask_2pi_neg = mask_noled & (visual_heading >= 0 & visual_heading <= 4);
+        negative_slope(mask_2pi_neg) = 1;
     end
+    
+    % --- run-length cleanup for negative_slope ---
     diff_array = diff([0, negative_slope, 0]);
     run_starts = find(diff_array == 1);
-    run_ends = find(diff_array == -1) - 1;
+    run_ends   = find(diff_array == -1) - 1;
+    
+    for i = 1:numel(run_starts)
+        run_length = run_ends(i) - run_starts(i) + 1;
+        if run_length < remove_if_shorter_than
+            negative_slope(run_starts(i):run_ends(i)) = 0;
+        end
+    end
     
     for i = 1:length(run_starts)
         run_length = run_ends(i) - run_starts(i) + 1;
