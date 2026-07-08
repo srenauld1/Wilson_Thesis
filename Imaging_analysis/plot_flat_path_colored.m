@@ -12,10 +12,22 @@ if ~ismember(scale_option, valid_scales)
 end
 
 % ---------------- Colormap: blue->red->yellow ----------------
-n = 100;
+% ---------------- Colormap: blue -> yellow -> red ----------------
+n    = 100;
 half = round(n/2);
-cmap1 = [linspace(0,1,half)' zeros(half,1) linspace(1,0,half)'];
-cmap2 = [ones(n-half,1) linspace(0,1,n-half)' zeros(n-half,1)];
+
+% blue (0,0,1) -> yellow (1,1,0)
+cmap1_r = linspace(0, 1, half)';      % 0 -> 1
+cmap1_g = linspace(0, 1, half)';      % 0 -> 1
+cmap1_b = linspace(1, 0, half)';      % 1 -> 0
+cmap1   = [cmap1_r cmap1_g cmap1_b];
+
+% yellow (1,1,0) -> red (1,0,0)
+cmap2_r = ones(n-half,1);             % stay at 1
+cmap2_g = linspace(1, 0, n-half)';    % 1 -> 0
+cmap2_b = zeros(n-half,1);            % stay at 0
+cmap2   = [cmap2_r cmap2_g cmap2_b];
+
 cmap = [cmap1; cmap2];
 
 % ---------------- Select variable to color by ----------------

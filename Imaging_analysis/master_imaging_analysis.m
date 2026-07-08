@@ -141,7 +141,7 @@ if an4_project % this includes all other visual cells
 end
 if visual
     plotting_an4(a2p_data, jump, savepath)
-    [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split);
+    [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split, LED);
 end
 if all_8
       eight_visual_pattern_analysis(a2p_data, savepath, box, split)

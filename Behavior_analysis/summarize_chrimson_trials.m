@@ -1,7 +1,7 @@
 function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, outCsvPath)
 % SUMMARIZE_CHRIMSON_TRIALS
 %
-%   resultsTable = summarize_chrimson_trials(baseFolder, outCsvPath)
+%   [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, outCsvPath)
 %
 % Recursively searches baseFolder for files matching:
 %   *_processed_final.mat
@@ -11,9 +11,10 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
 % from the filename (before ' pattern...').
 %
 % Loads the file (expects variable `exptData`), computes:
-%   - mean_heading_disp : mean(exptData.opto_sliced_headingdisp  )
+%   - mean_heading_disp : mean(exptData.opto_sliced_headingdisp)
 %   - mean_fwd_opto     : mean of all exptData.opto_sliced.forwardVelocity_raw
 %   - mean_yaw_opto     : mean of all exptData.opto_sliced.angularVelocity_raw
+%   - path              : copies exptData.path (raw + mean trajectories)
 %
 % Outputs:
 %   CSV: id, mean_heading_disp
@@ -21,6 +22,7 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
 %        - id
 %        - mean_fwd_opto
 %        - mean_yaw_opto
+%        - path          (struct copied from exptData.path; empty if missing)
 %
 % Inputs:
 %   baseFolder : root directory to search (string or char)
@@ -31,6 +33,7 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
 %   resultsTable : table with variables:
 %                  - id
 %                  - value (mean_heading_disp)
+%   trialSummary : struct array as described above
 
     if nargin < 1 || isempty(baseFolder)
         error('You must provide baseFolder.');
@@ -52,6 +55,7 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
     if isempty(fileList)
         warning('No *_processed_final.mat files found under: %s', baseFolder);
         resultsTable = table(string.empty(0,1), [], 'VariableNames', {'id','value'});
+        trialSummary = struct('id',strings(0,1), 'mean_fwd_opto',[], 'mean_yaw_opto',[], 'path',struct([]));
         return;
     end
 
@@ -59,10 +63,12 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
     ids    = strings(nFiles, 1);
     values = nan(nFiles, 1);  % mean_heading_disp
 
-    % Preallocate trialSummary (only id, mean_fwd_opto, mean_yaw_opto)
+    % Preallocate trialSummary (now includes "path")  %% <-- changed
+    emptyPath = struct();     % placeholder if exptData.path missing
     trialSummary(nFiles,1) = struct('id',"", ...
                                     'mean_fwd_opto',nan, ...
-                                    'mean_yaw_opto',nan);
+                                    'mean_yaw_opto',nan, ...
+                                    'path',emptyPath);
 
     fprintf('Found %d *_processed_final.mat files.\n', nFiles);
 
@@ -76,9 +82,6 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
         fname = fileList(k).name;
 
         % --- Extract ID from filename: part before ' pattern'
-        % Example:
-        %   '2026_03_04_fly01_cell01_trial01A pattern20 stim2 function1_processed_final.mat'
-        % We want: '2026_03_04_fly01_cell01_trial01A'
         token = regexp(fname, '^(.*)\s+pattern', 'tokens', 'once');
 
         if isempty(token)
@@ -101,10 +104,10 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
         % ---------- Compute mean heading displacement ----------
         mean_heading_disp = NaN;
         if isfield(exptData, 'opto_sliced_headingdisp') ...
-                && ~isempty(exptData.opto_sliced_headingdisp )
-            mean_heading_disp = mean(exptData.opto_sliced_headingdisp  (:), 'omitnan');
+                && ~isempty(exptData.opto_sliced_headingdisp)
+            mean_heading_disp = mean(exptData.opto_sliced_headingdisp(:), 'omitnan');
         else
-            warning('No exptData.opto_sliced_headingdisp   in %s; value set to NaN.', fpath);
+            warning('No exptData.opto_sliced_headingdisp in %s; value set to NaN.', fpath);
         end
 
         % ---------- Compute mean forward & yaw velocity during opto ----------
@@ -114,9 +117,9 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
         if isfield(exptData, 'opto_sliced') && ~isempty(exptData.opto_sliced)
             % forwardVelocity_raw
             if isfield(exptData.opto_sliced, 'forwardVelocity_raw')
-                fwd_cells = {exptData.opto_sliced.forwardVelocity_raw}';  % 80x1 cell
-                fwd_mat   = vertcat(fwd_cells{:});                       % 80 x 60000
-                mean_fwd_opto = mean(fwd_mat, 1, 'omitnan');             % 1 x 60000
+                fwd_cells = {exptData.opto_sliced.forwardVelocity_raw}';  % cell array
+                fwd_mat   = vertcat(fwd_cells{:});                        % [nPulses x nSamples]
+                mean_fwd_opto = mean(fwd_mat, 1, 'omitnan');              % 1 x nSamples
             end
 
             % angularVelocity_raw
@@ -129,6 +132,14 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
             warning('exptData.opto_sliced missing or empty in %s; fwd/yaw means set to NaN.', fpath);
         end
 
+        % ---------- Copy path struct if present ----------   %% <-- added
+        if isfield(exptData, 'path') && ~isempty(exptData.path)
+            pathStruct = exptData.path;
+        else
+            pathStruct = emptyPath;   % empty struct if missing
+            warning('exptData.path missing or empty in %s; path stored as empty struct.', fpath);
+        end
+
         % ---------- Store results ----------
         validCount = validCount + 1;
 
@@ -138,11 +149,12 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
         trialSummary(validCount).id            = string(idStr);
         trialSummary(validCount).mean_fwd_opto = mean_fwd_opto;
         trialSummary(validCount).mean_yaw_opto = mean_yaw_opto;
+        trialSummary(validCount).path          = pathStruct;   % <-- store path
     end
 
     % Trim to valid entries only
-    ids    = ids(1:validCount);
-    values = values(1:validCount);
+    ids          = ids(1:validCount);
+    values       = values(1:validCount);
     trialSummary = trialSummary(1:validCount);
 
     % ---------------------------------------------------------------------
@@ -164,7 +176,7 @@ function [resultsTable, trialSummary] = summarize_chrimson_trials(baseFolder, ou
     matPath = fullfile(csvDir, [csvName '_trialSummary.mat']);
 
     try
-        save(matPath, 'trialSummary');
+        save(matPath, 'trialSummary', '-v7.3');  % v7.3 in case path is large
         fprintf('Saved trialSummary MAT to: %s\n', matPath);
     catch ME
         warning('Could not write trialSummary MAT: %s\n  Reason: %s', matPath, ME.message);

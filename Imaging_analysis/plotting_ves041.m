@@ -284,107 +284,11 @@ text(xl(2), yl(2), sprintf('n epochs = %d', n_epochs), ...
 
 save_plot_with_title_as_filename('movement_offset', 'variables', savepath);
 
-
-%% old, more detailed plotting
-%% Plot the dff and fwd
-% % Plot the dff and fwd
-% figure;
-% 
-% 
-% yyaxis left;
-% plot(time_kin, fwd, '-b', 'LineWidth', 1.5)% Plot first time series in blue
-% ylabel('Forward Velocity');  % Label for the left y-axis
-% 
-% % Set the y-axis limits for the left axis to [-5, 10]
-% ylim([-5 10]);
-% 
-% % Plot the second time series on the right y-axis
-% yyaxis right;
-% plot(time, dff, '-r' , 'LineWidth', 1.5);  % Plot second time series in red
-% ylabel('dff');  % Label for the right y-axis
-% 
-% % Add title and x-axis label
-% xlabel('Time');
-% title('Forward velocity and DFF');
-% 
-% % Optional: Add legend
-% legend('Forward Velocity', 'dff');
-% save_plot_with_title_as_filename('Fwd vel', 'dff', savepath);
-% 
-% %% plot dff and yaw
-% figure;
-% yyaxis left;
-% plot(time_kin, yaw, '-g', 'LineWidth', 1.5);  % Plot first time series in blue
-% ylabel('Yaw velocity');  % Label for the left y-axis
-% 
-% % Set the y-axis limits for the left axis to [-5, 10]
-% ylim([-500 500]);
-% 
-% % Plot the second time series on the right y-axis
-% yyaxis right;
-% plot(time, dff, '-r', 'LineWidth', 1.5);  % Plot second time series in red
-% ylabel('dff');  % Label for the right y-axis
-% 
-% % Add title and x-axis label
-% xlabel('Time');
-% title('Yaw velocity and DFF');
-% 
-% % Optional: Add legend
-% legend('yaw velocity', 'dff');
-% save_plot_with_title_as_filename('Yaw vel', 'dff', savepath);
-
-%% plot fwd and yaw
-% figure;
-% yyaxis left;
-% plot(time_kin, fwd, '-b');  % Plot first time series in blue
-% ylabel('Forward velocity');  % Label for the left y-axis
-% 
-% % Set the y-axis limits for the left axis to [-5, 10]
-% ylim([-5 5]);
-% 
-% % Plot the second time series on the right y-axis
-% yyaxis right;
-% plot(time_kin, yaw, '-g');  % Plot second time series in red
-% ylabel('yaw vel');  % Label for the right y-axis
-% 
-% % Add title and x-axis label
-% xlabel('Time');
-% title('forward and yaw velocity');
-% 
-% % Optional: Add legend
-% legend('fwd velocity', 'yaw velocity');
-% save_plot_with_title_as_filename('Fwd vel', 'Yaw vel', savepath);
-% 
-% 
-% %% Plot the side and dff
-% % Plot the dff and fwd
-% figure;
-% yyaxis left;
-% plot(time_kin, side, '-y');  % Plot first time series in blue
-% ylabel('Sideways velocity');  % Label for the left y-axis
-% 
-% % Set the y-axis limits for the left axis to [-5, 10]
-% ylim([-500 500]);
-% 
-% % Plot the second time series on the right y-axis
-% yyaxis right;
-% plot(time, dff, '-r');  % Plot second time series in red
-% ylabel('dff');  % Label for the right y-axis
-% 
-% % Add title and x-axis label
-% xlabel('Time');
-% title('Side velocity vs dff');
-% 
-% % Optional: Add legend
-% legend('Sideways velocity', 'dff');
-% save_plot_with_title_as_filename('Side vel', 'dff', savepath);
-
-
 %% Parameters
 preN = 2*round(sample_rate);
 offN = 2*round(sample_rate);
 min_run_len = 0.5*round(sample_rate);
-min_inbetween_len = round(sample_rate);
+min_inbetween_len = 10*round(sample_rate);
 
 %% Find bouts
 d = diff([0; motion; 0]);

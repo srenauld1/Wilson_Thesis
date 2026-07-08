@@ -8,13 +8,13 @@ savepath = "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysi
 
 # LOAD IN AND LABEL DATA --------------------------------------------------
 
-behavior_kin<- read.csv("/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysis/Chrimson_Data_final.csv")
+behavior_kin<- read.csv("/Users/sophiarenauld/Downloads/Chrimson Data(Included) (3).csv")
 
 # from blinding sheet
-# ves041_1_Chrim <- [2, 7, 16, 19, 21, 26, 53, 58, 65, 70, 72, 74, 77, 79, 81, 85]
-# ves041_2_Chrim <- [1, 14, 18, 24, 29, 40, 44, 66, 73, 75, 80, 90, 100, 102, 105]
-# ves041_1_gfp <- [3, 4, 5, 8, 12, 15, 25, 27, 69, 99, 102, 103]
-# ves041_2_gfp <- [35, 52, 59, 63, 89, 93]
+# ves041_1_Chrim <- [2, 7, 16, 19, 21, 26, 53, 58, 65, 70, 72, 74, 77, 79, 81, 85, 119, 130]
+# ves041_2_Chrim <- [1, 14, 18, 24, 29, 40, 44, 66, 73, 75, 80, 90, 100, 102, 105, 108, 110]
+# ves041_1_gfp <- [3, 4, 5, 8, 12, 15, 25, 27, 69, 99, 101, 103, 111, 114, 121, 124]
+# ves041_2_gfp <- [35, 52, 59, 63, 89, 93, 107, 113, 118, 122, 123, 125, 129, 132, 133, 137]
 # empty_Chrim <- [6, 17, 20, 23, 31, 34, 39, 46, 50, 54, 57, 62, 84, 87, 88, 91, 96]
 
 
@@ -23,10 +23,10 @@ behavior_kin <- behavior_kin %>%
   mutate(
     Fly = as.numeric(as.character(Fly)), # Ensure Fly is numeric for matching
     Genotype = case_when(
-      Fly %in% c(2, 7, 16, 19, 21, 26, 53, 58, 65, 70, 72, 74, 77, 79, 81, 85) ~ "ves041_1_Chrim",
-      Fly %in% c(1, 14, 18, 24, 29, 40, 44, 66, 73, 75, 80, 90, 100, 102, 105) ~ "ves041_2_Chrim",
-      Fly %in% c(3, 4, 5, 8, 12, 15, 25, 27, 69, 99, 101, 103) ~ "ves041_1_gfp",
-      Fly %in% c(35, 52, 59, 63, 89, 93) ~ "ves041_2_gfp",
+      Fly %in% c(2, 7, 16, 19, 21, 26, 53, 58, 65, 70, 72, 74, 77, 79, 81, 85, 119, 130) ~ "ves041_1_Chrim",
+      Fly %in% c(1, 14, 18, 24, 29, 40, 44, 66, 73, 75, 80, 90, 100, 102, 105, 108, 110) ~ "ves041_2_Chrim",
+      Fly %in% c(3, 4, 5, 8, 12, 15, 25, 27, 69, 99, 101, 103, 111, 114, 121, 124) ~ "ves041_1_gfp",
+      Fly %in% c(35, 52, 59, 63, 89, 93, 107, 113, 118, 122, 123, 125, 129, 132, 133, 137) ~ "ves041_2_gfp",
       Fly %in% c(6, 17, 20, 23, 31, 34, 39, 46, 50, 54, 57, 62, 84, 87, 88, 91, 96) ~ "empty_Chrim",
       TRUE ~ NA_character_  # Or another default
     )
@@ -81,6 +81,9 @@ ggsave(
   dpi = 300
 )
 
+# Fit model with Condition * genotype interaction, Fly as random effect
+model <- lmer(ForwardVelocity ~ Condition * Genotype + (1|Fly), data = behavior_long)
+summary(model)
 # ROTATIONAL SPEED -----------------------------------------------------------
 
 behavior_long <- behavior_kin %>%
@@ -216,6 +219,128 @@ ggsave(
   dpi = 300
 )
 
+# NET HEADING DISPLACEMENT -------------------------------------------------
+library(dplyr)
+library(broom)
+library(stringr)
+
+# ---- pivot ----
+behavior_long <- behavior_kin %>%
+  pivot_longer(
+    cols = "Net.Heading.Displacement..deg.",
+    names_to = "Condition",
+    values_to = "Net.Heading.Displacement"
+  ) %>%
+  mutate(
+    Genotype = factor(Genotype, levels = c("ves041_1_Chrim", "ves041_2_Chrim", 
+                                           "ves041_1_gfp",   "ves041_2_gfp", 
+                                           "empty_Chrim"))
+  )
+
+library(dplyr)
+library(broom)
+library(ggplot2)
+
+# ---- p-value → stars ----
+p_to_stars <- function(p) {
+  case_when(
+    p <= 0.001 ~ "***",
+    p <= 0.01  ~ "**",
+    p <= 0.05  ~ "*",
+    TRUE       ~ "ns"
+  )
+}
+
+# ---- ANOVA + Tukey ----
+anova_model <- aov(Net.Heading.Displacement ~ Genotype, data = behavior_long)
+cat("=== ANOVA Summary ===\n")
+print(summary(anova_model))
+
+tukey_result <- TukeyHSD(anova_model)
+cat("\n=== Tukey HSD ===\n")
+print(tukey_result)
+
+# ---- Pull only the 4 meaningful contrasts ----
+comparisons_of_interest <- c(
+  "ves041_1_Chrim-ves041_1_gfp",
+  "ves041_2_Chrim-ves041_2_gfp",
+  "ves041_1_Chrim-empty_Chrim",
+  "ves041_2_Chrim-empty_Chrim"
+)
+
+tukey_df <- tidy(tukey_result) %>%
+  filter(contrast %in% comparisons_of_interest) %>%
+  mutate(stars = p_to_stars(adj.p.value))
+
+cat("\n=== Key Comparisons ===\n")
+print(tukey_df %>% select(contrast, estimate, adj.p.value, stars))
+
+# ---- y positions for brackets ----
+y_max <- max(behavior_long$Net.Heading.Displacement, na.rm = TRUE)
+step  <- (y_max * 0.12)   # space between brackets
+
+# assign a y level to each comparison so brackets don't overlap
+tukey_df <- tukey_df %>%
+  mutate(
+    y_bracket = y_max + step * row_number(),
+    # extract both group names
+    group1 = str_extract(contrast, "^[^-]+(?=-)"),   # left of first -
+    group2 = str_remove(contrast, "^[^-]+-")         # right of first -
+  )
+
+# ---- Plot ----
+p_heading_disp <- ggplot(behavior_long,
+                         aes(x = Genotype, y = Net.Heading.Displacement)) +
+  stat_summary(fun      = mean, geom = "bar",
+               fill = "orange", alpha = 0.5, color = "black", width = 0.6) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +
+  geom_point(aes(group = Fly),
+             size = 1.5, alpha = 0.7, shape = 21,
+             fill = "orange", color = "black") +
+  
+  # ---- significance brackets ----
+geom_segment(data = tukey_df,
+             aes(x    = group1, xend = group1,
+                 y    = y_bracket - step * 0.1,
+                 yend = y_bracket),
+             inherit.aes = FALSE) +
+  geom_segment(data = tukey_df,
+               aes(x    = group2, xend = group2,
+                   y    = y_bracket - step * 0.1,
+                   yend = y_bracket),
+               inherit.aes = FALSE) +
+  geom_segment(data = tukey_df,
+               aes(x    = group1, xend = group2,
+                   y    = y_bracket, yend = y_bracket),
+               inherit.aes = FALSE) +
+  geom_text(data = tukey_df,
+            aes(x     = (as.numeric(factor(group1, levels = levels(behavior_long$Genotype))) +
+                           as.numeric(factor(group2, levels = levels(behavior_long$Genotype)))) / 2,
+                y     = y_bracket + step * 0.15,
+                label = stars),
+            inherit.aes = FALSE, size = 5) +
+  
+  theme_minimal() +
+  theme(
+    axis.text.x  = element_text(angle = 45, hjust = 1, size = 11),
+    legend.position = "none"
+  ) +
+  labs(
+    title = "Net Heading Displacement Cs Chrimson Opto by Genotype",
+    x     = NULL,
+    y     = "Net Heading Displacement (degrees, mean ± SE)"
+  )
+
+p_heading_disp
+
+ggsave(
+  filename = "heading_disp.png",
+  plot     = p_heading_disp,
+  path     = savepath,
+  width    = 12,
+  height   = 9,
+  dpi      = 300
+)
 # SANDBOX -----------------------------------------------------------------
 # rot speed stats
 
