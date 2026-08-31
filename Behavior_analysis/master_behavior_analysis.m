@@ -26,7 +26,7 @@ minVel = 3; % minimum total velocity to be count as moving
 
 %% load in exptData and exptMeta
 % Define the base folder path
-baseFolder = '/Volumes/Neurobio/wilsonlab/Sophia/behavior/Chrimson Data/keepers'; % Change this to the desired directory
+baseFolder = '/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/round1 copy'; % Change this to the desired directory
 
 % ---------------------------------------------------------------------
 % 1. Find all *_processed_final.mat files recursively
@@ -53,11 +53,11 @@ fprintf('Found %d *_processed_final.mat files.\n', nFiles);
 % if isequal(fileName, 0)
 %     disp('User canceled the file selection.');
 %     return  % ← add this
-% endc
+% endce
 % fullFilePath = fullfile(pathName, fileName);
 % load(fullFilePath);
 
-for k = 84:nFiles
+for k = 27:nFiles
     fpath = fullfile(fileList(k).folder, fileList(k).name);
     fname = fileList(k).name;
     load(fpath);
@@ -135,6 +135,5 @@ for k = 84:nFiles
                 save_filename, ME.message);
     end
 end
-
 %% end!
 

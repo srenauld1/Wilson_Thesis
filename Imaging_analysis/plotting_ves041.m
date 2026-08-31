@@ -34,7 +34,7 @@ grid on;
 
 % Subplot 2: Forward Velocity
 subplot(3, 1, 2);  % Second subplot
-plot(time_kin, fwd_supp, 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
+plot(time, fwd, 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
 xlabel('Time (s)');
 ylabel('Forward Velocity (mm/s)');
 title('Forward Velocity');
@@ -43,7 +43,7 @@ ylim([-5 20]);
 
 % Subplot 3: Rotational Velocity
 subplot(3, 1, 3);  % Third subplot
-plot(time_kin, rot_supp, 'r', 'LineWidth', 1.5);  % Plot rotational velocity in blue
+plot(time, rot, 'r', 'LineWidth', 1.5);  % Plot rotational velocity in blue
 xlabel('Time (s)');
 ylabel('Rotational Velocity (deg/s)');
 title('Rotational Velocity');

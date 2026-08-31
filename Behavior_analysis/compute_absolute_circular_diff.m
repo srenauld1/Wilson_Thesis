@@ -25,6 +25,11 @@ function exptData = compute_absolute_circular_diff(exptData)
     end
     
     % Compute absolute circular difference
+    % NOTE (fix): g4displayXPos is in DEGREES, but atan2(sin,cos) expects
+    % RADIANS. Previously degrees were passed straight in, so the wrapped
+    % difference was meaningless and corrupted downstream jump detection.
+    % Convert to radians before wrapping. - claude
+    heading_diff = deg2rad(heading_diff);
     circular_diff = abs(atan2(...
         sin(heading_diff), ...
         cos(heading_diff)));

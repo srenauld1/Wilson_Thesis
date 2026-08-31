@@ -1,0 +1,9 @@
+cohort,group,movement_state,n_presentations,n_flies,median_presentations_per_fly,proportion_presentations
+blinded_round1,control,not_moving,753,18,37.5,0.470625
+blinded_round1,control,moving,847,18,45,0.529375
+blinded_round1,experimental,not_moving,447,13,31,0.3991071428571429
+blinded_round1,experimental,moving,673,13,49,0.6008928571428571
+unblinded,control,not_moving,749,16,45,0.5507352941176471
+unblinded,control,moving,611,16,35.5,0.44926470588235295
+unblinded,experimental,not_moving,790,18,35,0.49375
+unblinded,experimental,moving,810,18,47,0.50625

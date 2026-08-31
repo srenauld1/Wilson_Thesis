@@ -2,3 +2,14 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# Local/generated data (too large for Git and Codex snapshots)
+*.mat
+/round1 copy/
+/unblinded RubyACR copy/
+
+# Generated system/runtime files
+.DS_Store
+__pycache__/
+*.fig
+*.png

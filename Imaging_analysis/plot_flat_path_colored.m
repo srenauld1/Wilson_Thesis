@@ -32,7 +32,7 @@ cmap = [cmap1; cmap2];
 
 % ---------------- Select variable to color by ----------------
 if strcmp(color_option, 'dff')
-    color_scale = a2p_data.roi.ts(:);
+    color_scale = a2p_data.roi.ts(1, :)';
     if odor
         ball_px = a2p_data.dq(1).px(:);
         ball_py = a2p_data.dq(1).py(:);
@@ -189,20 +189,23 @@ else
 end
 
 % ---------------- Plot ----------------
-figure;
-hold on;
+% Keep an explicit handle so a different active figure cannot be saved by
+% mistake when this function is called from a larger analysis script.
+fig = figure;
+ax = axes(fig);
+hold(ax, 'on');
 
 if use_whole_range
-    scatter(pxb_f, pyb_f, 10, cdata, 'filled', 'MarkerEdgeColor', 'none');
-    colormap(cmap);
-    c = colorbar;
-    caxis([-0.3 0.3]);
+    scatter(ax, pxb_f, pyb_f, 10, cdata, 'filled', 'MarkerEdgeColor', 'none');
+    colormap(ax, cmap);
+    c = colorbar(ax);
+    clim(ax, [-0.3 0.3]);
     ylabel(c, [color_option ' (r)']);
 else
-    scatter(pxb_f, pyb_f, 10, cmap(color_inds,:), 'filled', 'MarkerEdgeColor', 'none');
-    colormap(cmap);
-    c = colorbar;
-    caxis([1 n]);  % index space
+    scatter(ax, pxb_f, pyb_f, 10, cmap(color_inds,:), 'filled', 'MarkerEdgeColor', 'none');
+    colormap(ax, cmap);
+    c = colorbar(ax);
+    clim(ax, [1 n]);  % index space
 
     yticks_vals = get(c,'YTick');
     actual_scaled = (yticks_vals - 1) / (n - 1);  % 0..1
@@ -214,13 +217,13 @@ else
     set(c,'YTickLabel', arrayfun(@(x) sprintf('%.3f', x), actual_values, 'UniformOutput', false));
 end
 
-min_value = min([ball_px(:); ball_py(:)]);
-max_value = max([ball_px(:); ball_py(:)]);
-xlim([min_value max_value]);
-ylim([min_value max_value]);
+% Preserve true path geometry without forcing both dimensions into the same
+% square numerical limits.
+axis(ax, 'equal');
+axis(ax, 'tight');
 
 % Start point
-plot(ball_px(1), ball_py(1), 'r.', 'MarkerSize', 20);
+plot(ax, ball_px(1), ball_py(1), 'r.', 'MarkerSize', 20);
 
 % ---------------- Title and filenames ----------------
 if isstring(color_option)
@@ -246,5 +249,5 @@ else
     yfilename = ['y_color_linear_' color_str];
 end
 
-save_plot_with_title_as_filename(xfilename, yfilename, savepath);
+save_plot_with_title_as_filename(xfilename, yfilename, savepath, fig);
 end

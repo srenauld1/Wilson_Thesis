@@ -1,0 +1,91 @@
+cohort,predictor,outcome,group,n_flies,spearman_rho,spearman_two_sided_p,interaction_beta,interaction_hc3_p,bh_q_within_cohort_group
+blinded_round1,high pre heading change,less heading change,experimental,13,0.6153846153846153,0.02864856757162142,,,0.07162141892905355
+blinded_round1,high pre heading change,less heading change,control,18,0.5789473684210527,0.013049347532623368,,,0.09787010649467526
+blinded_round1,high pre heading change,less heading change,experimental_vs_control_slope,31,,,-0.9312437814429364,0.7806628727521974,0.902474009627364
+blinded_round1,high pre heading change,more straightness,experimental,13,-0.33516483516483514,0.2570371481425929,,,0.38555572221388934
+blinded_round1,high pre heading change,more straightness,control,18,-0.3622291021671827,0.14064296785160743,,,0.3516074196290186
+blinded_round1,high pre heading change,more straightness,experimental_vs_control_slope,31,,,0.00471685904027621,0.902474009627364,0.902474009627364
+blinded_round1,high pre heading change,more heading consistency,experimental,13,-0.03296703296703297,0.91990400479976,,,0.91990400479976
+blinded_round1,high pre heading change,more heading consistency,control,18,0.39938080495356043,0.10124493775311234,,,0.30373481325933704
+blinded_round1,high pre heading change,more heading consistency,experimental_vs_control_slope,31,,,-0.008475656924466347,0.18626636851846873,0.8809459519799492
+blinded_round1,high pre heading change,faster while walking,experimental,13,0.7582417582417583,0.0036998150092495377,,,0.011099445027748612
+blinded_round1,high pre heading change,faster while walking,control,18,0.2776057791537668,0.2649367531623419,,,0.36325456454450006
+blinded_round1,high pre heading change,faster while walking,experimental_vs_control_slope,31,,,0.455924577767866,0.3683853044121587,0.8809459519799492
+blinded_round1,high pre heading change,higher mean forward velocity,experimental,13,0.7802197802197801,0.0031498425078746064,,,0.011099445027748612
+blinded_round1,high pre heading change,higher mean forward velocity,control,18,0.27347781217750256,0.2663866806659667,,,0.36325456454450006
+blinded_round1,high pre heading change,higher mean forward velocity,experimental_vs_control_slope,31,,,0.35105560364462973,0.44022734727218094,0.8809459519799492
+blinded_round1,low pre straightness,less heading change,experimental,13,-0.3626373626373627,0.22513874306284687,,,0.3752312384380781
+blinded_round1,low pre straightness,less heading change,control,18,-0.281733746130031,0.25733713314334283,,,0.36325456454450006
+blinded_round1,low pre straightness,less heading change,experimental_vs_control_slope,31,,,0.7204537892444423,0.8157288156281752,0.902474009627364
+blinded_round1,low pre straightness,more straightness,experimental,13,0.8076923076923077,0.0014499275036248187,,,0.011099445027748612
+blinded_round1,low pre straightness,more straightness,control,18,0.45304437564499483,0.05964701764911754,,,0.22761361931903407
+blinded_round1,low pre straightness,more straightness,experimental_vs_control_slope,31,,,0.013293725834230212,0.6506478128438684,0.902474009627364
+blinded_round1,low pre straightness,more heading consistency,experimental,13,0.20329670329670327,0.511774411279436,,,0.635593220338983
+blinded_round1,low pre straightness,more heading consistency,control,18,-0.0196078431372549,0.9384030798460077,,,0.9384030798460077
+blinded_round1,low pre straightness,more heading consistency,experimental_vs_control_slope,31,,,0.00273844912113206,0.6047389189810358,0.902474009627364
+blinded_round1,low pre straightness,faster while walking,experimental,13,-0.18131868131868134,0.5538723063846808,,,0.635593220338983
+blinded_round1,low pre straightness,faster while walking,control,18,-0.3003095975232198,0.2263386830658467,,,0.36325456454450006
+blinded_round1,low pre straightness,faster while walking,experimental_vs_control_slope,31,,,0.3636927510974896,0.46983784105597287,0.8809459519799492
+blinded_round1,low pre straightness,higher mean forward velocity,experimental,13,-0.532967032967033,0.0631468426578671,,,0.13531466283828666
+blinded_round1,low pre straightness,higher mean forward velocity,control,18,-0.28998968008255926,0.23988800559972,,,0.36325456454450006
+blinded_round1,low pre straightness,higher mean forward velocity,experimental_vs_control_slope,31,,,0.07718971625423038,0.867781142889652,0.902474009627364
+blinded_round1,low pre rho,less heading change,experimental,13,0.4835164835164835,0.09549522523873806,,,0.17905354732263387
+blinded_round1,low pre rho,less heading change,control,18,0.45098039215686275,0.060696965151742416,,,0.22761361931903407
+blinded_round1,low pre rho,less heading change,experimental_vs_control_slope,31,,,3.1526739574244287,0.44044613968611657,0.8809459519799492
+blinded_round1,low pre rho,more straightness,experimental,13,-0.2087912087912088,0.4908254587270636,,,0.635593220338983
+blinded_round1,low pre rho,more straightness,control,18,-0.17440660474716205,0.487925603719814,,,0.6099070046497675
+blinded_round1,low pre rho,more straightness,experimental_vs_control_slope,31,,,-0.012649686338218138,0.6894372978282628,0.902474009627364
+blinded_round1,low pre rho,more heading consistency,experimental,13,0.16483516483516483,0.5932203389830508,,,0.635593220338983
+blinded_round1,low pre rho,more heading consistency,control,18,0.6924664602683178,0.0018499075046247689,,,0.02774861256937153
+blinded_round1,low pre rho,more heading consistency,experimental_vs_control_slope,31,,,-0.007224086241695295,0.29277063087710925,0.8809459519799492
+blinded_round1,low pre rho,faster while walking,experimental,13,0.7857142857142857,0.002049897505124744,,,0.011099445027748612
+blinded_round1,low pre rho,faster while walking,control,18,-0.09597523219814243,0.7069146542672866,,,0.7574085581435214
+blinded_round1,low pre rho,faster while walking,experimental_vs_control_slope,31,,,1.5517002409810603,0.00118791339009142,0.0178187008513713
+blinded_round1,low pre rho,higher mean forward velocity,experimental,13,0.7747252747252747,0.0026998650067496625,,,0.011099445027748612
+blinded_round1,low pre rho,higher mean forward velocity,control,18,0.11042311661506708,0.664566771661417,,,0.7574085581435214
+blinded_round1,low pre rho,higher mean forward velocity,experimental_vs_control_slope,31,,,1.2096627575662822,0.023813869639949938,0.17860402229962455
+unblinded,high pre heading change,less heading change,experimental,18,0.6615067079463364,0.0031498425078746064,,,0.02362381880905955
+unblinded,high pre heading change,less heading change,control,16,0.30882352941176466,0.2463376831158442,,,0.41056280519307364
+unblinded,high pre heading change,less heading change,experimental_vs_control_slope,34,,,2.1697321391967095,0.5018535226546196,0.9409753549774117
+unblinded,high pre heading change,more straightness,experimental,18,0.25902992776057787,0.30018499075046245,,,0.3463672970197643
+unblinded,high pre heading change,more straightness,control,16,-0.032352941176470584,0.9109544522773861,,,0.9109544522773861
+unblinded,high pre heading change,more straightness,experimental_vs_control_slope,34,,,0.00151741813880419,0.9647635554741798,0.9973333060681391
+unblinded,high pre heading change,more heading consistency,experimental,18,0.5995872033023736,0.010499475026248688,,,0.03419829008549573
+unblinded,high pre heading change,more heading consistency,control,16,0.19999999999999998,0.4529273536323184,,,0.5915329233538323
+unblinded,high pre heading change,more heading consistency,experimental_vs_control_slope,34,,,0.000934248569566784,0.8761900298635819,0.9973333060681391
+unblinded,high pre heading change,faster while walking,experimental,18,0.49226006191950467,0.040197990100494976,,,0.060296985150742465
+unblinded,high pre heading change,faster while walking,control,16,0.5294117647058824,0.0391980400979951,,,0.29398530073496326
+unblinded,high pre heading change,faster while walking,experimental_vs_control_slope,34,,,0.06691400030645037,0.8900316546459894,0.9973333060681391
+unblinded,high pre heading change,higher mean forward velocity,experimental,18,0.5913312693498451,0.011399430028498575,,,0.03419829008549573
+unblinded,high pre heading change,higher mean forward velocity,control,16,0.4764705882352941,0.0663966801659917,,,0.312234388280586
+unblinded,high pre heading change,higher mean forward velocity,experimental_vs_control_slope,34,,,0.2744432883010223,0.45035119458555456,0.9409753549774117
+unblinded,low pre straightness,less heading change,experimental,18,-0.31475748194014447,0.20768961551922405,,,0.25961201939903006
+unblinded,low pre straightness,less heading change,control,16,-0.11176470588235293,0.6779161041947903,,,0.7263386830658468
+unblinded,low pre straightness,less heading change,experimental_vs_control_slope,34,,,-1.8074259818081577,0.7077807782113342,0.9973333060681391
+unblinded,low pre straightness,more straightness,experimental,18,0.0608875128998968,0.8091095445227738,,,0.809109544522774
+unblinded,low pre straightness,more straightness,control,16,0.4058823529411764,0.12489375531223439,,,0.312234388280586
+unblinded,low pre straightness,more straightness,experimental_vs_control_slope,34,,,-0.03161282947660336,0.20904946255835233,0.9409753549774117
+unblinded,low pre straightness,more heading consistency,experimental,18,-0.1496388028895769,0.551572421378931,,,0.590970451477426
+unblinded,low pre straightness,more heading consistency,control,16,0.28823529411764703,0.28528573571321436,,,0.4279286035698215
+unblinded,low pre straightness,more heading consistency,experimental_vs_control_slope,34,,,-0.00514678731428674,0.3801066848921383,0.9409753549774117
+unblinded,low pre straightness,faster while walking,experimental,18,-0.4055727554179567,0.0935453227338633,,,0.12756180372799542
+unblinded,low pre straightness,faster while walking,control,16,-0.34705882352941175,0.19004049797510125,,,0.35632593370331483
+unblinded,low pre straightness,faster while walking,experimental_vs_control_slope,34,,,-0.19681520696737337,0.766605700284025,0.9973333060681391
+unblinded,low pre straightness,higher mean forward velocity,experimental,18,-0.5190918472652218,0.026698665066746664,,,0.057211425143028564
+unblinded,low pre straightness,higher mean forward velocity,control,16,-0.19411764705882353,0.47322633868306585,,,0.5915329233538323
+unblinded,low pre straightness,higher mean forward velocity,experimental_vs_control_slope,34,,,-0.48817501902344396,0.3335699968349327,0.9409753549774117
+unblinded,low pre rho,less heading change,experimental,18,0.632610939112487,0.005499725013749313,,,0.027498625068746563
+unblinded,low pre rho,less heading change,control,16,0.36176470588235293,0.1710914454277286,,,0.35632593370331483
+unblinded,low pre rho,less heading change,experimental_vs_control_slope,34,,,4.025158286606066,0.23594883181634363,0.9409753549774117
+unblinded,low pre rho,more straightness,experimental,18,0.4943240454076367,0.03749812509374531,,,0.060296985150742465
+unblinded,low pre rho,more straightness,control,16,0.17352941176470588,0.5237238138093095,,,0.604296708241511
+unblinded,low pre rho,more straightness,experimental_vs_control_slope,34,,,0.0071125264419012735,0.8817468096544852,0.9973333060681391
+unblinded,low pre rho,more heading consistency,experimental,18,0.7853457172342622,0.00024998750062496874,,,0.003749812509374531
+unblinded,low pre rho,more heading consistency,control,16,0.6264705882352941,0.010699465026748662,,,0.16049197540122995
+unblinded,low pre rho,more heading consistency,experimental_vs_control_slope,34,,,2.3926925510602687e-05,0.9973333060681391,0.9973333060681391
+unblinded,low pre rho,faster while walking,experimental,18,0.4943240454076367,0.039098045097745115,,,0.060296985150742465
+unblinded,low pre rho,faster while walking,control,16,0.44705882352941173,0.08674566271686415,,,0.312234388280586
+unblinded,low pre rho,faster while walking,experimental_vs_control_slope,34,,,0.7207770782516095,0.3735730066297816,0.9409753549774117
+unblinded,low pre rho,higher mean forward velocity,experimental,18,0.5459236326109391,0.021948902554872255,,,0.054872256387180636
+unblinded,low pre rho,higher mean forward velocity,control,16,0.4147058823529412,0.11274436278186091,,,0.312234388280586
+unblinded,low pre rho,higher mean forward velocity,experimental_vs_control_slope,34,,,0.6621443241080287,0.3584281999072533,0.9409753549774117

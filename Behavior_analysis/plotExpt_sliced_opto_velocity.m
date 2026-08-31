@@ -125,14 +125,18 @@ function [exptData, exptMeta, fwdvelocity_segments_optoon_extra, rotvel_segments
 
 
                 % take average for trial
+                % NOTE (fix): mean(diff(x)) is the mean per-SAMPLE change, not a
+                % physical acceleration. Multiply by the sampling rate (samples/s)
+                % so accelerations are in units/s (e.g. mm/s^2, deg/s^2) and are
+                % comparable regardless of sampling rate. - claude
                 average_fwd = mean(opto_on_fwd);
-                average_opto_fwd_accel = mean(diff(opto_on_fwd));
+                average_opto_fwd_accel = mean(diff(opto_on_fwd)) * rate;
                 average_rot = mean(opto_on_rot);
-                average_opto_rot_accel = mean(diff(opto_on_rot));
+                average_opto_rot_accel = mean(diff(opto_on_rot)) * rate;
                 off_fwd_ave = mean(pre_opto_fwd);
-                average_preopto_fwd_accel = mean(diff(pre_opto_fwd));
+                average_preopto_fwd_accel = mean(diff(pre_opto_fwd)) * rate;
                 off_rot_ave = mean(pre_opto_rot);
-                average_preopto_rot_accel = mean(diff(pre_opto_rot));
+                average_preopto_rot_accel = mean(diff(pre_opto_rot)) * rate;
             
                 
                 % Include the 1000 points before the "optoon" segment

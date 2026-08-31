@@ -26,12 +26,12 @@ minVel = 3; % minimum total velocity to be count as moving
 
 %% load in exptData and exptMeta
 % Define the base folder path
-baseFolder = '/Volumes/Neurobio/wilsonlab/Sophia/behavior/Chrimson Data/keepers'; % Change this to the desired directory
+baseFolder = '/Volumes/Neurobio/wilsonlab/Sophia/behavior/unblinded RubyACR'; % Change this to the desired directory
 
 % ---------------------------------------------------------------------
 % 1. Find all *_processed_final.mat files recursively
 % ---------------------------------------------------------------------
-pattern  = fullfile(baseFolder, '**', '*function1_pro.mat');
+pattern  = fullfile(baseFolder, '**', '*function2_pro.mat');
 fileList = dir(pattern);
 
 if isempty(fileList)
@@ -53,11 +53,11 @@ fprintf('Found %d *_processed_final.mat files.\n', nFiles);
 % if isequal(fileName, 0)
 %     disp('User canceled the file selection.');
 %     return  % ← add this
-% endc
+% endce
 % fullFilePath = fullfile(pathName, fileName);
 % load(fullFilePath);
 
-for k = 82:nFiles
+Unfor k = 28:nFiles
     fpath = fullfile(fileList(k).folder, fileList(k).name);
     fname = fileList(k).name;
     load(fpath);

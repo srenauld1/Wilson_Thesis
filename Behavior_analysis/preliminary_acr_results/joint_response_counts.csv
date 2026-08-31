@@ -1,0 +1,5 @@
+cohort,experimental,n_flies,n_joint_responders,proportion_joint_responders,experimental_vs_control_fisher_two_sided_p
+blinded_round1,False,18,7,0.3888888888888889,0.7269541508653871
+blinded_round1,True,13,6,0.46153846153846156,0.7269541508653871
+unblinded,False,16,5,0.3125,0.7288968419016298
+unblinded,True,18,7,0.3888888888888889,0.7288968419016298

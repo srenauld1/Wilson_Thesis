@@ -1,4 +1,7 @@
-function save_plot_with_title_as_filename(ylabel_left, ylabel_right, savepath)
+function save_plot_with_title_as_filename(ylabel_left, ylabel_right, savepath, fig_handle)
+    if nargin < 4 || isempty(fig_handle)
+        fig_handle = gcf;
+    end
     filename = sprintf('%s_vs_%s.fig', strrep(ylabel_left, ' ', '_'), strrep(ylabel_right, ' ', '_'));
     filename_png = sprintf('%s_vs_%s.png', strrep(ylabel_left, ' ', '_'), strrep(ylabel_right, ' ', '_'));
     fullfilename = fullfile(savepath, filename);
@@ -9,9 +12,9 @@ function save_plot_with_title_as_filename(ylabel_left, ylabel_right, savepath)
     [~, id_label] = fileparts(parentdir); % gets '20251001-21_ves041_fly3_clbbar'
 
     % -- Place id_label as annotation in lower-right of figure window --
-    ax = gca;
+    ax = findobj(fig_handle, 'Type', 'axes'); %#ok<NASGU>
     % Normalized position: right edge, below axes (x=0.98, y=0.02: tweak as needed)
-    annotation(gcf, 'textbox', [0.80 0.01 0.18 0.04], ...
+    annotation(fig_handle, 'textbox', [0.80 0.01 0.18 0.04], ...
         'String', id_label, ...
         'FontSize', 11, 'FontWeight', 'bold', ...
         'EdgeColor', 'none', ...           % No border
@@ -22,7 +25,7 @@ function save_plot_with_title_as_filename(ylabel_left, ylabel_right, savepath)
         'Interpreter', 'none', ...
         'FitBoxToText', 'on');             % Resize box to fit text
 
-    savefig(gcf, fullfilename);
-    saveas(gcf, fullfile_png);
+    savefig(fig_handle, fullfilename);
+    saveas(fig_handle, fullfile_png);
     fprintf('Plot saved as: %s\n', fullfilename);
 end

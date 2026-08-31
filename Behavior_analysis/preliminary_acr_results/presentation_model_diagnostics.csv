@@ -1,0 +1,11 @@
+cohort,outcome,n_presentations,n_flies,singular_fit,fly_intercept_variance,residual_variance
+unblinded,less_heading_change,2960,34,FALSE,50.22443292670891,1370.7478680646648
+unblinded,more_straightness,2960,34,FALSE,0.007546964549514779,0.10475383581927597
+unblinded,more_heading_consistency,1708,34,TRUE,0,0.005903652601928665
+unblinded,faster_while_walking,1510,34,FALSE,2.356966710482871,6.749116106107692
+unblinded,higher_mean_forward_velocity,2960,34,FALSE,0.7859083847252026,7.883474228003662
+blinded_round1,less_heading_change,2720,31,FALSE,15.714610500030712,1407.4186709125963
+blinded_round1,more_straightness,2720,31,FALSE,0.007963103825321265,0.09196848488934455
+blinded_round1,more_heading_consistency,1805,31,TRUE,0,0.006609539275606521
+blinded_round1,faster_while_walking,1605,31,FALSE,2.88232496240551,8.040825439314602
+blinded_round1,higher_mean_forward_velocity,2720,31,FALSE,1.4604386334042474,9.663045411047875
