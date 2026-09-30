@@ -62,13 +62,18 @@ elseif strcmp(color_option, 'sinuosity')
     end
 
 elseif strcmp(color_option, 'fwd')
-    color_scale = a2p_data.dq(2).bvf(:);
+    % Use the same imaging-aligned dq entry and reconstructed path as dF/F.
+    % Mixing dq(1) and dq(2) can rotate the path because ficpath zeroes
+    % heading relative to the first sample of each independently resampled
+    % stream. With dq(1) for both plots, geometry is exactly matched and
+    % only the variable used for point color changes.
+    color_scale = a2p_data.dq(1).bvf(:);
     if odor
-        ball_px = a2p_data.dq(2).px(:);
-        ball_py = a2p_data.dq(2).py(:);
+        ball_px = a2p_data.dq(1).px(:);
+        ball_py = a2p_data.dq(1).py(:);
     else
-        ball_px = a2p_data.dq(2).pxb(:);
-        ball_py = a2p_data.dq(2).pyb(:);
+        ball_px = a2p_data.dq(1).pxb(:);
+        ball_py = a2p_data.dq(1).pyb(:);
     end
 
 elseif strcmp(color_option, 'crosscorr')

@@ -19,12 +19,32 @@ if odor
     rot_supp = a2p_data.dq(2).vvy;
 end
 
+% Stimulus overlays for the main dF/F/kinematics plot.
+jump_times = [];
+if jump && isfield(a2p_data,'jump_detected')
+    jump_idx = find(logical(a2p_data.jump_detected(:)));
+    jump_idx = jump_idx(jump_idx <= numel(time));
+    % Reject detector startup transients that are not genuine large jumps.
+    visual_heading = a2p_data.dq(1).vh(:);
+    signed_step = atan2(sin([visual_heading(1); diff(visual_heading)]), ...
+        cos([visual_heading(1); diff(visual_heading)]));
+    jump_idx = jump_idx(abs(rad2deg(signed_step(jump_idx))) >= 45);
+    jump_times = time(jump_idx);
+end
+
+clockwise_stim = false(size(time));
+counterclockwise_stim = false(size(time));
+if contains(lower(savepath),'grating')
+    [clockwise_stim,counterclockwise_stim] = ...
+        ves041_grating_direction_masks(a2p_data);
+end
+
 %% all 3 (fwd, rot, dff) on one plot
 % Create the figure and subplots
 figure;
 
 % Subplot 1: dFF
-subplot(3, 1, 1);  % First subplot
+ax_dff=subplot(3, 1, 1);  % First subplot
 hold on
 plot(time, dff, 'b', 'LineWidth', 1.5);  % Plot dFF in red
 xlabel('Time (s)');
@@ -33,7 +53,8 @@ title('dF/F');
 grid on;
 
 % Subplot 2: Forward Velocity
-subplot(3, 1, 2);  % Second subplot
+ax_fwd=subplot(3, 1, 2);  % Second subplot
+hold on
 plot(time, fwd, 'black', 'LineWidth', 1.5);  % Plot forward velocity in green
 xlabel('Time (s)');
 ylabel('Forward Velocity (mm/s)');
@@ -42,11 +63,12 @@ grid on;
 ylim([-5 20]);
 
 % Subplot 3: Rotational Velocity
-subplot(3, 1, 3);  % Third subplot
+ax_rot=subplot(3, 1, 3);  % Third subplot
+hold on
 plot(time, rot, 'r', 'LineWidth', 1.5);  % Plot rotational velocity in blue
 xlabel('Time (s)');
-ylabel('Rotational Velocity (deg/s)');
-title('Rotational Velocity');
+ylabel('Rotational velocity (deg/s)');
+title('Rotational velocity');
 grid on;
 %ylim([-500 500]);
 
@@ -57,6 +79,19 @@ linkaxes(findall(gcf, 'Type', 'axes'), 'x');
 sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
 
 save_plot_with_title_as_filename('fwd_rot', 'dff_separate', savepath);
+
+% Keep the original plot above, then save a second stimulus-annotated copy.
+if ~isempty(jump_times) || any(clockwise_stim) || any(counterclockwise_stim)
+    add_ves041_stimulus_overlay(ax_dff,time,jump_times,clockwise_stim, ...
+        counterclockwise_stim,true);
+    add_ves041_stimulus_overlay(ax_fwd,time,jump_times,clockwise_stim, ...
+        counterclockwise_stim,false);
+    add_ves041_stimulus_overlay(ax_rot,time,jump_times,clockwise_stim, ...
+        counterclockwise_stim,false);
+    sgtitle('dF/F, Forward, and Rotational Velocity with visual stimulus');
+    save_plot_with_title_as_filename('fwd_rot', ...
+        'dff_separate_stimulus_overlay',savepath);
+end
 
 
 %% now interactively plot dff and yaw velocity
@@ -500,11 +535,20 @@ for g = 1:2
 end
 
 %% dff peaks
-dff_smooth2 = smooth(smooth(dff, 'rlowess'), 50, 'rlowess');
-%findpeaks(dff_smooth2, 'MinPeakDistance', 25, 'MinPeakHeight', 2);
+% Trial-specific SNR-adjusted detector. Estimate noise after subtracting a
+% 30 s moving-median baseline, then require 3 sigma prominence, at least
+% 0.25 s width, and 2 s separation. Raw dF/F is neither clipped nor capped.
+baseline_N = max(3, round(30 * sample_rate));
+dff_baseline = movmedian(dff, baseline_N, 'omitmissing');
+noise_sigma = 1.4826 * mad(dff - dff_baseline, 1);
+peak_prominence = 3 * noise_sigma;
+peak_args = {'MinPeakProminence', peak_prominence, ...
+    'MinPeakDistance', round(2 * sample_rate), ...
+    'MinPeakWidth', round(0.25 * sample_rate)};
 figure
-findpeaks(dff, 'MinPeakDistance', 30, 'MinPeakHeight', 3);
-[pks, locs] = findpeaks(dff, 'MinPeakDistance', 30, 'MinPeakHeight', 2.5);
+findpeaks(dff, peak_args{:});
+title(sprintf('VES041 peaks: prominence >= 3 sigma (%.3g dF/F)', peak_prominence));
+[pks, locs] = findpeaks(dff, peak_args{:});
 
 window_s = 2; % seconds before/after
 window_N = round(window_s * sample_rate);
@@ -578,7 +622,7 @@ ylabel('Forward velocity');
 title(sprintf('Forward velocity aligned to dF/F peak (n peaks=%d)', n_epochs));
 hold off;
 
-% Rotational velocity
+% Rotational speed
 subplot(3,1,3); hold on;
 for i = 1:n_epochs
     plot(t_epochs{i}, rots_epochs{i}, 'Color', [1 0.5 0.5 0.2], 'HandleVisibility','off');
@@ -586,8 +630,8 @@ end
 plot(t_mean, nanmean(rots_mat,2), 'r', 'LineWidth', 2, 'DisplayName', 'Mean');
 line([0 0], ylim, 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
 xlabel('Time from dF/F peak (s)');
-ylabel('Rotational velocity (deg/s)');
-title('Rotational velocity aligned to dF/F peak');
+ylabel('Rotational speed (deg/s)');
+title('Rotational speed aligned to dF/F peak');
 hold off;
 
 sgtitle('dF/F and behavior aligned to dF/F peaks');
@@ -696,3 +740,72 @@ save_plot_with_title_as_filename('fwd_rot', 'dff_separate_menotaxis', savepath);
 
 end
 
+function [clockwise, counterclockwise] = ves041_grating_direction_masks(a2p_data)
+% Reproduce the non-LED stimulus-direction logic in
+% openloop_gratings_process, including its 1.5 s run-length cleanup.
+visual_heading = a2p_data.dq(1).vh(:)';
+visual_velocity = a2p_data.dq(1).vvy(:)';
+time = a2p_data.dq(1).t(:)';
+remove_if_shorter_than = round(1.5/median(diff(time)));
+
+positive = visual_heading >= -3.1 & visual_velocity >= 0.02;
+negative = visual_heading >= -3.1 & visual_velocity <= 0;
+if max(visual_velocity,[],'omitnan') < 2.5
+    positive = visual_heading >= -3.1 & visual_heading <= 0;
+    negative = visual_heading >= 0 & visual_heading <= 4;
+end
+positive = clean_direction_mask(positive,remove_if_shorter_than);
+negative = clean_direction_mask(negative,remove_if_shorter_than);
+
+% For box=0 and split=0, these match the labels used by
+% openloop_gratings_process.
+clockwise = positive;
+counterclockwise = negative;
+end
+
+function mask = clean_direction_mask(mask,minRun)
+mask=logical(mask(:)');
+d=diff([false mask false]);starts=find(d==1);stops=find(d==-1)-1;
+for i=1:numel(starts)
+    if stops(i)-starts(i)+1<minRun,mask(starts(i):stops(i))=false;end
+end
+% Fill isolated one- and two-sample gaps, matching the existing parser.
+d=diff([false mask false]);starts=find(d==1);stops=find(d==-1)-1;
+for i=1:numel(starts)-1
+    gap=starts(i+1)-stops(i)-1;
+    if gap<=2,mask(stops(i)+1:starts(i+1)-1)=true;end
+end
+end
+
+function add_ves041_stimulus_overlay(ax,time,jumpTimes,cw,ccw,showLegend)
+yl=ylim(ax);hold(ax,'on');
+h=[];labels={};
+if any(cw)
+    h(end+1)=shade_runs(ax,time,cw,yl,[0.35 0.65 1]); %#ok<AGROW>
+    labels{end+1}='Clockwise grating'; %#ok<AGROW>
+end
+if any(ccw)
+    h(end+1)=shade_runs(ax,time,ccw,yl,[1 0.65 0.30]); %#ok<AGROW>
+    labels{end+1}='Counterclockwise grating'; %#ok<AGROW>
+end
+for i=1:numel(jumpTimes)
+    hj=xline(ax,jumpTimes(i),'-','Color',[0 .65 0],'LineWidth',1.4);
+    if i==1
+        h(end+1)=hj;labels{end+1}='Bar jump'; %#ok<AGROW>
+    else
+        hj.HandleVisibility='off';
+    end
+end
+if showLegend && ~isempty(h),legend(ax,h,labels,'Location','best');end
+end
+
+function h=shade_runs(ax,time,mask,yl,color)
+d=diff([false mask(:)' false]);starts=find(d==1);stops=find(d==-1)-1;
+h=gobjects(1);
+for i=1:numel(starts)
+    hp=patch(ax,[time(starts(i)) time(stops(i)) time(stops(i)) time(starts(i))], ...
+        [yl(1) yl(1) yl(2) yl(2)],color,'FaceAlpha',0.18,'EdgeColor','none');
+    if i==1,h=hp;else,hp.HandleVisibility='off';end
+    uistack(hp,'bottom');
+end
+end

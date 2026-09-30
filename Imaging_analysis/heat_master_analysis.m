@@ -4,23 +4,35 @@
 %% SETUP
 
 baseFolder = '/Users/sophiarenauld/stacks/';  % change if needed
-savepath   = '/Users/sophiarenauld/stacks/20260429-1_ves041_heat_80mm';
 
 %% LOAD DATA
 
-% --- FicTrac data ---
-ftFile = uigetfile_full('*_ficTracData.mat', 'Select FicTrac Data', baseFolder);
-if isempty(ftFile), return; end
-load(ftFile, 'ftData');   % adjust if file contains different var names
+% For batch use, callers may define heatTrialFolder before running this
+% script. Interactive use retains the three file pickers.
+if exist('heatTrialFolder', 'var') && ~isempty(heatTrialFolder)
+    if ~isfolder(heatTrialFolder)
+        error('heat_master_analysis:TrialFolderNotFound', ...
+            'Heat trial folder does not exist: %s', heatTrialFolder);
+    end
+    ftFile = find_single_file(heatTrialFolder, '*_ficTracData.mat');
+    vmFile = find_single_file(heatTrialFolder, '*virmenData.mat');
+    imFile = find_single_file(heatTrialFolder, '*_or_z0z1_s_.mat');
+    savepath = fullfile(heatTrialFolder, 'smr_analysis');
+else
+    ftFile = uigetfile_full('*_ficTracData.mat', 'Select FicTrac Data', baseFolder);
+    if isempty(ftFile), return; end
+    vmFile = uigetfile_full('*virmenData.mat', 'Select Virmen Data', baseFolder);
+    if isempty(vmFile), return; end
+    imFile = uigetfile_full('*_or_z0z1_s_.mat', 'Select IMAGING Data', baseFolder);
+    if isempty(imFile), return; end
+    savepath = fullfile(fileparts(imFile), 'smr_analysis');
+end
 
-% --- Virmen data ---
-vmFile = uigetfile_full('*virmenData.mat', 'Select Virmen Data', baseFolder);
-if isempty(vmFile), return; end
-load(vmFile);   % assumes vmData exists
+if ~isfolder(savepath), mkdir(savepath); end
+disp(['Heat analysis output: ' savepath]);
 
-% --- Imaging data ---
-imFile = uigetfile_full('*_or_z0z1_s_.mat', 'Select IMAGING Data', baseFolder);
-if isempty(imFile), return; end
+load(ftFile, 'ftData');
+load(vmFile);   % assumes vmData and daqVolumeTime exist
 imaging_data = load(imFile);   % keep as struct
 
 %% COMMON LABELS (dF/F + kinematics on common time bases)
@@ -396,10 +408,21 @@ plot_epoch_group(low_idx, fluo_cell, behav_cell, rot_cell, t_cell, savepath, ...
     sprintf('LOW heat (mean heat <= %.2f)', low_heat_thresh));
 
 %% dff peaks
-dff_smooth2 = smooth(smooth(dff, 'rlowess'), 50, 'rlowess');
+% Match the VES041 peak definition used by plotting_ves041: trial-specific
+% 3 sigma prominence, >=0.25 s width, and >=2 s separation. No upper dF/F
+% cutoff is applied. Fill only interpolation-edge gaps for peak detection.
+fluo_for_peaks = fillmissing(fluo, 'linear', 'EndValues', 'nearest');
+baseline_N = max(3, round(30 * sample_rate_kin));
+dff_baseline = movmedian(fluo_for_peaks, baseline_N, 'omitmissing');
+noise_sigma = 1.4826 * mad(fluo_for_peaks - dff_baseline, 1);
+peak_prominence = 3 * noise_sigma;
+peak_args = {'MinPeakProminence', peak_prominence, ...
+    'MinPeakDistance', round(2 * sample_rate_kin), ...
+    'MinPeakWidth', round(0.25 * sample_rate_kin)};
 figure
-findpeaks(fluo, 'MinPeakDistance', 1000, 'MinPeakHeight', 1.5);
-[pks, locs] = findpeaks(fluo, 'MinPeakDistance', 1000, 'MinPeakHeight', 1.5);
+findpeaks(fluo_for_peaks, peak_args{:});
+title(sprintf('VES041 peaks: prominence >= 3 sigma (%.3g dF/F)', peak_prominence));
+[pks, locs] = findpeaks(fluo_for_peaks, peak_args{:});
 
 window_s = 2; % seconds before/after
 window_N = round(window_s * sample_rate_kin);
@@ -510,6 +533,18 @@ function fullFilePath = uigetfile_full(pattern, prompt, baseFolder)
         fullFilePath = fullfile(pathName, fileName);
         disp(['Loaded: ' fullFilePath]);
     end
+end
+
+function fullFilePath = find_single_file(folder, pattern)
+    matches = dir(fullfile(folder, pattern));
+    matches = matches(~[matches.isdir]);
+    if numel(matches) ~= 1
+        error('heat_master_analysis:InputFileCount', ...
+            'Expected one %s file in %s; found %d.', ...
+            pattern, folder, numel(matches));
+    end
+    fullFilePath = fullfile(matches(1).folder, matches(1).name);
+    disp(['Loaded: ' fullFilePath]);
 end
 
 %% helper function

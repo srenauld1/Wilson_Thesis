@@ -15,13 +15,15 @@ function results = dna03_preliminary_bilateral_kinematics(dataDir, outputDir)
 %      leaving the source pData files unchanged.
 %   6. Compares kinematics when both copies are jointly high versus jointly
 %      low and aligns behavior to entries into those common-mode states.
-%   7. Finds windows with sliding left-right correlation r >= 0.8 and
+%   7. Finds windows with sliding left-right correlation r >= 0.6 and
 %      asks which kinematics accompany unusually coordinated activity.
 %   8. Plots the same flat path colored by left dF/F, right dF/F, and yaw
 %      speed for direct spatial comparison.
 %   9. Regresses signed yaw and yaw speed out of each side, then correlates
 %      the turn-residualized fluorescence with every kinematic variable.
-%  10. Saves per-trial diagnostic figures and dataset-level CSV summaries.
+%  10. Plots 4-by-4 dF/F-versus-kinematic scatter matrices pooled across
+%      all flies and separately for each biological fly, with linear fits.
+%  11. Saves per-trial diagnostic figures and dataset-level CSV summaries.
 %
 % Fluorescence representations:
 %   left, right          Individual DNa03 copies.
@@ -49,6 +51,7 @@ function results = dna03_preliminary_bilateral_kinematics(dataDir, outputDir)
 %   <outputDir>/figures/<trial>_common_mode_states.png
 %   <outputDir>/figures/<trial>_rolling_bilateral_correlation.png
 %   <outputDir>/figures/<trial>_flat_paths_left_right_yawspeed.png
+%   <outputDir>/figures/<trial>_flat_path_left_right_correlation.png
 %
 % Notes:
 % - The script uses img.filtDFF rather than raw img.dFF because these files
@@ -82,13 +85,16 @@ end
 maxLagSeconds = 5;
 minimumValidSamples = 100;
 overviewDurationSeconds = 120;
-highCorrelationThreshold = 0.8;
+highCorrelationThreshold = 0.6;
+rollingCorrelationWindowSeconds = 1;
+minimumStateDurationSeconds = 0.2;
 
 correlationRows = table();
 qcRows = table();
 stateRows = table();
 rollingCorrelationRows = table();
 turnResidualRows = table();
+scatterTrialData = struct('fly_id',{},'trial_id',{},'dff',{},'kinematics',{});
 errorLog = strings(0, 2);
 
 fprintf('DNa03 preliminary analysis: %d files\n', numel(files));
@@ -160,6 +166,17 @@ for fileIndex = 1:numel(files)
         fluorescence = [leftDFF, rightDFF, ...
             mean([leftDFF rightDFF], 2, 'omitnan'), rightDFF-leftDFF];
 
+        % Retain aligned samples for the requested scatter matrices. Here
+        % R+L is the literal sum (not the bilateral mean), and rotation is
+        % signed yaw velocity. Date is included in fly_id so fly numbers
+        % reused on different experimental dates are not merged.
+        scatterTrialData(end+1).fly_id = string(loaded.name.dateName) + "_" + ...
+            string(loaded.name.flyName); %#ok<AGROW>
+        scatterTrialData(end).trial_id = string(trialID);
+        scatterTrialData(end).dff = [leftDFF rightDFF ...
+            rightDFF-leftDFF rightDFF+leftDFF];
+        scatterTrialData(end).kinematics = behavior(:,[1 3 2 5]);
+
         % Remove the contemporaneous turning component separately from the
         % left and right traces. Signed yaw captures turn direction, while
         % yaw speed captures turn magnitude. The residual therefore means
@@ -209,21 +226,22 @@ for fileIndex = 1:numel(files)
         leftZ = robust_zscore(leftDFF);
         rightZ = robust_zscore(rightDFF);
         jointHigh = clean_binary_state(leftZ >= 1 & rightZ >= 1, ...
-            medianImagingDt, 0.2, 0.1);
+            medianImagingDt, minimumStateDurationSeconds, 0.1);
         jointLow = clean_binary_state(leftZ <= -1 & rightZ <= -1, ...
-            medianImagingDt, 0.2, 0.1);
+            medianImagingDt, minimumStateDurationSeconds, 0.1);
 
         stateRows = [stateRows; make_state_rows(trialID, loaded.name, ...
             jointHigh, jointLow, behavior)]; %#ok<AGROW>
 
-        % A two-second sliding Pearson correlation captures coordination
+        % A one-second sliding Pearson correlation captures coordination
         % independent of whether both signals are high or low. "Especially
-        % correlated" uses the same absolute r >= 0.8 criterion in every
+        % correlated" uses the same r >= 0.6 criterion in every
         % trial, then removes fragments shorter than 200 ms.
         rollingR = rolling_pairwise_corr(leftDFF, rightDFF, ...
-            medianImagingDt, 2);
+            medianImagingDt, rollingCorrelationWindowSeconds);
         highCorrelationState = clean_binary_state( ...
-            rollingR >= highCorrelationThreshold, medianImagingDt, 0.2, 0.1);
+            rollingR >= highCorrelationThreshold, medianImagingDt, ...
+            minimumStateDurationSeconds, 0.1);
         rollingCorrelationRows = [rollingCorrelationRows; ...
             make_correlation_state_rows(trialID, loaded.name, rollingR, ...
             highCorrelationState, highCorrelationThreshold, behavior)]; %#ok<AGROW>
@@ -245,6 +263,9 @@ for fileIndex = 1:numel(files)
             highCorrelationState, highCorrelationThreshold, behavior, figureDir);
         save_flat_path_figure(trialID, xPosition, yPosition, leftDFF, ...
             rightDFF, behavior(:,4), figureDir);
+        save_correlation_flat_path_figure(trialID, xPosition, yPosition, ...
+            rollingR, highCorrelationState, highCorrelationThreshold, ...
+            leftZ, rightZ, figureDir);
 
     catch ME
         warning('Could not analyze %s: %s', files(fileIndex).name, ME.message);
@@ -274,6 +295,14 @@ turnResidualSummary = groupsummary(turnResidualRows, ...
 writetable(turnResidualSummary, ...
     fullfile(outputDir, 'turn_residualized_correlation_summary.csv'));
 
+% Scatter plots are descriptive frame-level views. Trend fits use every
+% finite aligned sample; plotting is deterministically thinned only to keep
+% PNG/FIG files responsive. Per-fly panels pool that fly's trials/FOVs.
+scatterRegressionRows = save_dff_kinematic_scatter_matrices( ...
+    scatterTrialData, figureDir);
+writetable(scatterRegressionRows, ...
+    fullfile(outputDir, 'dff_kinematic_scatter_regressions.csv'));
+
 if ~isempty(errorLog)
     errorTable = array2table(errorLog, 'VariableNames', {'file','error'});
     writetable(errorTable, fullfile(outputDir, 'processing_errors.csv'));
@@ -289,6 +318,7 @@ results.common_mode_states = stateRows;
 results.rolling_correlation = rollingCorrelationRows;
 results.turn_residualized_correlations = turnResidualRows;
 results.turn_residualized_summary = turnResidualSummary;
+results.dff_kinematic_scatter_regressions = scatterRegressionRows;
 results.errors = errorTable;
 results.output_directory = outputDir;
 
@@ -738,11 +768,12 @@ nexttile([1 3]); hold on;
 keep=imageTime<=imageTime(1)+min(120,imageTime(end)-imageTime(1));
 t=imageTime(keep)-imageTime(1);
 plot(t,rollingR(keep),'Color',[0.2 0.2 0.2],'LineWidth',1);
-yline(threshold,'--','Color',[0.85 0.33 0.10],'Label','r = 0.8 cutoff');
+yline(threshold,'--','Color',[0.85 0.33 0.10], ...
+    'Label',sprintf('r = %.1f cutoff',threshold));
 area(t,double(highState(keep)),'FaceColor',[0.47 0.67 0.19], ...
     'FaceAlpha',0.22,'EdgeColor','none');
 yline(0,':k'); ylim([-1.05 1.05]); grid on;
-xlabel('Time (s)'); ylabel('2-s rolling Pearson r');
+xlabel('Time (s)'); ylabel('1-s rolling Pearson r');
 title('Local left-right coordination');
 nexttile;
 bar(mean(highState)*100,'FaceColor',[0.47 0.67 0.19]);
@@ -761,21 +792,29 @@ close(fig);
 end
 
 function save_flat_path_figure(trialID,x,y,leftDFF,rightDFF,yawSpeed,figureDir)
-% Plot identical path samples in every panel. Robust 2nd-98th percentile
-% color limits prevent a few residual extremes from flattening the colors;
-% only displayed colors are clipped, not the underlying measurements.
+% Plot identical path samples in every panel. The common-mode panel sums
+% separately robust-z-scored sides, preventing the brighter/more variable
+% ROI from dominating R+L. Display clipping does not change measurements.
 valid=isfinite(x)&isfinite(y)&isfinite(leftDFF)&isfinite(rightDFF)&isfinite(yawSpeed);
 x=x(valid); y=y(valid);
-signals={leftDFF(valid),rightDFF(valid),yawSpeed(valid)};
-labels={'Left dF/F','Right dF/F','Yaw speed'};
+leftValues=leftDFF(valid); rightValues=rightDFF(valid);
+commonModeZ=robust_zscore(leftValues)+robust_zscore(rightValues);
+signals={leftValues,rightValues,commonModeZ,yawSpeed(valid)};
+labels={'Left dF/F','Right dF/F','z(Right) + z(Left)','Yaw speed'};
 if isempty(x), return; end
 xLimits=[min(x) max(x)]; yLimits=[min(y) max(y)];
 if diff(xLimits)==0, xLimits=xLimits+[-1 1]; end
 if diff(yLimits)==0, yLimits=yLimits+[-1 1]; end
-fig=figure('Visible','off','Color','white','Position',[100 100 1500 500]);
-tiledlayout(fig,1,3,'TileSpacing','compact','Padding','compact');
-for k=1:3
-    ax=nexttile; values=signals{k}; limits=prctile(values,[2 98]);
+fig=figure('Visible','off','Color','white','Position',[100 100 1900 500]);
+tiledlayout(fig,1,4,'TileSpacing','compact','Padding','compact');
+for k=1:4
+    ax=nexttile; values=signals{k};
+    if k==3
+        maxAbs=prctile(abs(values),98);
+        limits=[-maxAbs maxAbs];
+    else
+        limits=prctile(values,[2 98]);
+    end
     if ~all(isfinite(limits)) || limits(1)==limits(2)
         limits=[min(values) max(values)];
         if limits(1)==limits(2), limits=limits(1)+[-1 1]; end
@@ -785,11 +824,168 @@ for k=1:3
     plot(x(1),y(1),'kp','MarkerFaceColor','w','MarkerSize',10);
     axis equal; xlim(xLimits); ylim(yLimits); grid on;
     xlabel('x position'); ylabel('y position'); title(labels{k});
-    colormap(ax,turbo); clim(limits); colorbar;
+    if k==3
+        blueWhiteRed=[linspace(0.1,1,128)' linspace(0.3,1,128)' ones(128,1); ...
+            ones(128,1) linspace(1,0.15,128)' linspace(1,0.1,128)'];
+        colormap(ax,blueWhiteRed);
+    else
+        colormap(ax,turbo);
+    end
+    clim(limits); colorbar;
 end
 sgtitle([trialID ' | matched flat paths (star = start)'],'Interpreter','none');
 exportgraphics(fig,fullfile(figureDir,[trialID '_flat_paths_left_right_yawspeed.png']), ...
     'Resolution',180,'BackgroundColor','white');
 savefig(fig,fullfile(figureDir,[trialID '_flat_paths_left_right_yawspeed.fig']),'compact');
 close(fig);
+end
+
+function save_correlation_flat_path_figure(trialID,x,y,rollingR,highState,threshold,leftZ,rightZ,figureDir)
+% Plot local bilateral coordination and its activity level side by side.
+% rollingR is the centered one-second left-right Pearson correlation used
+% elsewhere in the analysis. The second panel retains the full path in gray
+% and colors high-correlation samples by mean(left z-score,right z-score).
+% The threshold is shared with the state analysis (currently r >= 0.6). Red
+% means jointly elevated, blue means jointly suppressed, and white means
+% highly correlated but close to baseline. Correlation color limits span
+% each trial's observed minimum and maximum; bilateral z limits stay fixed.
+valid=isfinite(x)&isfinite(y)&isfinite(rollingR)&isfinite(leftZ)&isfinite(rightZ);
+x=x(valid); y=y(valid); rollingR=rollingR(valid);
+highState=highState(valid); bilateralZ=(leftZ(valid)+rightZ(valid))/2;
+if isempty(x), return; end
+fig=figure('Visible','off','Color','white','Position',[100 100 1500 700]);
+tiledlayout(fig,1,2,'TileSpacing','compact','Padding','compact');
+
+ax1=nexttile; scatter(x,y,10,rollingR,'filled'); hold on;
+plot(x(1),y(1),'kp','MarkerFaceColor','w','MarkerSize',11);
+correlationLimits=[min(rollingR) max(rollingR)];
+if correlationLimits(1)==correlationLimits(2)
+    correlationLimits=correlationLimits(1)+[-0.01 0.01];
+end
+axis equal tight; grid on; colormap(ax1,turbo); clim(ax1,correlationLimits);
+cb=colorbar; cb.Label.String='1-s rolling left-right Pearson r';
+xlabel('x position'); ylabel('y position'); title('Local left-right correlation');
+
+ax2=nexttile; plot(x,y,'Color',[0.82 0.82 0.82],'LineWidth',1); hold on;
+displayedZ=max(-2,min(2,bilateralZ));
+scatter(x(highState),y(highState),12,displayedZ(highState),'filled');
+plot(x(1),y(1),'kp','MarkerFaceColor','w','MarkerSize',11);
+axis equal tight; grid on;
+blueWhiteRed=[linspace(0.1,1,128)' linspace(0.3,1,128)' ones(128,1); ...
+    ones(128,1) linspace(1,0.15,128)' linspace(1,0.1,128)'];
+colormap(ax2,blueWhiteRed); clim(ax2,[-2 2]);
+cb=colorbar; cb.Label.String='Bilateral mean activity (z-score)';
+xlabel('x position'); ylabel('y position');
+title(sprintf('r >= %.1f: blue = jointly low, red = jointly high',threshold));
+
+sgtitle([trialID ' | bilateral correlation and activity level (star = start)'], ...
+    'Interpreter','none');
+exportgraphics(fig,fullfile(figureDir, ...
+    [trialID '_flat_path_left_right_correlation.png']), ...
+    'Resolution',180,'BackgroundColor','white');
+savefig(fig,fullfile(figureDir, ...
+    [trialID '_flat_path_left_right_correlation.fig']),'compact');
+close(fig);
+end
+
+function regressionRows = save_dff_kinematic_scatter_matrices(trialData,figureDir)
+% Plot fluorescence against four kinematic variables, pooled and per fly.
+% Each biological fly is date + fly ID. Every linear model is y = dF/F and
+% x = kinematics. Pearson r and the fit use all pairwise-finite frames.
+% Scatter rendering is thinned to at most 6000 points per panel, and axes
+% show the 0.5th-99.5th percentiles so isolated behavior spikes do not make
+% the central relationship unreadable. Neither fitting nor CSV values are
+% clipped or downsampled.
+regressionRows=table();
+if isempty(trialData), return; end
+
+dffNames={'left_dff','right_dff','right_minus_left_dff','right_plus_left_dff'};
+dffLabels={'Left dF/F','Right dF/F','R - L dF/F','R + L dF/F'};
+kinematicNames={'forward_velocity','signed_yaw_velocity', ...
+    'lateral_velocity','total_velocity'};
+kinematicLabels={'Forward velocity','Signed yaw velocity', ...
+    'Lateral velocity','Total velocity'};
+
+flyIDs=unique([trialData.fly_id],'stable');
+groupIDs=["all_flies" flyIDs];
+for groupIndex=1:numel(groupIDs)
+    groupID=groupIDs(groupIndex);
+    if groupID=="all_flies"
+        use=true(1,numel(trialData)); groupType="pooled";
+        displayTitle='All flies pooled';
+    else
+        use=[trialData.fly_id]==groupID; groupType="per_fly";
+        displayTitle=strrep(char(groupID),'_',' ');
+    end
+    groupTrials=trialData(use);
+    allDFF=vertcat(groupTrials.dff);
+    allKinematics=vertcat(groupTrials.kinematics);
+
+    fig=figure('Visible','off','Color','white','Position',[50 50 1800 1500]);
+    tiledlayout(fig,4,4,'TileSpacing','compact','Padding','compact');
+    for dffIndex=1:4
+        for kinematicIndex=1:4
+            ax=nexttile; hold on;
+            x=allKinematics(:,kinematicIndex);
+            y=allDFF(:,dffIndex);
+            valid=isfinite(x)&isfinite(y);
+            xValid=x(valid); yValid=y(valid); nValid=numel(xValid);
+
+            if nValid>=3 && std(xValid)>0 && std(yValid)>0
+                coefficients=polyfit(xValid,yValid,1);
+                r=pairwise_corr(xValid,yValid,3);
+                xLimits=scatter_axis_limits(xValid);
+                yLimits=scatter_axis_limits(yValid);
+                sampleCount=min(6000,nValid);
+                sampleIndices=unique(round(linspace(1,nValid,sampleCount)));
+                scatter(xValid(sampleIndices),yValid(sampleIndices),7, ...
+                    'filled','MarkerFaceColor',[0.25 0.35 0.48], ...
+                    'MarkerFaceAlpha',0.16,'MarkerEdgeAlpha',0.08);
+                fitX=linspace(xLimits(1),xLimits(2),100);
+                plot(fitX,polyval(coefficients,fitX),'Color',[0.78 0.12 0.12], ...
+                    'LineWidth',2.2);
+                xlim(xLimits); ylim(yLimits);
+                text(0.04,0.93,sprintf('r = %.3f | n = %d',r,nValid), ...
+                    'Units','normalized','VerticalAlignment','top', ...
+                    'FontSize',10,'FontWeight','bold');
+                slope=coefficients(1); intercept=coefficients(2);
+            else
+                r=NaN; slope=NaN; intercept=NaN;
+                text(0.5,0.5,'Insufficient variable data','Units','normalized', ...
+                    'HorizontalAlignment','center');
+            end
+            grid on; box off;
+            if dffIndex==1, title(kinematicLabels{kinematicIndex}); end
+            if dffIndex==4, xlabel(kinematicLabels{kinematicIndex}); end
+            if kinematicIndex==1, ylabel(dffLabels{dffIndex}); end
+
+            newRow=table(groupType,string(groupID),string(dffNames{dffIndex}), ...
+                string(kinematicNames{kinematicIndex}),nValid,r,slope,intercept, ...
+                'VariableNames',{'group_type','group_id','dff_signal', ...
+                'kinematic_variable','n_samples','pearson_r','linear_slope', ...
+                'linear_intercept'});
+            regressionRows=[regressionRows;newRow]; %#ok<AGROW>
+        end
+    end
+    sgtitle(sprintf('%s | dF/F versus kinematics',displayTitle), ...
+        'FontWeight','bold','Interpreter','none');
+    fileStem=regexprep(char(groupID),'[^A-Za-z0-9_-]','_');
+    exportgraphics(fig,fullfile(figureDir, ...
+        [fileStem '_dff_kinematic_scatter_matrix.png']), ...
+        'Resolution',180,'BackgroundColor','white');
+    savefig(fig,fullfile(figureDir, ...
+        [fileStem '_dff_kinematic_scatter_matrix.fig']),'compact');
+    close(fig);
+end
+end
+
+function limits = scatter_axis_limits(values)
+% Robust display limits only; statistical fits continue to use all values.
+limits=prctile(values,[0.5 99.5]);
+if ~all(isfinite(limits)) || limits(1)==limits(2)
+    limits=[min(values) max(values)];
+end
+if limits(1)==limits(2), limits=limits(1)+[-1 1]; end
+padding=0.04*diff(limits);
+limits=limits+[-padding padding];
 end

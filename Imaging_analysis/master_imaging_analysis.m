@@ -33,18 +33,24 @@ odor = 0;
 % Define the base folder path
 baseFolder = '/Users/sophiarenauld/stacks/'; % Change this to the desired directory
 
-% Prompt the user to select a file from the base folder
-[fileName, pathName] = uigetfile('*_s_.mat', 'Select Processed Data', baseFolder);
-% Check if the user clicked "Cancel"
-if isequal(fileName, 0)
-    disp('User canceled the file selection.');
-else
-    % Load the selected file into the workspace
+% For interactive use, prompt for a processed file as before. For batch use,
+% callers may define fullFilePath before running this script.
+if ~exist('fullFilePath', 'var') || isempty(fullFilePath)
+    [fileName, pathName] = uigetfile('*_s_.mat', 'Select Processed Data', baseFolder);
+    if isequal(fileName, 0)
+        error('master_imaging_analysis:NoInput', ...
+            'User canceled the file selection.');
+    end
     fullFilePath = fullfile(pathName, fileName);
-    a2p_data = load(fullFilePath);
-    disp(['User selected "', fullFilePath, '".']);
-   
 end
+
+if ~isfile(fullFilePath)
+    error('master_imaging_analysis:InputNotFound', ...
+        'Processed input does not exist: %s', fullFilePath);
+end
+
+a2p_data = load(fullFilePath);
+disp(['Analyzing "', fullFilePath, '".']);
 
 
 
@@ -162,31 +168,38 @@ if ves041
     lowThres = 0.7;
     [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump, 0);
     
-    a2p_data = plot_flat_path_colored(a2p_data, 'rho', 'data_only', savepath, odor);
+    a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
+    a2p_data = plot_flat_path_colored(a2p_data, 'fwd', 'data_only', savepath, odor);
 
     % sinuosity
-    window_sec = 5; % desired window in seconds
-    dt = median(diff(a2p_data.dq(2).t)); % or your timebase
-    window_pts = round(window_sec / dt);
-    a2p_data = add_sinuosity_sliding(a2p_data, window_pts);
-
-    a2p_data = plot_flat_path_colored(a2p_data, 'sinuosity', 'data_only', savepath, odor);
-
-    % plot dff
-    a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
+    % window_sec = 5; % desired window in seconds
+    % dt = median(diff(a2p_data.dq(2).t)); % or your timebase
+    % window_pts = round(window_sec / dt);
+    % a2p_data = add_sinuosity_sliding(a2p_data, window_pts);
+    % 
+    % a2p_data = plot_flat_path_colored(a2p_data, 'sinuosity', 'data_only', savepath, odor);
+    % 
+    % % plot dff
+    % a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
 
     %% basic velocity and dff plotting
     a2p_data = plotting_ves041(a2p_data, jump, savepath, odor);
+
+    % Event-aligned visual-response plots are generated automatically for
+    % discrete bar-jump and moving-grating trials.
+    if jump || contains(lower(base_path),'grating')
+        plot_ves041_visual_event_responses(a2p_data,savepath,jump);
+    end
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
 
     %% add in the xcorr stuff for behavior / imaging quantification
-    [results_meno_rho, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'rho', 'dff');
-    [results_meno_fwd, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'fwd', 'dff');
-    [results_meno_sinuosity, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'sinuosity', 'dff');
-    % plot xcorr for fwd and sinuosity
-    a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
-    a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
+    % [results_meno_rho, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'rho', 'dff');
+    % [results_meno_fwd, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'fwd', 'dff');
+    % [results_meno_sinuosity, a2p_data] = moving_window_zero_lag_corr(a2p_data, [0.25, 0.5, 1, 2, 4, 8], [15, 30, 60, 120], 'sinuosity', 'dff');
+    % % plot xcorr for fwd and sinuosity
+    % a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
+    % a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
 
 end
 %% odor section
@@ -271,8 +284,6 @@ if ~ visual
 else
     save_fly_data(a2p_data, dff_motion, savepath)
 end
-
-
 
 
 
