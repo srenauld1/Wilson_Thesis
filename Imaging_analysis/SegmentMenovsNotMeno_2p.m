@@ -27,6 +27,8 @@ function [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = Segme
 
 % sophia switched minvel to be minfwd vel
 
+a2p_data = harmonize_a2p_data(a2p_data);
+
 Meno_chunks = {}; 
 not_Meno_chunks = {};
 triggerIdx = [];
@@ -42,11 +44,22 @@ no0vel_idx = find(abs(a2p_data.dq(2).bvf) >= 0);
 count = 1; 
 if jump
     % find jump idxes 
-    a2p_data = compute_absolute_circular_diff_2p(a2p_data);
-    a2p_data = detect_local_peaks_2p(a2p_data);
-    jump_idx = a2p_data.jump_detected;
+    if ~isfield(a2p_data,'jump_detected')
+        a2p_data = compute_absolute_circular_diff_2p(a2p_data);
+        a2p_data = detect_local_peaks_2p(a2p_data);
+    end
+    if isfield(a2p_data,'omit_jump_blocks')
+        jump_idx = a2p_data.omit_jump_blocks;
+    else
+        jump_idx = a2p_data.jump_detected;
+    end
 else
     jump_idx = zeros(size(a2p_data.dq(2).bvf));
+end
+% Legacy recordings can retain a faster supplemental behavior stream.
+if numel(jump_idx)~=numel(a2p_data.dq(2).t)
+    jump_idx=interp1(a2p_data.dq(1).t(:),double(jump_idx(:)), ...
+        a2p_data.dq(2).t(:),'previous',0)>0;
 end
 
 % calculate & assign rho value to each datapoint
@@ -56,11 +69,12 @@ all_idx =  no0vel_idx;
 if sum(jump_idx)==0
     noJump_idx = all_idx;
 else
-    noJump_idx = all_idx(~ismember(all_idx, jump_idx));
+    excluded=find(jump_idx);
+    noJump_idx = all_idx(~ismember(all_idx, excluded));
 end
 
 keep_idx = intersect(noJump_idx, no0vel_idx);
-newSampRate = length(a2p_data.dq(2).t)/max(a2p_data.dq(2).t);
+newSampRate = 1/median(diff(a2p_data.dq(2).t));
 
 ts_rm = a2p_data;
 % Get the field names of the structure
@@ -105,6 +119,10 @@ for i = 1:total_points
     
     % Get angles for this window
     angles_flyFor = ts_rm.dq(2).bh(window_start:window_end);
+    if numel(jump_idx)==total_points
+        angles_flyFor(logical(jump_idx(window_start:window_end)))=NaN;
+    end
+    angles_flyFor=angles_flyFor(isfinite(angles_flyFor));
     
     % Calculate mean vector
     x = cos(angles_flyFor);
@@ -182,7 +200,7 @@ end
 
 notNan_idx = find(~isnan(ts_rm.dq(2).bh) & ~isnan(ts_rm.dq(2).bvf) & ~isnan(ts_rm.dq(2).bvs));
 yawAngPos = rad2deg(ts_rm.dq(2).bh(notNan_idx));
-fwdAngVel = ts_rm.dq(2).bvf;
+fwdAngVel = ts_rm.dq(2).bvf(notNan_idx);
 slideAngVel = ts_rm.dq(2).bvs(notNan_idx);
 triggerIdx = triggerIdx(notNan_idx); 
 transition = zeros(size(ts_rm.dq(2).bvs));
@@ -310,7 +328,7 @@ menotaxis_struct.lowThres      = lowThres;
 
 % Optionally, also save rho for each point, and whatever else you like
 menotaxis_struct.rho           = nan(size(a2p_data.dq(2).t));
-menotaxis_struct.rho(notNan_idx) = rho(:);
+menotaxis_struct.rho(notNan_idx) = rho(notNan_idx);
 
 % Save chunks and indices if desired:
 menotaxis_struct.Meno_chunks      = Meno_chunks;

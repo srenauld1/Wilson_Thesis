@@ -2,6 +2,21 @@ function a2p_data = plot_flat_path_colored(a2p_data, color_option, scale_option,
 % Flat path colored by chosen variable
 % scale_option - 'whole_range' or 'data_only'
 
+a2p_data = harmonize_a2p_data(a2p_data);
+if odor
+    requiredPosition = {'px','py'};
+else
+    requiredPosition = {'pxb','pyb'};
+end
+hasPosition = all(cellfun(@(f) isfield(a2p_data.dq(1),f) && ...
+    ~isempty(a2p_data.dq(1).(f)), requiredPosition));
+if ~hasPosition
+    warning('plot_flat_path_colored:MissingPosition', ...
+        'Skipping %s flat-path plot because %s/%s are unavailable.', ...
+        color_option,requiredPosition{1},requiredPosition{2});
+    return
+end
+
 % ---------------- Validate scale_option ----------------
 if isstring(scale_option)
     scale_option = char(scale_option);

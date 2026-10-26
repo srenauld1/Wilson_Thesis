@@ -8,9 +8,12 @@
 %   - cross-correlations between each dF/F and each kinematic variable
 %   - scatter plots of each dF/F against each kinematic variable
 %
-% dF/F convention for smp544:
+% dF/F convention for legacy smp544:
 %   roi.ts(1,:) = RIGHT side
 %   roi.ts(2,:) = LEFT side
+% Current bergII data use roi.pxfilter.filteredts. This script copies that
+% segmented trace into the in-memory roi.ts field so the established
+% analyses below operate unchanged. The processed input file is not edited.
 
 %close all
 %clear all
@@ -23,14 +26,47 @@ heat  = 0;   % set below based on the file name
 %% load in daq and ts (same pattern as master_imaging_analysis)
 baseFolder = '/Users/sophiarenauld/stacks/';
 
-[fileName, pathName] = uigetfile('*_s_.mat', 'Select Processed Data', baseFolder);
-if isequal(fileName, 0)
-    disp('User canceled the file selection.');
-    return;
+% For batch use, callers may define smp544_input_file before running this
+% script. Interactive use is unchanged and still opens the file picker.
+if exist('smp544_input_file','var') && strlength(string(smp544_input_file))>0
+    fullFilePath = char(smp544_input_file);
+    if ~isfile(fullFilePath)
+        error('smp544_analysis:InputNotFound','Input file does not exist: %s',fullFilePath);
+    end
+else
+    [fileName, pathName] = uigetfile('*_s_.mat', 'Select Processed Data', baseFolder);
+    if isequal(fileName, 0)
+        disp('User canceled the file selection.');
+        return;
+    end
+    fullFilePath = fullfile(pathName, fileName);
 end
-fullFilePath = fullfile(pathName, fileName);
 a2p_data = load(fullFilePath);
 disp(['User selected "', fullFilePath, '".']);
+
+%% select the fluorescence trace represented by the current data structure
+roi_trace_source = 'roi.ts';
+fallback_planes = NaN;
+if isfield(a2p_data,'roi') && ~isempty(a2p_data.roi) && ...
+        isfield(a2p_data.roi(1),'pxfilter') && ...
+        isfield(a2p_data.roi(1).pxfilter,'filteredts') && ...
+        ~isempty(a2p_data.roi(1).pxfilter.filteredts)
+    a2p_data.roi(1).ts = a2p_data.roi(1).pxfilter.filteredts;
+    roi_trace_source = 'roi.pxfilter.filteredts';
+    if isfield(a2p_data.roi(1).pxfilter,'fallbackmanual')
+        fallback_planes = nnz(a2p_data.roi(1).pxfilter.fallbackmanual);
+    end
+    if fallback_planes>0
+        warning('smp544_analysis:ManualFallback', ...
+            ['The filtered trace contains the complete hand-drawn mask on %d ' ...
+             'plane(s), because no pixels passed the filter there.'],fallback_planes);
+    end
+elseif ~isfield(a2p_data,'roi') || isempty(a2p_data.roi) || ...
+        ~isfield(a2p_data.roi(1),'ts') || isempty(a2p_data.roi(1).ts)
+    error('smp544_analysis:MissingROITrace', ...
+        'Neither roi.pxfilter.filteredts nor roi.ts is available in %s.',fullFilePath);
+end
+fprintf('Fluorescence source: %s (fallback planes: %g)\n',roi_trace_source,fallback_planes);
 
 %% decide whether heat is on based on the file name
 % Heat experiments have "heat" somewhere in the path/file name.
@@ -45,7 +81,12 @@ end
 %% create savepath and folder directory
 [base_path, ~, ~] = fileparts(fullFilePath);
 
-stim_directory = fullfile(base_path, 'smr_analysis');
+if exist('smp544_output_directory','var') && ...
+        strlength(string(smp544_output_directory))>0
+    stim_directory = char(smp544_output_directory);
+else
+    stim_directory = fullfile(base_path, 'smr_analysis_segmented');
+end
 if ~exist(stim_directory, 'dir')
     mkdir(stim_directory);
 end
@@ -92,6 +133,23 @@ else
     end
     a2p_data.dq(1).motion.moving_or_not = motion;
     a2p_data.dq(1).motion.ftNotMoveInd  = find(motion == 0);
+end
+
+% Current bergII files store a continuous heat-monitor voltage rather than
+% the legacy binary heat_active field. Derive the legacy field in memory so
+% the existing heat-split plots and correlations remain usable.
+if heat && (~isfield(a2p_data.dq(1),'heat_active') || ...
+        isempty(a2p_data.dq(1).heat_active))
+    if isfield(a2p_data.dq(1),'heat') && ~isempty(a2p_data.dq(1).heat)
+        heat_monitor = double(a2p_data.dq(1).heat(:));
+        heat_threshold = median(heat_monitor,'omitnan') + 2*mad(heat_monitor,1);
+        a2p_data.dq(1).heat_active = heat_monitor > heat_threshold;
+        fprintf('Derived heat_active from dq.heat at %.6g V.\n',heat_threshold);
+    else
+        warning('smp544_analysis:MissingHeatSignal', ...
+            'Heat experiment detected, but neither heat_active nor heat is available.');
+        a2p_data.dq(1).heat_active = false(size(a2p_data.dq(1).t));
+    end
 end
 
 %% align imaging and DAQ time bases
@@ -154,8 +212,7 @@ rot  = a2p_data.dq(1).bvy_deg(:);    % rotational velocity (deg/s)
 side = a2p_data.dq(1).bvs_deg(:);    % side/lateral velocity (deg/s)
 time = a2p_data.dq(1).t(:);          % imaging-volume time base
 
-dff_right = a2p_data.roi.ts(1,:).';  % roi 1 = right side
-dff_left  = a2p_data.roi.ts(2,:).';  % roi 2 = left side
+dff_right = a2p_data.roi.ts(1,:).';  % first ROI (segmented for current data)
 
 % Package kinematic variables and dF/F for looping in later sections
 kin_vars   = {fwd, rot, abs(rot), side};
@@ -163,9 +220,19 @@ kin_names  = {'Forward velocity (mm/s)', 'Rotational velocity (deg/s)', ...
               'Rotational speed (deg/s)', 'Side velocity (deg/s)'};
 kin_tags   = {'fwd', 'rot', 'rotspeed', 'side'};
 
-dff_vars  = {dff_right, dff_left};
-dff_names = {'dF/F right', 'dF/F left'};
-dff_tags  = {'right', 'left'};
+if size(a2p_data.roi.ts,1) >= 2
+    dff_left  = a2p_data.roi.ts(2,:).';  % roi 2 = left side
+    dff_vars  = {dff_right, dff_left};
+    dff_names = {'dF/F right', 'dF/F left'};
+    dff_tags  = {'right', 'left'};
+else
+    warning('smp544_analysis:SingleROI', ...
+        ['Only one ROI is present. Treating it as the aggregate segmented ' ...
+         'ROI and skipping bilateral comparisons.']);
+    dff_vars  = {dff_right};
+    dff_names = {'dF/F segmented ROI'};
+    dff_tags  = {'segmented'};
+end
 
 sample_rate = length(time) / (max(time) - min(time));  % samples per second
 
@@ -179,12 +246,12 @@ end
 %% ===== EXPLORATORY: one dF/F trace (right ROI), fwd, rot on one figure =====
 figure;
 
-% Subplot 1: dF/F from the first/right ROI only
+% Subplot 1: dF/F from the first ROI
 subplot(3, 1, 1);
 plot(time, dff_right, 'b', 'LineWidth', 1.5);
 xlabel('Time (s)');
 ylabel('dF/F');
-title('dF/F (right ROI)');
+title(dff_names{1});
 grid on;
 
 % Subplot 2: Forward Velocity
@@ -205,25 +272,42 @@ title('Rotational Velocity');
 grid on;
 
 linkaxes(findall(gcf, 'Type', 'axes'), 'x');
-sgtitle('dF/F (right ROI), Forward, and Rotational Velocity');
+sgtitle([dff_names{1} ', Forward, and Rotational Velocity']);
 save_plot_with_title_as_filename('fwd_rot', 'dff_separate', savepath);
 
 %% ===== EXPLORATORY: flat path =====
-a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
-figure
-plot(a2p_data.dq(1).px, a2p_data.dq(1).py)
-xlabel('X position (mm)'); ylabel('Y position (mm)');
-title('Flat path'); axis equal; grid on;
+has_visual_path = isfield(a2p_data.dq(1),'px') && isfield(a2p_data.dq(1),'py') && ...
+    ~isempty(a2p_data.dq(1).px) && ~isempty(a2p_data.dq(1).py);
+has_ball_path = isfield(a2p_data.dq(1),'pxb') && isfield(a2p_data.dq(1),'pyb') && ...
+    ~isempty(a2p_data.dq(1).pxb) && ~isempty(a2p_data.dq(1).pyb);
+if has_visual_path || has_ball_path
+    a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
+    figure
+    if has_visual_path
+        plot(a2p_data.dq(1).px, a2p_data.dq(1).py)
+    else
+        plot(a2p_data.dq(1).pxb, a2p_data.dq(1).pyb)
+    end
+    xlabel('X position (mm)'); ylabel('Y position (mm)');
+    title('Flat path'); axis equal; grid on;
+else
+    warning('smp544_analysis:MissingPath', ...
+        'No px/py or pxb/pyb coordinates are available; skipping flat-path figures.');
+end
 
 %% ===== EXPLORATORY: flat path colored by forward velocity =====
 % Use the imaging-grid FicTrac path and velocity so all vectors share the
 % same time base. The fixed color range matches the forward-velocity panel.
-if odor
+if has_visual_path || has_ball_path
+if odor && has_visual_path
     flat_x = a2p_data.dq(1).px(:);
     flat_y = a2p_data.dq(1).py(:);
-else
+elseif has_ball_path
     flat_x = a2p_data.dq(1).pxb(:);
     flat_y = a2p_data.dq(1).pyb(:);
+else
+    flat_x = a2p_data.dq(1).px(:);
+    flat_y = a2p_data.dq(1).py(:);
 end
 n_flat = min([numel(flat_x), numel(flat_y), numel(fwd)]);
 flat_x = flat_x(1:n_flat);
@@ -253,13 +337,14 @@ clim([fwd_color_min fwd_color_max]);
 savefig(f_flat_fwd, fullfile(savepath, 'flat_path_colored_by_fwd.fig'));
 exportgraphics(f_flat_fwd, fullfile(savepath, 'flat_path_colored_by_fwd.png'), ...
     'Resolution', 150, 'BackgroundColor', 'white');
+end
 
 %% ===== EXPLORATORY: flat path with heat on/off + dF/F (heat expts only) =====
-if heat
+if heat && (has_visual_path || has_ball_path)
     figure(10); clf;
 
     % Choose which fictive path to plot: 'visual' (dq.px/py) or 'ball' (dq.pxb/pyb)
-    usepath = 'visual';
+    if has_visual_path, usepath = 'visual'; else, usepath = 'ball'; end
     if strcmp(usepath, 'ball')
         x_vm = a2p_data.dq(1).pxb(:);  y_vm = a2p_data.dq(1).pyb(:);
     else
@@ -281,17 +366,17 @@ if heat
     title('Flat path — heat on (red) vs off (black)');
     axis equal; grid on; hold off;
 
-    % ---------- Panel 2: dF/F-colored path (right side) ----------
+    % ---------- Panel 2: dF/F-colored path (first ROI) ----------
     ax2 = subplot(1,2,2); hold on;
     dff_on_vm = dff_right;
     valid  = ~isnan(dff_on_vm);
     scatter(x_vm(valid), y_vm(valid), 10, dff_on_vm(valid), 'filled', 'MarkerEdgeColor', 'none');
     axis equal;
     colormap(jet);
-    c = colorbar; ylabel(c, 'dF/F (right)');
+    c = colorbar; ylabel(c, dff_names{1});
     plot(x_vm(1), y_vm(1), 'go', 'MarkerSize', 8, 'MarkerFaceColor', 'g');
     xlabel('X position (mm)'); ylabel('Y position (mm)');
-    title('Flat path colored by dF/F (right)');
+    title(['Flat path colored by ' dff_names{1}]);
     grid on; hold off;
 
     linkaxes([ax1, ax2], 'xy');

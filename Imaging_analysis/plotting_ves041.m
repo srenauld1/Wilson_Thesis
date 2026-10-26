@@ -3,6 +3,7 @@
 function a2p_data = plotting_ves041(a2p_data, jump, savepath, odor)
 
 close all
+a2p_data = harmonize_a2p_data(a2p_data);
 %% define variables
 time = a2p_data.dq(1).t;                  % Time points
 dff = a2p_data.roi.ts(1, :);                    % Example dFF data
@@ -12,7 +13,7 @@ fwd_supp = a2p_data.dq(2).bvf;
 rot = a2p_data.dq(1).bvy_deg; % Example rotational velocity data
 rot_supp = a2p_data.dq(2).bvy_deg;
 side = a2p_data.dq(1).bvs_deg;
-sample_rate = 1/(max(time)/length(time)); %samples per second
+sample_rate = 1/median(diff(time)); % measured samples per second
 
 if odor
     rot = a2p_data.dq(1).vvy; % Example rotational velocity data
@@ -21,20 +22,23 @@ end
 
 % Stimulus overlays for the main dF/F/kinematics plot.
 jump_times = [];
-if jump && isfield(a2p_data,'jump_detected')
+hasVisualHeading = isfield(a2p_data.dq(1),'vh') && ~isempty(a2p_data.dq(1).vh);
+if jump && isfield(a2p_data,'jump_detected') && hasVisualHeading
     jump_idx = find(logical(a2p_data.jump_detected(:)));
     jump_idx = jump_idx(jump_idx <= numel(time));
     % Reject detector startup transients that are not genuine large jumps.
     visual_heading = a2p_data.dq(1).vh(:);
     signed_step = atan2(sin([visual_heading(1); diff(visual_heading)]), ...
         cos([visual_heading(1); diff(visual_heading)]));
-    jump_idx = jump_idx(abs(rad2deg(signed_step(jump_idx))) >= 45);
+    if ~isfield(a2p_data,'jump_source') || strcmp(a2p_data.jump_source,'visual heading detector')
+        jump_idx = jump_idx(abs(rad2deg(signed_step(jump_idx))) >= 45);
+    end
     jump_times = time(jump_idx);
 end
 
 clockwise_stim = false(size(time));
 counterclockwise_stim = false(size(time));
-if contains(lower(savepath),'grating')
+if contains(lower(savepath),'grating') && hasVisualHeading
     [clockwise_stim,counterclockwise_stim] = ...
         ves041_grating_direction_masks(a2p_data);
 end
@@ -79,6 +83,10 @@ linkaxes(findall(gcf, 'Type', 'axes'), 'x');
 sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
 
 save_plot_with_title_as_filename('fwd_rot', 'dff_separate', savepath);
+
+if ~odor
+    plot_ves041_heat_state_traces(a2p_data,savepath);
+end
 
 % Keep the original plot above, then save a second stimulus-annotated copy.
 if ~isempty(jump_times) || any(clockwise_stim) || any(counterclockwise_stim)
@@ -138,9 +146,9 @@ for i=1:numel(onsets)
 end
 
 % Robust dt and restrict to epochs with enough pre samples
-dt_median = median(cellfun(@(t) median(diff(t)), t_cell));
+dt_median = median(diff(time));
 t_pre = -preN*dt_median;
-bouts_with_all_pre = cellfun(@(t) any(t <= t_pre), t_cell);
+bouts_with_all_pre = cellfun(@(t) any(t <= t_pre+0.25*dt_median), t_cell);
 fluo_cell    = fluo_cell(bouts_with_all_pre);
 forvel_cell  = forvel_cell(bouts_with_all_pre);
 rotsel_cell  = rotsel_cell(bouts_with_all_pre);
@@ -148,6 +156,7 @@ t_cell       = t_cell(bouts_with_all_pre);
 
 % Mean axis: overlapping duration only
 t_post_max = min(cellfun(@(t) max(t), t_cell));
+if isempty(t_post_max),t_post_max=0;end
 t_mean = t_pre:dt_median:t_post_max;
 
 % Interpolate all epochs to t_mean for averaging
@@ -545,10 +554,10 @@ peak_prominence = 3 * noise_sigma;
 peak_args = {'MinPeakProminence', peak_prominence, ...
     'MinPeakDistance', round(2 * sample_rate), ...
     'MinPeakWidth', round(0.25 * sample_rate)};
-figure
-findpeaks(dff, peak_args{:});
-title(sprintf('VES041 peaks: prominence >= 3 sigma (%.3g dF/F)', peak_prominence));
 [pks, locs] = findpeaks(dff, peak_args{:});
+% Persist a peak-marked trace using the exact selections below. Heat trials
+% additionally receive peak-triggered heat/no-heat descriptive comparisons.
+plot_ves041_peak_heat_context(a2p_data,savepath,locs,peak_prominence);
 
 window_s = 2; % seconds before/after
 window_N = round(window_s * sample_rate);

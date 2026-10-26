@@ -3,6 +3,7 @@
 function plotting_an4(a2p_data, jump, savepath)
 
 close all
+a2p_data = harmonize_a2p_data(a2p_data);
 
 
 %[a2p_data.dq(1), triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data.dq(1), savepath, 10, 2,0.88,0.88);
@@ -52,6 +53,14 @@ linkaxes(findall(gcf, 'Type', 'axes'), 'x');
 sgtitle('dF/F, Forward, and Rotational Velocity');  % Super title
 
 save_plot_with_title_as_filename('fwd_yaw', 'dff_separate', savepath);
+
+hasPosition = isfield(a2p_data.dq(1),'px') && isfield(a2p_data.dq(1),'py') && ...
+    ~isempty(a2p_data.dq(1).px) && ~isempty(a2p_data.dq(1).py);
+if ~hasPosition
+    warning('plotting_an4:MissingPosition', ...
+        'Saved time-series plots; skipping flat-path plots because dq.px/dq.py are unavailable.');
+    return
+end
 
 
 %% flat path
@@ -204,4 +213,3 @@ save_plot_with_title_as_filename('x_yaw', 'y_yaw', savepath);
 
 
 end
-

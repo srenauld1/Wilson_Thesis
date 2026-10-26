@@ -49,7 +49,21 @@ if ~isfile(fullFilePath)
         'Processed input does not exist: %s', fullFilePath);
 end
 
-a2p_data = load(fullFilePath);
+if exist('analysisOmitImageStack','var') && analysisOmitImageStack
+    % Behavior/ROI reruns do not need a second copy of the multi-GB movie.
+    inputVariables=whos('-file',fullFilePath);
+    inputVariables=setdiff({inputVariables.name},{'stack'},'stable');
+    a2p_data=load(fullFilePath,inputVariables{:});
+else
+    a2p_data = load(fullFilePath);
+end
+a2p_data = import_ves041_protocol(a2p_data,fileparts(fullFilePath));
+[a2p_data, compatibility] = harmonize_a2p_data(a2p_data);
+if compatibility.synthesizedSupplementalDq
+    warning('master_imaging_analysis:SingleDqStream', ...
+        ['Only dq(1) is present. dq(2) was copied from dq(1); analyses ' ...
+         'will use the imaging-aligned behavioral sampling rate.']);
+end
 disp(['Analyzing "', fullFilePath, '".']);
 
 
@@ -73,6 +87,9 @@ if contains(base_path, 'jump')
     jump = 1;  % Set neck to 1 if "neck" is found
 else
     jump = 0;  % Set neck to 0 if "neck" is not found
+end
+if isfield(a2p_data,'protocol')
+    jump=strcmp(a2p_data.protocol.kind,'bar-jump');
 end
 if contains(base_path, 'an4')
     an4_project = 1;  
@@ -107,9 +124,20 @@ if contains(base_path, 'odor')
     ves041=1;
 end
 
+% Jump detection requires visual heading. Keep legacy behavior when vh is
+% present, but do not fail newer recordings that omit that channel.
+if jump && ~compatibility.hasVisualHeading
+    warning('master_imaging_analysis:MissingVisualHeading', ...
+        'Disabling jump detection because dq.vh is unavailable.');
+    jump = 0;
+end
+
 
 % Define the directory for the stimulus
 stim_directory = fullfile(base_path, 'smr_analysis');
+if exist('analysisOutputFolder','var') && ~isempty(analysisOutputFolder)
+    stim_directory=analysisOutputFolder;
+end
 
 % Create the directory if it doesn't exist
 if ~exist(stim_directory, 'dir')
@@ -147,7 +175,13 @@ if an4_project % this includes all other visual cells
 end
 if visual
     plotting_an4(a2p_data, jump, savepath)
-    [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split, LED);
+    if compatibility.hasVisualHeading
+        [a2p_data, dff_motion] = openloop_gratings_process(a2p_data, savepath, box, split, LED);
+    else
+        warning('master_imaging_analysis:MissingVisualHeading', ...
+            'Skipping visual-heading/grating analysis because dq.vh is unavailable.');
+        visual = 0;
+    end
 end
 if all_8
       eight_visual_pattern_analysis(a2p_data, savepath, box, split)
@@ -168,8 +202,10 @@ if ves041
     lowThres = 0.7;
     [a2p_data, triggerIdx, rho, Meno_chunks, not_Meno_chunks,ts_rm] = SegmentMenovsNotMeno_2p(a2p_data, savepath, window, minVel,highThres,lowThres, jump, 0);
     
-    a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
-    a2p_data = plot_flat_path_colored(a2p_data, 'fwd', 'data_only', savepath, odor);
+    if compatibility.hasPosition
+        a2p_data = plot_flat_path_colored(a2p_data, 'dff', 'data_only', savepath, odor);
+        a2p_data = plot_flat_path_colored(a2p_data, 'fwd', 'data_only', savepath, odor);
+    end
 
     % sinuosity
     % window_sec = 5; % desired window in seconds
@@ -184,11 +220,17 @@ if ves041
 
     %% basic velocity and dff plotting
     a2p_data = plotting_ves041(a2p_data, jump, savepath, odor);
+    if isfield(a2p_data,'protocol') && any(strcmp(a2p_data.protocol.kind,{'heat-barrier','heat-stripes'}))
+        a2p_data.heat_analysis = analyze_ves041_heat_context(a2p_data,savepath);
+    end
 
     % Event-aligned visual-response plots are generated automatically for
     % discrete bar-jump and moving-grating trials.
-    if jump || contains(lower(base_path),'grating')
+    if (jump || contains(lower(base_path),'grating')) && compatibility.hasVisualHeading
         plot_ves041_visual_event_responses(a2p_data,savepath,jump);
+    elseif jump || contains(lower(base_path),'grating')
+        warning('master_imaging_analysis:MissingVisualHeading', ...
+            'Skipping VES041 stimulus-aligned plots because dq.vh is unavailable.');
     end
     % NOT ADJUSTED FOR NEW A2P
     %lm_velocity(a2p_data, dat, savepath)
@@ -209,8 +251,8 @@ if odor
     % speed i should look at vh and vvy
     % segment out odor
     odor_pulses = a2p_data.dq(1).bh;
-    odor_x = a2p_data.dq(1).px;
-    odor_y = a2p_data.dq(1).py;
+    if isfield(a2p_data.dq(1),'px'), odor_x = a2p_data.dq(1).px; else, odor_x = []; end
+    if isfield(a2p_data.dq(1),'py'), odor_y = a2p_data.dq(1).py; else, odor_y = []; end
 
     % Define ON/OFF based on odor thresholds
     odor_on  = odor_pulses > -0.5;  % logical vector
@@ -218,6 +260,7 @@ if odor
     % Anything in between (-1 to -0.5) will be treated as OFF here, but you can
     % adjust that if desired.
     
+    if ~isempty(odor_x) && ~isempty(odor_y)
     figure; hold on;
     h_on = []; h_off = []; h_start = [];
     
@@ -245,6 +288,10 @@ if odor
     axis equal; axis tight; grid on; hold off;
     
     save_plot_with_title_as_filename('flatpath', 'odor', savepath);
+    else
+        warning('master_imaging_analysis:MissingPosition', ...
+            'Skipping odor flat-path plot because dq.px/dq.py are unavailable.');
+    end
 
     %% chop up by odor and plot
     time        = a2p_data.dq(1).t;
@@ -285,5 +332,8 @@ else
     save_fly_data(a2p_data, dff_motion, savepath)
 end
 
-
+% Hidden runs must still produce FIG files that open visibly for the user.
+if ves041
+    repair_saved_figure_visibility(savepath);
+end
 

@@ -28,11 +28,26 @@
 
 function a2p_data = process_fictrac_panels_2p(a2p_data, vel_on,vel_off, jump)
 
+    % Accept both legacy two-stream A2P files and newer files containing
+    % only an imaging-aligned dq(1).
+    a2p_data = harmonize_a2p_data(a2p_data);
+
     if jump
         % NOT ADJUSTED TO NEW A2P
         %% detect jumps
-        a2p_data = compute_absolute_circular_diff_2p(a2p_data);
-        a2p_data = detect_local_peaks_2p(a2p_data);
+        if isfield(a2p_data.dq(1),'jump_count') && ~isempty(a2p_data.dq(1).jump_count)
+            c=a2p_data.dq(1).jump_count(:)';
+            a2p_data.jump_detected=[false,diff(c)>0];
+            a2p_data.jump_source='recorded jump_count';
+        elseif isfield(a2p_data.dq(1),'bar_jump') && ~isempty(a2p_data.dq(1).bar_jump)
+            b=a2p_data.dq(1).bar_jump(:)'>0;
+            a2p_data.jump_detected=b & ~[false,b(1:end-1)];
+            a2p_data.jump_source='recorded bar_jump';
+        else
+            a2p_data = compute_absolute_circular_diff_2p(a2p_data);
+            a2p_data = detect_local_peaks_2p(a2p_data);
+            a2p_data.jump_source='visual heading detector';
+        end
     
         %% add in jump buffer for later calculations
         % Define the padding size on each side
@@ -40,7 +55,7 @@ function a2p_data = process_fictrac_panels_2p(a2p_data, vel_on,vel_off, jump)
         jump_idx = a2p_data.jump_detected;
     
         % calculate trial duration
-        duration = length(a2p_data.t)/a2p_data.t(end);
+        duration = 1/median(diff(a2p_data.dq(1).t));
         
         % Define the padding size on each side
         buffer_before_and_after_jump = 2;

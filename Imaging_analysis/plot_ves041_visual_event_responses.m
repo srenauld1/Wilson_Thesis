@@ -14,7 +14,11 @@ if jump && isfield(a2p_data,'jump_detected')
     n=min([n,numel(bh),numel(vh)]);t=t(1:n);dff=dff(1:n);bh=bh(1:n);vh=vh(1:n);
     idx=find(logical(a2p_data.jump_detected(:)));idx=idx(idx<=n);
     dvh=atan2(sin([vh(1);diff(vh)]),cos([vh(1);diff(vh)]));jumpDeg=rad2deg(dvh(idx));
-    keep=abs(jumpDeg)>=45 & t(idx)>=2 & t(idx)<=t(end)-2;
+    if isfield(a2p_data,'jump_source') && ~strcmp(a2p_data.jump_source,'visual heading detector')
+        keep=t(idx)>=2 & t(idx)<=t(end)-2;
+    else
+        keep=abs(jumpDeg)>=45 & t(idx)>=2 & t(idx)<=t(end)-2;
+    end
     idx=idx(keep);jumpDeg=jumpDeg(keep);tRel=(-2:0.02:2)';
     B=nan(numel(tRel),numel(idx));V=B;D=B;ubh=unwrap(bh);uvh=unwrap(vh);
     for k=1:numel(idx)

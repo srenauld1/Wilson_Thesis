@@ -1,0 +1,36 @@
+{
+  "recordings": "2026-10-20 VES041 fly1: 11_2, 12_1, 13_1",
+  "event_alignment": "maximum deceleration per contiguous candidate run",
+  "behavior_smoothing_seconds": 0.25,
+  "candidate_acceleration_max_mm_s2": -2,
+  "minimum_speed_before_mm_s": 1,
+  "minimum_speed_drop_mm_s": 1,
+  "speed_before_seconds": [
+    -0.75,
+    -0.25
+  ],
+  "speed_after_seconds": [
+    0.25,
+    0.75
+  ],
+  "minimum_accepted_event_spacing_seconds": 2,
+  "event_window_seconds": [
+    -2,
+    3
+  ],
+  "reorientation": "integral of absolute smoothed yaw >=30 degrees in [-0.5,0.5] s",
+  "heat_context": "all measured command samples >0.05 V within [-0.5,0.5] s; all <=0.05 V = no heat; mixed = transition; barrier control episodes separate",
+  "context_limitation": "No heat means no current command in the core window; recent heat exposure is not excluded. Core context can change outside +/-0.5 s, as shown by command traces. Events are not behavior-matched.",
+  "fluorescence": "ROI 1 raw dF/F; no amplitude exclusions or event baseline subtraction in trace plots",
+  "scatter_response": "mean dF/F 0:1 s minus mean -2:-1 s",
+  "xy": "protocol logged positions and measured geometry time alignment; never overlay geometry on independently reconstructed ficpath coordinates",
+  "background": "normalized programmed profile, not measured temperature; pale red = heat, gray = virtual control profile",
+  "color_display": "trajectory limits: 1st-99th recording percentiles; event heatmap: 2nd-98th event-window percentiles; display clipping does not exclude samples",
+  "pooling": "none across recordings; no hypothesis tests",
+  "quality_checks": [
+    "monotonic imaging time",
+    "geometry aligned by measured tracking timestamps",
+    "stripe reconstruction agrees with logged zone membership >98%",
+    "event windows require finite fluorescence, behavior, command, position and behaviorVolumeValid when available"
+  ]
+}
