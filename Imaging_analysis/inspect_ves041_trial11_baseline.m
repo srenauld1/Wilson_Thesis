@@ -6,7 +6,7 @@ function result=inspect_ves041_trial11_baseline()
 % morphology, plane redistribution, motion and background alongside the trace.
 set(groot,'defaultFigureVisible','off');
 folder='/Users/sophiarenauld/stacks/2026-10-20/20261020_11_2_ves041_syt8m_fly1_heatbarrier_redo';
-out=fullfile(fileparts(mfilename('fullpath')),'diagnostics','ves041_20261020_11');
+out=fullfile(imaging_analysis_artifact_root(),'diagnostics','ves041_20261020_11');
 if ~isfolder(out),mkdir(out);end
 a=load(fullfile(folder,'20261020_11_2_or_z0z1_s_.mat'),'roi','dq','t');
 t=a.dq(1).t(:); mask=a.roi.mask; nt=numel(t);nz=size(mask,3);

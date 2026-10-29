@@ -135,6 +135,10 @@ end
 
 % Define the directory for the stimulus
 stim_directory = fullfile(base_path, 'smr_analysis');
+% Prepared registration bundles resolve to their original recording folder.
+if isfield(a2p_data,'protocol') && isfield(a2p_data.protocol,'sourceFolder')
+    stim_directory=fullfile(a2p_data.protocol.sourceFolder,'smr_analysis');
+end
 if exist('analysisOutputFolder','var') && ~isempty(analysisOutputFolder)
     stim_directory=analysisOutputFolder;
 end
@@ -220,7 +224,7 @@ if ves041
 
     %% basic velocity and dff plotting
     a2p_data = plotting_ves041(a2p_data, jump, savepath, odor);
-    if isfield(a2p_data,'protocol') && any(strcmp(a2p_data.protocol.kind,{'heat-barrier','heat-stripes'}))
+    if isfield(a2p_data,'protocol') && any(strcmp(a2p_data.protocol.kind,{'heat-barrier','heat-pyramid','heat-stripes'}))
         a2p_data.heat_analysis = analyze_ves041_heat_context(a2p_data,savepath);
     end
 
@@ -243,6 +247,12 @@ if ves041
     % a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
     % a2p_data = plot_flat_path_colored(a2p_data, 'crosscorr', 'whole_range', savepath, odor);
 
+end
+% Required for heat recordings of every cell type, before saving completion.
+% Missing geometry, failed plots, or missing artifacts fail the run explicitly.
+if ~odor
+    [~,recordingName]=fileparts(base_path);
+    a2p_data.heat_exploration=require_heat_exploration(a2p_data,savepath,recordingName);
 end
 %% odor section
 if odor
@@ -333,7 +343,7 @@ else
 end
 
 % Hidden runs must still produce FIG files that open visibly for the user.
-if ves041
+if ves041 || (isfield(a2p_data,'heat_exploration') && a2p_data.heat_exploration.required)
     repair_saved_figure_visibility(savepath);
 end
 

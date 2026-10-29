@@ -1,0 +1,215 @@
+{
+  "analysis_date": "2026-10-28",
+  "seed": 20261028,
+  "bootstrap_resamples": 100000,
+  "sign_flip_samples": 200000,
+  "positive_direction": "right",
+  "negative_direction": "left",
+  "sign_convention_status": "Lab analysis-code convention; no new hardware calibration.",
+  "primary_test": {
+    "estimand": "Mean signed light-window heading across 34 VES041 flies",
+    "p": 0.6957765211173944,
+    "method": "two-sided fly-level sign-flip, plus-one correction",
+    "assumption": "independent flies and symmetry of fly estimates under a zero-mean null"
+  },
+  "sensitivity_tests": {
+    "exact_fly_sign_count_p": 0.39152830513194203,
+    "light_minus_pre_sign_flip_p": 0.6760566197169015,
+    "status": "descriptive sensitivity; unadjusted"
+  },
+  "group_order": [
+    "ves041_1_Chrim",
+    "ves041_2_Chrim",
+    "ves041_1_gfp",
+    "ves041_2_gfp",
+    "empty_Chrim"
+  ],
+  "labels": {
+    "ves041_1_Chrim": "VES041 line 1 + csChrimson",
+    "ves041_2_Chrim": "VES041 line 2 + csChrimson",
+    "ves041_1_gfp": "Line 1 + GFP",
+    "ves041_2_gfp": "Line 2 + GFP",
+    "empty_Chrim": "Empty + csChrimson"
+  },
+  "summary": [
+    {
+      "genotype": "ves041_1_Chrim",
+      "label": "VES041 line 1 + csChrimson",
+      "n_flies": 18,
+      "n_pulses": 1440,
+      "light_mean_deg": -0.5594857119252339,
+      "light_ci95_lo": -11.083038615881927,
+      "light_ci95_hi": 10.260536310772306,
+      "baseline_mean_deg": -2.5371399742335887,
+      "baseline_ci95_lo": -7.063087439716187,
+      "baseline_ci95_hi": 1.6895160296554066,
+      "light_minus_pre_mean_deg": 1.9776542623083546,
+      "light_minus_pre_ci95_lo": -8.873212677783563,
+      "light_minus_pre_ci95_hi": 14.038011218882701,
+      "right_mean_percent": 50.27777777777778,
+      "right_ci95_lo": 43.888888888888886,
+      "right_ci95_hi": 56.875,
+      "flies_mean_right": 8,
+      "flies_mean_left": 10,
+      "right_pulses": 724,
+      "left_pulses": 716,
+      "zero_pulses": 0
+    },
+    {
+      "genotype": "ves041_2_Chrim",
+      "label": "VES041 line 2 + csChrimson",
+      "n_flies": 16,
+      "n_pulses": 1280,
+      "light_mean_deg": -2.2518118844556794,
+      "light_ci95_lo": -9.667804278157718,
+      "light_ci95_hi": 5.430013479565794,
+      "baseline_mean_deg": -3.280783592446335,
+      "baseline_ci95_lo": -5.62745702000118,
+      "baseline_ci95_hi": -1.1925842512514395,
+      "light_minus_pre_mean_deg": 1.0289717079906562,
+      "light_minus_pre_ci95_lo": -5.268922927527247,
+      "light_minus_pre_ci95_hi": 7.614769820881875,
+      "right_mean_percent": 47.96875,
+      "right_ci95_lo": 42.578125,
+      "right_ci95_hi": 53.359375,
+      "flies_mean_right": 6,
+      "flies_mean_left": 10,
+      "right_pulses": 614,
+      "left_pulses": 666,
+      "zero_pulses": 0
+    },
+    {
+      "genotype": "ves041_1_gfp",
+      "label": "Line 1 + GFP",
+      "n_flies": 16,
+      "n_pulses": 1280,
+      "light_mean_deg": 0.0523468414522088,
+      "light_ci95_lo": -6.642080105557985,
+      "light_ci95_hi": 6.342616002857111,
+      "baseline_mean_deg": -0.07398597682497188,
+      "baseline_ci95_lo": -4.939049057090828,
+      "baseline_ci95_hi": 4.794193756798136,
+      "light_minus_pre_mean_deg": 0.1263328182771799,
+      "light_minus_pre_ci95_lo": -5.818955174963906,
+      "light_minus_pre_ci95_hi": 5.90436141145032,
+      "right_mean_percent": 51.171875,
+      "right_ci95_lo": 43.59375,
+      "right_ci95_hi": 58.359375,
+      "flies_mean_right": 9,
+      "flies_mean_left": 7,
+      "right_pulses": 655,
+      "left_pulses": 625,
+      "zero_pulses": 0
+    },
+    {
+      "genotype": "ves041_2_gfp",
+      "label": "Line 2 + GFP",
+      "n_flies": 16,
+      "n_pulses": 1280,
+      "light_mean_deg": -4.528016587423833,
+      "light_ci95_lo": -8.758630583082589,
+      "light_ci95_hi": -0.10131499072657676,
+      "baseline_mean_deg": -1.5337417387805,
+      "baseline_ci95_lo": -5.431907215361106,
+      "baseline_ci95_hi": 2.3715915782027026,
+      "light_minus_pre_mean_deg": -2.9942748486433333,
+      "light_minus_pre_ci95_lo": -5.804489399651412,
+      "light_minus_pre_ci95_hi": 0.14718548281414356,
+      "right_mean_percent": 45.546875,
+      "right_ci95_lo": 40.625,
+      "right_ci95_hi": 50.859375,
+      "flies_mean_right": 4,
+      "flies_mean_left": 12,
+      "right_pulses": 583,
+      "left_pulses": 697,
+      "zero_pulses": 0
+    },
+    {
+      "genotype": "empty_Chrim",
+      "label": "Empty + csChrimson",
+      "n_flies": 15,
+      "n_pulses": 1200,
+      "light_mean_deg": -1.3623389268169086,
+      "light_ci95_lo": -6.537353846373467,
+      "light_ci95_hi": 3.428950570858779,
+      "baseline_mean_deg": 1.6747453344897842,
+      "baseline_ci95_lo": -0.2961046479536003,
+      "baseline_ci95_hi": 3.75799627682205,
+      "light_minus_pre_mean_deg": -3.037084261306693,
+      "light_minus_pre_ci95_lo": -7.121357447252072,
+      "light_minus_pre_ci95_hi": 0.7666509894193586,
+      "right_mean_percent": 46.333333333333336,
+      "right_ci95_lo": 41.75,
+      "right_ci95_hi": 51.083333333333336,
+      "flies_mean_right": 6,
+      "flies_mean_left": 9,
+      "right_pulses": 556,
+      "left_pulses": 644,
+      "zero_pulses": 0
+    },
+    {
+      "genotype": "VES041 activation pooled",
+      "label": "VES041 activation pooled",
+      "n_flies": 34,
+      "n_pulses": 2720,
+      "light_mean_deg": -1.3558744989983842,
+      "light_ci95_lo": -7.92283501514798,
+      "light_ci95_hi": 5.359626909144546,
+      "baseline_mean_deg": -2.887089912216058,
+      "baseline_ci95_lo": -5.518002040015605,
+      "baseline_ci95_hi": -0.39930504502277786,
+      "light_minus_pre_mean_deg": 1.531215413217673,
+      "light_minus_pre_ci95_lo": -4.9912382893863665,
+      "light_minus_pre_ci95_hi": 8.63909583790328,
+      "right_mean_percent": 49.19117647058823,
+      "right_ci95_lo": 44.963235294117645,
+      "right_ci95_hi": 53.49264705882353,
+      "flies_mean_right": 14,
+      "flies_mean_left": 20,
+      "right_pulses": 1338,
+      "left_pulses": 1382,
+      "zero_pulses": 0
+    }
+  ],
+  "time_window": "First 1 s of light; last minus first unwrapped heading sample, approximately 0.999 s apart.",
+  "mean_definition": "Arithmetic mean of signed endpoint shifts over 80 pulses within each fly, then equal weight across flies.",
+  "direction_fraction": "Per fly, number of positive endpoint pulses / number of nonzero endpoint pulses. No turn-amplitude cutoff.",
+  "uncertainty": "Pointwise percentile 95% bootstrap intervals across flies; no within-fly error bars are drawn.",
+  "exclusions": "Select dataset=ves041_activation only. No movement filter, outlier removal, imputation, or new fly exclusions.",
+  "limitations": [
+    "Net endpoint direction within a window does not count every individual turn bout.",
+    "The analysis begins with saved exports; raw acquisition processing is not rerun.",
+    "Nonsignificance does not establish equivalence or prove zero directional bias.",
+    "The light-versus-baseline sensitivity uses paired fly means; zero initial heading is a coordinate reference."
+  ],
+  "sources": {
+    "analyze_smp544_pivots.py": {
+      "sha256": "8ac962a1c49341aae043e00eab3062f264ef9a1956a930dd72ce3bf2377850aa",
+      "bytes": 8822
+    },
+    "computeSmoothedVelocity.m": {
+      "sha256": "d52c9a8f9d16b8ddd8202b99219a139b82e35e49abcda400176fb61c11b4ab23",
+      "bytes": 1126
+    },
+    "cschrim_behaviorcrunch.R": {
+      "sha256": "9bbe8d03027a93a3577435737c40c13c0793a7faf9b594d5b334bdd153c71e14",
+      "bytes": 14056
+    },
+    "dsFiltFictrac.m": {
+      "sha256": "1b18d8107d76313ff276eee5e029de42ede3cceebff0b93e0a2900421832f6ec",
+      "bytes": 4350
+    },
+    "findYawVelPeaksFT.m": {
+      "sha256": "f2ec9bee78808adc52e6165e977f43587c1553bb7dc6c12ce90569643d47ae4e",
+      "bytes": 7470
+    },
+    "presentation_metrics.csv": {
+      "sha256": "3520f9c3fa69fa9306f27c9cb785f947fdde5c3fddbf77693032857533822ea3",
+      "bytes": 9239970
+    },
+    "processExptData.m": {
+      "sha256": "e576bcb8f57792c8d8f7d36d8dcdc0bdc7fd627ce536bd10d369c01c9f694410",
+      "bytes": 5870
+    }
+  }
+}

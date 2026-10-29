@@ -1,0 +1,12 @@
+import fs from 'node:fs/promises';
+import {FileBlob,SpreadsheetFile} from '@oai/artifact-tool';
+const w=await SpreadsheetFile.importXlsx(await FileBlob.load('/Users/sophiarenauld/stacks/pizza_talk_analysis/good_behavior_fly_inventory.xlsx'));
+const s=w.worksheets.getItem('Trial records');const rows=JSON.parse(await fs.readFile('outputs/pizza_heat_20261028/new_rows.json','utf8'));
+s.tables.items.find(t=>t.name==='TrialRecords').rows.add(null,rows);
+s.getRange('A54:J59').copyFrom(s.getRange('A48:J53'),'all');s.getRange('A54:J59').values=rows;
+s.getRange('A54:J59').format.rowHeight=70;s.getRange('E54:E59').dataValidation={rule:{type:'list',values:['Y','N','Unreviewed']}};
+const o=w.worksheets.getItem('Fly overview');let f=o.getRange('A1:L32').formulas;for(let r=0;r<f.length;r++)for(let c=0;c<f[r].length;c++)if(f[r][c])o.getCell(r,c).formulas=[[f[r][c].replaceAll('$53','$59')]];
+w.recalculate();console.log((await w.inspect({kind:'table',range:"'Trial records'!A54:F59",tableMaxRows:6,tableMaxCols:6,maxChars:2000})).ndjson);
+console.log((await w.inspect({kind:'match',searchTerm:'#REF!|#DIV/0!|#VALUE!|#NAME\\?|#NUM!',options:{useRegex:true,maxResults:20},maxChars:1500})).ndjson);
+const p=await w.render({sheetName:'Trial records',range:'A54:F59',scale:1.5});await fs.writeFile('outputs/pizza_heat_20261028/after.png',new Uint8Array(await p.arrayBuffer()));
+const b=await SpreadsheetFile.exportXlsx(w);await b.save('outputs/pizza_heat_20261028/good_behavior_fly_inventory.xlsx');

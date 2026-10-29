@@ -2,7 +2,7 @@ function plot_ves041_rectangular_heat_summary(out)
 % Plot saved descriptive results without re-detecting events or changing data.
 % Bars are trial-specific; recordings are not assumed independent flies.
 % Peak fractions are not adjusted for chance or matched for movement.
-if nargin<1,out=fullfile(fileparts(mfilename('fullpath')),'diagnostics','rectangular_heat_metrics','hand_drawn');end
+if nargin<1,out=fullfile(imaging_analysis_artifact_root(),'diagnostics','rectangular_heat_metrics','hand_drawn');end
 S=readtable(fullfile(out,'event_metrics.csv'),'TextType','string');
 S=S(S.reorientation==1,:);
 old=get(groot,'defaultFigureVisible');

@@ -2,7 +2,7 @@ function S=inspect_ves041_trial11_pixel_noise()
 % Dense raw-pixel check around the abrupt step. Quantifies fixed dark-region
 % intensity distributions independently of the calcium ROI. No data modified.
 set(groot,'defaultFigureVisible','off');
-out=fullfile(fileparts(mfilename('fullpath')),'diagnostics','ves041_20261020_11');
+out=fullfile(imaging_analysis_artifact_root(),'diagnostics','ves041_20261020_11');
 q=load(fullfile(out,'diagnostic.mat'),'result');d=q.result;
 folder='/Users/sophiarenauld/stacks/2026-10-20/20261020_11_2_ves041_syt8m_fly1_heatbarrier_redo';
 a=load(fullfile(folder,'20261020_11_2_or_z0z1_s_.mat'),'dq','roi');t=a.dq(1).t(:);

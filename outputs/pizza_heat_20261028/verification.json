@@ -1,0 +1,117 @@
+[
+  {
+    "trial": "20260427-3_ves041_fly2_heat_20mmbarrier",
+    "groupEntries": 880,
+    "transitionGroupEntries": 172
+  },
+  {
+    "trial": "20260427-6_ves041_fly3_heat_80mm",
+    "groupEntries": 538,
+    "transitionGroupEntries": 133
+  },
+  {
+    "trial": "20260427-7_ves041_fly3_heat_20mm",
+    "groupEntries": 457,
+    "transitionGroupEntries": 98
+  },
+  {
+    "trial": "20261019_4_1",
+    "groupEntries": 283,
+    "transitionGroupEntries": 58
+  },
+  {
+    "trial": "20261019_5_1",
+    "groupEntries": 468,
+    "transitionGroupEntries": 67
+  },
+  {
+    "trial": "20261019_6_1",
+    "groupEntries": 115,
+    "transitionGroupEntries": 25
+  },
+  {
+    "trial": "20261019_7_1",
+    "groupEntries": 138,
+    "transitionGroupEntries": 57
+  },
+  {
+    "trial": "20261019_8_2",
+    "groupEntries": 571,
+    "transitionGroupEntries": 229
+  },
+  {
+    "trial": "20261020_11_2",
+    "groupEntries": 411,
+    "transitionGroupEntries": 103
+  },
+  {
+    "trial": "20261020_12_1",
+    "groupEntries": 334,
+    "transitionGroupEntries": 71
+  },
+  {
+    "trial": "20261020_13_1",
+    "groupEntries": 269,
+    "transitionGroupEntries": 92
+  },
+  {
+    "trial": "20261020_5_1",
+    "groupEntries": 283,
+    "transitionGroupEntries": 47
+  },
+  {
+    "trial": "20261020_6_1",
+    "groupEntries": 343,
+    "transitionGroupEntries": 289
+  },
+  {
+    "trial": "20261024_5_2_ves041_pyramid_bar",
+    "groupEntries": 237,
+    "transitionGroupEntries": 46
+  },
+  {
+    "trial": "20261024_4_1_ves041_barrier_bar_multiple",
+    "groupEntries": 583,
+    "transitionGroupEntries": 111
+  },
+  {
+    "trial": "20261024_3_2_ves041_barrier_bar",
+    "groupEntries": 252,
+    "transitionGroupEntries": 40
+  },
+  {
+    "trial": "20261024_6_3_ves041_stripes_ball",
+    "groupEntries": 482,
+    "transitionGroupEntries": 95
+  },
+  {
+    "trial": "20261024_7_1_ves041_stripes_bar",
+    "groupEntries": 305,
+    "transitionGroupEntries": 116
+  },
+  {
+    "trial": "20260429-1_ves041_heat_80mm",
+    "groupEntries": 799,
+    "transitionGroupEntries": 155
+  },
+  {
+    "trial": "20260427-2_ves041_fly2_heat",
+    "groupEntries": 620,
+    "transitionGroupEntries": 113
+  },
+  {
+    "trial": "20260427-8_ves041_fly3_heat_80mm_otherside_L",
+    "groupEntries": 394,
+    "transitionGroupEntries": 102
+  },
+  {
+    "trial": "20260427-5_ves041_fly2_heat_20mmbarrier_3",
+    "groupEntries": 97,
+    "transitionGroupEntries": 11
+  },
+  {
+    "trial": "20260427-4_ves041_fly2_heat_20mmbarrier_2",
+    "groupEntries": 461,
+    "transitionGroupEntries": 87
+  }
+]

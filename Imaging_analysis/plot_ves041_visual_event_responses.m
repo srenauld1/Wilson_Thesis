@@ -5,6 +5,7 @@ function summary = plot_ves041_visual_event_responses(a2p_data,savepath,jump)
 % low forward speed (mean <=2 mm/s from the turn through +1 s).
 
 summary=table();trial=string(get_trial_name(savepath));
+cellLabel='VES041';if isfield(a2p_data,'analysisCellLabel'),cellLabel=char(a2p_data.analysisCellLabel);end
 t=a2p_data.dq(1).t(:);dff=a2p_data.roi.ts(1,:)';
 n=min(numel(t),numel(dff));t=t(1:n);dff=dff(1:n);
 fs=1/median(diff(t));
@@ -43,8 +44,8 @@ if jump && isfield(a2p_data,'jump_detected')
     ax=nexttile(tl);hold(ax,'on');
     for k=1:numel(idx),plot(ax,tRel,D(:,k),'Color',cc(k,:),'HandleVisibility','off');end
     plot(ax,tRel,mean(D,2,'omitnan'),'k','LineWidth',2.5,'DisplayName','Mean');
-    event_line(ax,'Bar jump');xlabel(ax,'Time from bar jump (s)');ylabel(ax,'VES041 dF/F');
-    title(ax,'VES041 activity following bar jump');grid(ax,'on');legend(ax,'Location','best');
+    event_line(ax,'Bar jump');xlabel(ax,'Time from bar jump (s)');ylabel(ax,[cellLabel ' dF/F']);
+    title(ax,[cellLabel ' activity following bar jump']);grid(ax,'on');legend(ax,'Location','best');
     sgtitle(tl,strrep(trial,'_','\_'));
     savefig(fig,fullfile(savepath,'bar_jump_heading_vh_dff.fig'));
     exportgraphics(fig,fullfile(savepath,'bar_jump_heading_vh_dff.png'),'Resolution',200);close(fig);

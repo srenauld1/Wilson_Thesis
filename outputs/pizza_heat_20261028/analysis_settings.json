@@ -1,0 +1,82 @@
+{
+  "inventory": "cohort.csv",
+  "windowSec": [
+    -2,
+    3
+  ],
+  "displayDff": "original source dF/F; no event baseline subtraction",
+  "peakDetector": "Standard plotting_ves041.m findpeaks on original dF/F",
+  "noiseEstimator": "1.4826 * MAD(dF/F - 30-second moving-median baseline)",
+  "peakProminenceSigma": 3,
+  "peakDistanceSec": 2,
+  "peakWidthSec": 0.25,
+  "slowdownSmoothSec": 0.25,
+  "maximumAccelerationMmS2": -2,
+  "minimumSpeedBeforeMmS": 1,
+  "minimumSpeedDropMmS": 1,
+  "slowdownSeparationSec": 2,
+  "speedBeforeWindowSec": [
+    -0.75,
+    -0.25
+  ],
+  "speedAfterWindowSec": [
+    0.25,
+    0.75
+  ],
+  "turnWindowSec": [
+    0,
+    0.5
+  ],
+  "turnAbsoluteYawDeg": 15,
+  "rotationDisplay": "absolute yaw speed in deg/s; signed yaw retained in MAT",
+  "eventOrder": "chronological within each column",
+  "eventGridSec": 0.05,
+  "stimulusEpochs": "visual and odor epochs retained",
+  "colorLimits": "Full finite dF/F range shared across heat-on/off within each trial",
+  "eventWindowValidity": "full window must have finite dF/F, forward, yaw and saved valid behavior, with no time gaps",
+  "individualFigureLayout": "4 rows x 8 columns: peaks; slowdowns; slowdowns without/with turns; rotation peaks below/above 1 mm/s forward drop; speed-ups without/with turns",
+  "rotationDetector": "Absolute yaw after 0.12 s Gaussian smoothing; height >=20 deg/s, prominence >=max(20,2*1.4826*MAD(abs(yaw)-5 s moving median)), spacing >=1.5 s",
+  "rotationForwardSplit": "0.25 s median-smoothed forward; median(-0.75:-0.25 s) minus median(+0.25:+0.75 s), threshold 1 mm/s",
+  "speedupDetector": {
+    "accelerationMinimumMmS2": 2,
+    "minimumSpeedGainMmS": 1,
+    "minimumSpeedAfterMmS": 1,
+    "smoothWindowSec": 0.25,
+    "minimumAcceptedSpacingSec": 2,
+    "preWindowSec": [
+      -0.75,
+      -0.25
+    ],
+    "postWindowSec": [
+      0.25,
+      0.75
+    ],
+    "turnWindowSec": [
+      -0.5,
+      0
+    ],
+    "turnAbsoluteYawDeg": 15,
+    "eventWindowSec": [
+      -2,
+      3
+    ]
+  },
+  "slowdownTurnWindowSec": [
+    0,
+    0.5
+  ],
+  "speedupTurnWindowSec": [
+    -0.5,
+    0
+  ],
+  "turnAngleIntegration": "Accumulated absolute 0.25-second median-smoothed yaw over exact interval endpoints; threshold 15 degrees",
+  "heatClassification": "Heat state at event alignment sample; complete windows may cross transitions, recorded in events.csv",
+  "newerHeatThreshold": 0.05,
+  "legacyHeatThreshold": 0.0001,
+  "legacyHeatInterpolation": "previous",
+  "legacyYawUnits": "Virmen radians/s converted to degrees/s; original saved gain retained",
+  "cohort": "All located heat trials, regardless of prior behavior quality",
+  "shortValidSegments": "Skip rotation-detector segments shorter than 5 s; no complete -2:+3 s window can fit",
+  "nativeLegacyFallback": "20260427-5: processed imaging MAT dq(1).heat >0.05 V; imaging-aligned physical ball velocities",
+  "completion": "23 complete trials; 20260424-2 awaiting ROI extraction by user request"
+}

@@ -19,7 +19,8 @@ if nargin==0
     files=[dir('/Users/sophiarenauld/stacks/2026-10-19/**/smr_analysis/*.fig'); ...
         dir('/Users/sophiarenauld/stacks/2026-10-20/**/smr_analysis/*.fig')];
 else
-    files=dir(fullfile(folder,'*.fig'));
+    % Mandatory heat exploration includes nested per-geometry figure folders.
+    files=dir(fullfile(folder,'**','*.fig'));
 end
 rows=cell(numel(files),3);
 for k=1:numel(files)

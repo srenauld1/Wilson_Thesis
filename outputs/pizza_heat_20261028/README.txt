@@ -1,0 +1,17 @@
+VES041 heat analysis
+
+Each completed trial folder contains heat_on and heat_off versions of the existing 4-row, 8-column peak/slowdown figure, in PNG and editable MATLAB FIG formats. Axis and fluorescence color limits are shared between the two figures for a trial. Original dF/F is displayed without event baseline subtraction.
+
+Columns: VES041 fluorescence peaks; all slowdowns; slowdowns without turns; slowdowns with turns; absolute-yaw peaks with forward drop <1 mm/s; absolute-yaw peaks with drop >=1 mm/s; speed-ups without turns; speed-ups with turns. Rows: dF/F event heatmap; individual dF/F traces and mean; forward velocity; absolute yaw speed.
+
+Events are detected across the complete recording with the same detectors as ves041_noheat_imaging, then assigned by heat state at the alignment sample. The -2 to +3 second window may contain a heat transition. events.csv flags these windows and includes the fraction of source samples with heat on. A missing heat command at the alignment sample excludes that event from both conditions. The full window must have valid fluorescence and behavior with no time gaps.
+
+Newer recordings use dq(1).heat >0.05 V. April recordings with a saved Virmen file use vmData.heat >0.0001, following their existing heat-analysis convention. These are recorded command states, not measured tissue temperature. Legacy Virmen behavior is interpolated onto the original imaging timestamps from daqVolumeTime. Yaw is converted from radians/s to degrees/s. The legacy saved Virmen velocity convention is retained, including its recorded gain; it can differ from physical ball velocity. Heat is sampled with previous-value interpolation. April 27 trial 5 uses the imaging-aligned dq(1) heat and physical ball-velocity signals in its processed imaging MAT file, with the same 0.05 V threshold as the native DAQ workflow.
+
+Peak prominence is 3 times 1.4826*MAD of dF/F minus a 30-second moving median; peak spacing >=2 s and width >=0.25 s. Slowdowns align to maximum negative acceleration <=-2 mm/s^2 after 0.25-second median smoothing; forward speed before >=1 mm/s and speed drop >=1 mm/s. Speed-ups use acceleration >=2 mm/s^2, gain >=1 mm/s, and speed after >=1 mm/s. The before/after medians use -0.75:-0.25 s and +0.25:+0.75 s. Turn groups use integrated absolute 0.25-second median-smoothed yaw >=15 degrees over 0:+0.5 s after slowdowns and -0.5:0 s before speed-ups. Rotation peak settings match pizza_ves041_rotation_peaks.m.
+
+The cohort includes all 24 located heat recordings, including previously rejected or unreviewed behavior. Existing behavior decisions are preserved in cohort.csv; generation of figures does not approve behavior quality. Six trials absent from the trial spreadsheet were added as Unreviewed. The other 18 were already present.
+
+manifest.csv records completion and sources. Its event totals are group entries: some events occur in both the all-slowdown column and a turn-subgroup column. They are not counts of unique events. analysis.mat preserves the aligned signals, full event arrays, detector settings, group indices, and condition counts. events.csv uses group numbers 1 through 8 in the column order above.
+
+Reproduce with Imaging_analysis/plot_pizza_ves041_heat_trials.m and reports/pizza_ves041_heat_cohort.csv in Wilson_Thesis. April 24 trial 2 is awaiting ROI extraction, as requested: its raw image stacks exist, but there is no saved ROI fluorescence trace. The other 23 trials have complete heat-on/off figures. Existing no-heat figures are unchanged.

@@ -11,9 +11,9 @@
 % dF/F convention for legacy smp544:
 %   roi.ts(1,:) = RIGHT side
 %   roi.ts(2,:) = LEFT side
-% Current bergII data use roi.pxfilter.filteredts. This script copies that
-% segmented trace into the in-memory roi.ts field so the established
-% analyses below operate unchanged. The processed input file is not edited.
+% Default fluorescence is roi.pxfilter.filteredts. Batch callers can choose
+% smp544_roi_source='manual' to use the full saved hand-drawn ROI instead.
+% Neither choice edits the processed input file.
 
 %close all
 %clear all
@@ -41,13 +41,22 @@ else
     end
     fullFilePath = fullfile(pathName, fileName);
 end
-a2p_data = load(fullFilePath);
+if exist('smp544_omit_image_stack','var') && smp544_omit_image_stack
+    variables=whos('-file',fullFilePath);
+    variables=setdiff({variables.name},{'stack'},'stable');
+    a2p_data=load(fullFilePath,variables{:});
+else
+    a2p_data = load(fullFilePath);
+end
 disp(['User selected "', fullFilePath, '".']);
 
 %% select the fluorescence trace represented by the current data structure
 roi_trace_source = 'roi.ts';
 fallback_planes = NaN;
-if isfield(a2p_data,'roi') && ~isempty(a2p_data.roi) && ...
+if exist('smp544_roi_source','var') && strcmp(smp544_roi_source,'manual')
+    a2p_data=select_ves041_manual_roi(a2p_data);
+    roi_trace_source='roi.pxfilter.manualts';
+elseif isfield(a2p_data,'roi') && ~isempty(a2p_data.roi) && ...
         isfield(a2p_data.roi(1),'pxfilter') && ...
         isfield(a2p_data.roi(1).pxfilter,'filteredts') && ...
         ~isempty(a2p_data.roi(1).pxfilter.filteredts)
@@ -67,10 +76,15 @@ elseif ~isfield(a2p_data,'roi') || isempty(a2p_data.roi) || ...
         'Neither roi.pxfilter.filteredts nor roi.ts is available in %s.',fullFilePath);
 end
 fprintf('Fluorescence source: %s (fallback planes: %g)\n',roi_trace_source,fallback_planes);
+a2p_data=import_ves041_protocol(a2p_data,fileparts(fullFilePath));
+a2p_data=harmonize_a2p_data(a2p_data);
+a2p_data.analysisCellLabel='SMP544';
+a2p_data.analysisRoiSource=roi_trace_source;
+if isfield(a2p_data,'protocol'),jump=strcmp(a2p_data.protocol.kind,'bar-jump');end
 
 %% decide whether heat is on based on the file name
 % Heat experiments have "heat" somewhere in the path/file name.
-if contains(lower(fullFilePath), 'heat')
+if (isfield(a2p_data,'protocol') && ismember(a2p_data.protocol.kind,{'heat-barrier','heat-pyramid','heat-stripes'})) || contains(lower(fullFilePath), 'heat')
     heat = 1;
     disp('Heat experiment detected (found "heat" in file name).');
 else
@@ -138,7 +152,12 @@ end
 % Current bergII files store a continuous heat-monitor voltage rather than
 % the legacy binary heat_active field. Derive the legacy field in memory so
 % the existing heat-split plots and correlations remain usable.
-if heat && (~isfield(a2p_data.dq(1),'heat_active') || ...
+if heat && isfield(a2p_data.dq(1),'bergii') && isfield(a2p_data.dq(1),'heat')
+    % A measured command is not a trial-relative outlier signal. Use the
+    % same fixed monitor threshold as the geometry-aware heat analysis.
+    monitor=a2p_data.dq(1).heat(:);state=double(monitor>.05);state(~isfinite(monitor))=NaN;
+    a2p_data.dq(1).heat_active=state;
+elseif heat && (~isfield(a2p_data.dq(1),'heat_active') || ...
         isempty(a2p_data.dq(1).heat_active))
     if isfield(a2p_data.dq(1),'heat') && ~isempty(a2p_data.dq(1).heat)
         heat_monitor = double(a2p_data.dq(1).heat(:));
@@ -227,11 +246,14 @@ if size(a2p_data.roi.ts,1) >= 2
     dff_tags  = {'right', 'left'};
 else
     warning('smp544_analysis:SingleROI', ...
-        ['Only one ROI is present. Treating it as the aggregate segmented ' ...
+        ['Only one ROI is present. Treating it as the aggregate selected ' ...
          'ROI and skipping bilateral comparisons.']);
     dff_vars  = {dff_right};
-    dff_names = {'dF/F segmented ROI'};
-    dff_tags  = {'segmented'};
+    if contains(roi_trace_source,'manual')
+        dff_names = {'dF/F hand-drawn ROI'};dff_tags={'manual'};
+    else
+        dff_names = {'dF/F segmented ROI'};dff_tags={'segmented'};
+    end
 end
 
 sample_rate = length(time) / (max(time) - min(time));  % samples per second

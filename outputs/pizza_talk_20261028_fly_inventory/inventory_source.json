@@ -1,0 +1,754 @@
+{
+  "records": [
+    {
+      "trial": "20260720-3_smp544_fly2_dark",
+      "cellType": "SMP544",
+      "date": "20260720",
+      "flyId": "SMP544_20260720_F2",
+      "good": "Y",
+      "condition": "Dark",
+      "review": "Previously behavior-screened: sustained, varied walking",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/compare_smp544_ves041_reorientation.m",
+      "folder": "/Users/sophiarenauld/stacks/20260720-3_smp544_fly2_dark"
+    },
+    {
+      "trial": "20260720-4_smp544_fly2_dark2_volume",
+      "cellType": "SMP544",
+      "date": "20260720",
+      "flyId": "SMP544_20260720_F2",
+      "good": "Y",
+      "condition": "Dark",
+      "review": "Previously behavior-screened: sustained, varied walking",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/compare_smp544_ves041_reorientation.m",
+      "folder": "/Users/sophiarenauld/stacks/20260720-4_smp544_fly2_dark2_volume"
+    },
+    {
+      "trial": "20260721-2_smp544_fly1_clbar",
+      "cellType": "SMP544",
+      "date": "20260721",
+      "flyId": "SMP544_20260721_F1",
+      "good": "Y",
+      "condition": "CL bar",
+      "review": "Previously behavior-screened: sustained, varied walking",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/compare_smp544_ves041_reorientation.m",
+      "folder": "/Users/sophiarenauld/stacks/20260721-2_smp544_fly1_clbar"
+    },
+    {
+      "trial": "20260721-3_smp544_fly1_clbar",
+      "cellType": "SMP544",
+      "date": "20260721",
+      "flyId": "SMP544_20260721_F1",
+      "good": "Y",
+      "condition": "CL bar",
+      "review": "Previously behavior-screened: sustained, varied walking",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/compare_smp544_ves041_reorientation.m",
+      "folder": "/Users/sophiarenauld/stacks/20260721-3_smp544_fly1_clbar"
+    },
+    {
+      "trial": "20260721-4_smp544_fly1_olheat",
+      "cellType": "SMP544",
+      "date": "20260721",
+      "flyId": "SMP544_20260721_F1",
+      "good": "Y",
+      "condition": "Heat OL",
+      "review": "Previously behavior-screened: sustained, varied walking",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/compare_smp544_ves041_reorientation.m",
+      "folder": "/Users/sophiarenauld/stacks/20260721-4_smp544_fly1_olheat"
+    },
+    {
+      "trial": "20260722-2_smp544_fly1_clbar",
+      "cellType": "SMP544",
+      "date": "20260722",
+      "flyId": "SMP544_20260722_F1",
+      "good": "Y",
+      "condition": "CL bar",
+      "review": "Previously behavior-screened: sustained, varied walking",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/compare_smp544_ves041_reorientation.m",
+      "folder": "/Users/sophiarenauld/stacks/20260722-2_smp544_fly1_clbar"
+    },
+    {
+      "trial": "20261026_1_1_smp544_barjumps",
+      "cellType": "SMP544",
+      "date": "20261026",
+      "flyId": "",
+      "good": "Unreviewed",
+      "condition": "Bar jumps",
+      "review": "Processed only; no recorded good-behavior decision; registration QC held",
+      "identityBasis": "Unassigned; fly identity absent",
+      "source": "/Users/sophiarenauld/stacks/smp544_20261026_analysis_20261028/run_report.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-26/a2p_exploratory_20261027/20261026_1_1_smp544_barjumps"
+    },
+    {
+      "trial": "20261026_5_5_smp544_fly2_heatpyramid",
+      "cellType": "SMP544",
+      "date": "20261026",
+      "flyId": "SMP544_20261026_F2",
+      "good": "Unreviewed",
+      "condition": "Heat pyramid",
+      "review": "Processed only; no recorded good-behavior decision; registration QC held",
+      "identityBasis": "Explicit fly number",
+      "source": "/Users/sophiarenauld/stacks/smp544_20261026_analysis_20261028/run_report.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-26/a2p_exploratory_20261027/20261026_5_5_smp544_fly2_heatpyramid"
+    },
+    {
+      "trial": "20261026_6_1_smp544_heat_stripe",
+      "cellType": "SMP544",
+      "date": "20261026",
+      "flyId": "",
+      "good": "Unreviewed",
+      "condition": "Heat stripe",
+      "review": "Processed only; no recorded good-behavior decision; registration QC held",
+      "identityBasis": "Unassigned; fly identity absent",
+      "source": "/Users/sophiarenauld/stacks/smp544_20261026_analysis_20261028/run_report.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-26/a2p_exploratory_20261027/20261026_6_1_smp544_heat_stripe"
+    },
+    {
+      "trial": "20261026_7_1_smp544_heat_stripes",
+      "cellType": "SMP544",
+      "date": "20261026",
+      "flyId": "",
+      "good": "Unreviewed",
+      "condition": "Heat stripe",
+      "review": "Processed only; no recorded good-behavior decision; registration QC held",
+      "identityBasis": "Unassigned; fly identity absent",
+      "source": "/Users/sophiarenauld/stacks/smp544_20261026_analysis_20261028/run_report.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-26/a2p_exploratory_20261027/20261026_7_1_smp544_heat_stripes"
+    },
+    {
+      "trial": "20261026_8_1_smp544_heatpyramid",
+      "cellType": "SMP544",
+      "date": "20261026",
+      "flyId": "",
+      "good": "Unreviewed",
+      "condition": "Heat pyramid",
+      "review": "Processed only; no recorded good-behavior decision; registration QC held",
+      "identityBasis": "Unassigned; fly identity absent",
+      "source": "/Users/sophiarenauld/stacks/smp544_20261026_analysis_20261028/run_report.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-26/a2p_exploratory_20261027/20261026_8_1_smp544_heatpyramid"
+    },
+    {
+      "trial": "20250812-20_ves041_fly3_clbarjumps",
+      "cellType": "VES041",
+      "date": "20250812",
+      "flyId": "VES041_20250812_F3",
+      "good": "Y",
+      "condition": "Bar jumps",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20250812-20_ves041_fly3_clbarjumps"
+    },
+    {
+      "trial": "20250812-21_ves041_fly3_olgrating",
+      "cellType": "VES041",
+      "date": "20250812",
+      "flyId": "VES041_20250812_F3",
+      "good": "Y",
+      "condition": "Gratings",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20250812-21_ves041_fly3_olgrating"
+    },
+    {
+      "trial": "20250812-22_ves041_fly3_bbarjumps2",
+      "cellType": "VES041",
+      "date": "20250812",
+      "flyId": "VES041_20250812_F3",
+      "good": "Y",
+      "condition": "Bar jumps",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20250812-22_ves041_fly3_bbarjumps2"
+    },
+    {
+      "trial": "20250813-3_ves041_fly1_olgrating",
+      "cellType": "VES041",
+      "date": "20250813",
+      "flyId": "VES041_20250813_F1",
+      "good": "Y",
+      "condition": "Gratings",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20250813-3_ves041_fly1_olgrating"
+    },
+    {
+      "trial": "20250819-10_ves041_fly1_olgrating5",
+      "cellType": "VES041",
+      "date": "20250819",
+      "flyId": "VES041_20250819_F1",
+      "good": "Y",
+      "condition": "Gratings",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20250819-10_ves041_fly1_olgrating5"
+    },
+    {
+      "trial": "20251001-21_ves041_fly3_clbbar",
+      "cellType": "VES041",
+      "date": "20251001",
+      "flyId": "VES041_20251001_F3",
+      "good": "N",
+      "condition": "CL bar",
+      "review": "not good behavior: user exclusion",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20251001-21_ves041_fly3_clbbar"
+    },
+    {
+      "trial": "20260213-2_ves041_clbar",
+      "cellType": "VES041",
+      "date": "20260213",
+      "flyId": "VES041_20260213_F1",
+      "good": "N",
+      "condition": "CL bar",
+      "review": "not good behavior: user exclusion",
+      "identityBasis": "Inferred first fly; later same-date folders explicitly label fly 2",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260213-2_ves041_clbar"
+    },
+    {
+      "trial": "20260213-4_ves041_fly2_clbar",
+      "cellType": "VES041",
+      "date": "20260213",
+      "flyId": "VES041_20260213_F2",
+      "good": "N",
+      "condition": "CL bar",
+      "review": "not good behavior: user exclusion",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260213-4_ves041_fly2_clbar"
+    },
+    {
+      "trial": "20260217-2_ves041_vt_clbbar1",
+      "cellType": "VES041",
+      "date": "20260217",
+      "flyId": "VES041_20260217_F1",
+      "good": "Y",
+      "condition": "CL bar",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Inferred first fly; later same-date folders explicitly label fly 2",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260217-2_ves041_vt_clbbar1"
+    },
+    {
+      "trial": "20260217-3_ves041_vt_clbbar2_actuallydark",
+      "cellType": "VES041",
+      "date": "20260217",
+      "flyId": "VES041_20260217_F1",
+      "good": "Y",
+      "condition": "Dark",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Inferred first fly; later same-date folders explicitly label fly 2",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260217-3_ves041_vt_clbbar2_actuallydark"
+    },
+    {
+      "trial": "20260217-4_ves041_vt_clbbar3",
+      "cellType": "VES041",
+      "date": "20260217",
+      "flyId": "VES041_20260217_F1",
+      "good": "Y",
+      "condition": "CL bar",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Inferred first fly; later same-date folders explicitly label fly 2",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260217-4_ves041_vt_clbbar3"
+    },
+    {
+      "trial": "20260311-1_ves041_1_clbar_1hr",
+      "cellType": "VES041",
+      "date": "20260311",
+      "flyId": "VES041_20260311_F1",
+      "good": "Y",
+      "condition": "CL bar",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Inferred single unnumbered preparation on this date; confirm identity",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260311-1_ves041_1_clbar_1hr"
+    },
+    {
+      "trial": "20260313-1_ves041_vt_clbar",
+      "cellType": "VES041",
+      "date": "20260313",
+      "flyId": "VES041_20260313_F1",
+      "good": "Y",
+      "condition": "CL bar",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Inferred single unnumbered preparation on this date; confirm identity",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260313-1_ves041_vt_clbar"
+    },
+    {
+      "trial": "20260313-4_ves041_vt_clbar_2s_15olf_take2_odor",
+      "cellType": "VES041",
+      "date": "20260313",
+      "flyId": "VES041_20260313_F1",
+      "good": "Y",
+      "condition": "Odor",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Inferred single unnumbered preparation on this date; confirm identity",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260313-4_ves041_vt_clbar_2s_15olf_take2_odor"
+    },
+    {
+      "trial": "20260318-2_ves041_odor",
+      "cellType": "VES041",
+      "date": "20260318",
+      "flyId": "VES041_20260318_F1",
+      "good": "Y",
+      "condition": "Odor",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Inferred single unnumbered preparation on this date; confirm identity",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260318-2_ves041_odor"
+    },
+    {
+      "trial": "20260427-3_ves041_fly2_heat_20mmbarrier",
+      "cellType": "VES041",
+      "date": "20260427",
+      "flyId": "VES041_20260427_F2",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260427-3_ves041_fly2_heat_20mmbarrier"
+    },
+    {
+      "trial": "20260427-6_ves041_fly3_heat_80mm",
+      "cellType": "VES041",
+      "date": "20260427",
+      "flyId": "VES041_20260427_F3",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260427-6_ves041_fly3_heat_80mm"
+    },
+    {
+      "trial": "20260427-7_ves041_fly3_heat_20mm",
+      "cellType": "VES041",
+      "date": "20260427",
+      "flyId": "VES041_20260427_F3",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "confirmed: Finder good behavior tag",
+      "identityBasis": "Explicit fly number in recording folder",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/20260427-7_ves041_fly3_heat_20mm"
+    },
+    {
+      "trial": "20261019_3_2",
+      "cellType": "VES041",
+      "date": "20261019",
+      "flyId": "VES041_20261019_F1",
+      "good": "Y",
+      "condition": "Bar jumps",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-19/ves041_syt8m_barjummps/192905_938_a91a18c7"
+    },
+    {
+      "trial": "20261019_4_1",
+      "cellType": "VES041",
+      "date": "20261019",
+      "flyId": "VES041_20261019_F1",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-19/ves041_syt8m_heatbarrier/195226_128_73c8f424"
+    },
+    {
+      "trial": "20261019_5_1",
+      "cellType": "VES041",
+      "date": "20261019",
+      "flyId": "VES041_20261019_F1",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-19/ves041_syt8m_heatbarrier2/205359_796_a138bba5"
+    },
+    {
+      "trial": "20261019_6_1",
+      "cellType": "VES041",
+      "date": "20261019",
+      "flyId": "VES041_20261019_F1",
+      "good": "N",
+      "condition": "Heat stripe",
+      "review": "reviewed: restricted: verified partial recording",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-19/ves041_syt8m_heatstripe/200227_905_2566ec37"
+    },
+    {
+      "trial": "20261019_7_1",
+      "cellType": "VES041",
+      "date": "20261019",
+      "flyId": "VES041_20261019_F1",
+      "good": "Y",
+      "condition": "Heat stripe",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-19/ves041_syt8m_heatstripe2/202713_884_a38d41fe"
+    },
+    {
+      "trial": "20261019_8_2",
+      "cellType": "VES041",
+      "date": "20261019",
+      "flyId": "VES041_20261019_F1",
+      "good": "Y",
+      "condition": "Heat stripe",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-19/ves041_syt8m_heatstripe3/203444_878_11e00dc7"
+    },
+    {
+      "trial": "20261020_11_2",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F1",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_11_2_ves041_syt8m_fly1_heatbarrier_redo"
+    },
+    {
+      "trial": "20261020_12_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F1",
+      "good": "Y",
+      "condition": "Heat stripe",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_12_1_ves041_syt8m_fly1_stripes"
+    },
+    {
+      "trial": "20261020_13_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F1",
+      "good": "Y",
+      "condition": "Heat stripe",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_13_1_ves041_syt8m_fly1_stripes2"
+    },
+    {
+      "trial": "20261020_3_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F2",
+      "good": "N",
+      "condition": "Bar jumps",
+      "review": "not good behavior: user exclusion",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_3_1_ves041_fly2_barjump"
+    },
+    {
+      "trial": "20261020_4_2",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F2",
+      "good": "Y",
+      "condition": "Dark",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_4_2_ves041_fly2_dark"
+    },
+    {
+      "trial": "20261020_5_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F2",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_5_1_ves041_fly2_heatgradient"
+    },
+    {
+      "trial": "20261020_6_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F2",
+      "good": "Y",
+      "condition": "Heat stripe",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_6_1_ves041_fly2_heatstripe"
+    },
+    {
+      "trial": "20261020_7_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F1",
+      "good": "Y",
+      "condition": "Bar jumps",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_7_1_ves041_syt8m_fly1_barjump"
+    },
+    {
+      "trial": "20261020_8_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F1",
+      "good": "N",
+      "condition": "Bar jumps",
+      "review": "reviewed: restricted: active epochs only",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_8_1_ves041_syt8m_fly1_barjumps"
+    },
+    {
+      "trial": "20261020_9_1",
+      "cellType": "VES041",
+      "date": "20261020",
+      "flyId": "VES041_20261020_F1",
+      "good": "Y",
+      "condition": "Dark",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-20/20261020_9_1_ves041_syt8m_fly1_dark"
+    },
+    {
+      "trial": "20261024_2_3_ves041_barjumps",
+      "cellType": "VES041",
+      "date": "20261024",
+      "flyId": "VES041_20261024_F1",
+      "good": "N",
+      "condition": "Bar jumps",
+      "review": "reviewed: hold: low locomotor sampling",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-24/ves041_barjumps/201946_637_a39e0974"
+    },
+    {
+      "trial": "20261024_2_4_ves041_barjumps",
+      "cellType": "VES041",
+      "date": "20261024",
+      "flyId": "VES041_20261024_F1",
+      "good": "Y",
+      "condition": "Bar jumps",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-24/ves041_barjumps/221751_217_1e96e609"
+    },
+    {
+      "trial": "20261024_3_2_ves041_barrier_bar",
+      "cellType": "VES041",
+      "date": "20261024",
+      "flyId": "VES041_20261024_F1",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-24/ves041_barrier_bar/213706_600_71996adc"
+    },
+    {
+      "trial": "20261024_4_1_ves041_barrier_bar_multiple",
+      "cellType": "VES041",
+      "date": "20261024",
+      "flyId": "VES041_20261024_F1",
+      "good": "Y",
+      "condition": "Heat barrier",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-24/ves041_barrier_bar_multiple/214458_559_ca220e07"
+    },
+    {
+      "trial": "20261024_5_2_ves041_pyramid_bar",
+      "cellType": "VES041",
+      "date": "20261024",
+      "flyId": "VES041_20261024_F1",
+      "good": "Y",
+      "condition": "Heat pyramid",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-24/ves041_pyramid_bar/212759_082_1086b7b3"
+    },
+    {
+      "trial": "20261024_6_3_ves041_stripes_ball",
+      "cellType": "VES041",
+      "date": "20261024",
+      "flyId": "VES041_20261024_F1",
+      "good": "Y",
+      "condition": "Heat stripe",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-24/ves041_stripes_ball/211308_521_da8c0ebd"
+    },
+    {
+      "trial": "20261024_7_1_ves041_stripes_bar",
+      "cellType": "VES041",
+      "date": "20261024",
+      "flyId": "VES041_20261024_F1",
+      "good": "Y",
+      "condition": "Heat stripe",
+      "review": "reviewed: add: good behavior",
+      "identityBasis": "User confirmed: all recordings on this date are one fly",
+      "source": "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Imaging_analysis/reports/ves041_trial_inventory_20261028.csv",
+      "folder": "/Users/sophiarenauld/stacks/2026-10-24/ves041_stripes_bar/220212_164_f8f96557"
+    }
+  ],
+  "flies": [
+    {
+      "flyId": "SMP544_20260720_F2",
+      "date": "20260720",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "SMP544_20260721_F1",
+      "date": "20260721",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "SMP544_20260722_F1",
+      "date": "20260722",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20250812_F3",
+      "date": "20250812",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20250813_F1",
+      "date": "20250813",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20250819_F1",
+      "date": "20250819",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20251001_F3",
+      "date": "20251001",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20260213_F1",
+      "date": "20260213",
+      "identity": "Inferred",
+      "identityBasis": "Inferred first fly; later same-date folders explicitly label fly 2"
+    },
+    {
+      "flyId": "VES041_20260213_F2",
+      "date": "20260213",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20260217_F1",
+      "date": "20260217",
+      "identity": "Inferred",
+      "identityBasis": "Inferred first fly; later same-date folders explicitly label fly 2"
+    },
+    {
+      "flyId": "VES041_20260311_F1",
+      "date": "20260311",
+      "identity": "Inferred",
+      "identityBasis": "Inferred single unnumbered preparation on this date; confirm identity"
+    },
+    {
+      "flyId": "VES041_20260313_F1",
+      "date": "20260313",
+      "identity": "Inferred",
+      "identityBasis": "Inferred single unnumbered preparation on this date; confirm identity"
+    },
+    {
+      "flyId": "VES041_20260318_F1",
+      "date": "20260318",
+      "identity": "Inferred",
+      "identityBasis": "Inferred single unnumbered preparation on this date; confirm identity"
+    },
+    {
+      "flyId": "VES041_20260427_F2",
+      "date": "20260427",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20260427_F3",
+      "date": "20260427",
+      "identity": "Explicit",
+      "identityBasis": "Explicit fly number in recording folder"
+    },
+    {
+      "flyId": "VES041_20261019_F1",
+      "date": "20261019",
+      "identity": "User confirmed",
+      "identityBasis": "User confirmed: all recordings on this date are one fly"
+    },
+    {
+      "flyId": "VES041_20261020_F1",
+      "date": "20261020",
+      "identity": "User confirmed",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1"
+    },
+    {
+      "flyId": "VES041_20261020_F2",
+      "date": "20261020",
+      "identity": "User confirmed",
+      "identityBasis": "User confirmed: trials 3\u20136 fly 2; trials 7\u201313 fly 1"
+    },
+    {
+      "flyId": "VES041_20261024_F1",
+      "date": "20261024",
+      "identity": "User confirmed",
+      "identityBasis": "User confirmed: all recordings on this date are one fly"
+    }
+  ],
+  "conditionHeaders": [
+    "Dark",
+    "CL bar",
+    "Bar jumps",
+    "Gratings",
+    "Heat OL",
+    "Heat barrier",
+    "Heat pyramid",
+    "Heat stripe"
+  ]
+}

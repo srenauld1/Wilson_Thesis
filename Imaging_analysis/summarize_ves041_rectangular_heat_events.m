@@ -9,7 +9,7 @@ old=get(groot,'defaultFigureVisible');
 c=onCleanup(@()set(groot,'defaultFigureVisible',old)); %#ok<NASGU>
 set(groot,'defaultFigureVisible','off');
 base='/Users/sophiarenauld/stacks/ves041_oct19_oct20_analysis/15s_ave_f';
-out=fullfile(fileparts(mfilename('fullpath')),'diagnostics','rectangular_heat_metrics','hand_drawn');
+out=fullfile(imaging_analysis_artifact_root(),'diagnostics','rectangular_heat_metrics','hand_drawn');
 if ~isfolder(out),mkdir(out);end
 E=readtable(fullfile(base,'remaining_heat','all_slowdown_events.csv'),'TextType','string');
 F=readtable(fullfile(base,'fly1_matched_heat','candidate_events.csv'),'TextType','string');
