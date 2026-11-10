@@ -1,0 +1,11 @@
+{
+  "source": "/Users/sophiarenauld/stacks/pizza_talk_analysis/ves041_heat_analysis/barrier/pooled_four_original_pizza_rules_20261102/baseline_subtracted_dff/excluding_april27_fly3/crunch_data.mat",
+  "exampleSource": "/Users/sophiarenauld/stacks/pizza_talk_analysis/ves041_heat_analysis/barrier/20261020_11_2/presentation_control_vs_heat_20261102/original_criteria_turns/comparison_data.mat",
+  "split": "Exact original heat-state at event, not a new spontaneous classification",
+  "displayDff": "Existing per-event -2:-1 s baseline subtraction plus 1, matching the screenshot pooled panel",
+  "kinematics": "Existing physical forward and absolute yaw arrays; absolute value before event averaging; no new smoothing",
+  "selection": "Exact original saved slowdown+rotation group4; no re-detection or event filtering",
+  "sem": "Sample SD across events divided by sqrt(N events), separately for each fly and condition",
+  "alignment": "Strongest forward deceleration; yaw-peak re-alignment is a separate diagnostic only",
+  "originalExampleSelection": "The single-fly screenshot uses original-criteria >=30 deg in +/-0.5 s control/heat contexts; pooled other-fly source uses original pizza >=15 deg in 0:+0.5 s and heat at event time. These sources are not identical selections."
+}

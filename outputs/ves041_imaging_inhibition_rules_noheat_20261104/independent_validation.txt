@@ -1,0 +1,12 @@
+Validation completed 2026-11-04.
+
+The original inhibition Python functions window_features() and bouts() from
+Behavior_analysis/analyze_ves041_inhibition_pivot_frequency.py were run directly
+on source recorded heading and cached matching XY coordinates in all ten
+assessable no-heat recordings. All 243 detected bouts matched the MATLAB
+implementation: merged boundaries, representative-window sample indices, net
+rotation, net displacement, and directionality (feature tolerance 1e-6).
+
+Of those 243 detections, 238 had complete valid -2 to +3 second plotting context.
+The figure uses those 238 epochs, with each mapped fly weighted equally.
+No heat-cohort recordings were analyzed.

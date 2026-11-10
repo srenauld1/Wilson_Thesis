@@ -1,0 +1,4 @@
+recording,flyId,traceSource,heatSource,heatThreshold,heatOffTurns,heatOnTurns
+20260427-2_ves041_fly2_heat,20260427_fly2,/Users/sophiarenauld/stacks/20260427-2_ves041_fly2_heat/20260427_2_1_or_z0z1_s_.mat,Virmen heat command,0.0001,6,3
+20261019_4_1,20261019_fly1,/Users/sophiarenauld/stacks/2026-10-19/ves041_syt8m_heatbarrier/195226_128_73c8f424/hand_drawn_15s_ave_f_20261026/fly_data.mat,DAQ heat command,0.05,17,7
+20261020_11_2,20261020_fly1,/Users/sophiarenauld/stacks/2026-10-20/20261020_11_2_ves041_syt8m_fly1_heatbarrier_redo/hand_drawn_15s_ave_f_20261026/fly_data.mat,DAQ heat command,0.05,20,19

@@ -1,0 +1,13 @@
+{
+  "recording": "20261020_11_2",
+  "source": "/Users/sophiarenauld/stacks/pizza_talk_analysis/ves041_heat_analysis/barrier/20261020_11_2/analysis.mat",
+  "strictThresholdDeg": 45,
+  "comparison": "Original linked PDF >=15 deg vs new strict >45 deg, all other rules held fixed",
+  "turnMeasurement": "Accumulated absolute 0.25-second median-smoothed yaw, exact integration over 0:+0.5 s after strongest deceleration",
+  "slowdownCandidates": "Exact saved original group2; acceleration <=-2 mm/s^2, speed before >=1 mm/s, drop >=1 mm/s, >=2 s accepted spacing and full-valid -2:+3 s window",
+  "split": "Original measured heat command at event sample >0.05 V; transitions elsewhere in window retained",
+  "alignment": "Original strongest forward deceleration",
+  "display": "Original saved dF/F and physical kinematics, no extra smoothing or normalization; rotational speed is absolute before averaging",
+  "uncertainty": "Sample SD/sqrt(N events); single-fly descriptive SEM",
+  "validation": "Original >=15 group reconstructed exactly and reproduces linked PDF counts 20/19; candidate selection is unchanged"
+}

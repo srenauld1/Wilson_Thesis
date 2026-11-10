@@ -1,0 +1,3 @@
+condition,nEvents,medianIndividualPeakWithinHalfSecond,meanIndividualPeakWithinHalfSecond,maxMeanWithinHalfSecond,earliestPeakTime,latestPeakTime,maxMeanFullWindow,maxMeanYawPeakAligned
+1,15,109.368220171853,106.158752698185,63.4386205161268,-0.5,0.4,71.3763375405258,106.158752698185
+2,18,168.353574615799,168.22896527848,119.877622540824,-0.5,0.45,119.877622540824,168.22896527848

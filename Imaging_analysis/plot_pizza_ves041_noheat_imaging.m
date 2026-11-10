@@ -25,7 +25,7 @@ settings=struct('inventory',input,'windowSec',[-2 3],'displayDff','original sour
  'heatExclusion','entire configured heat recordings and recordings with measured heat >0.05 V excluded', ...
  'stimulusEpochs','visual and odor epochs retained','colorLimits','full finite dF/F range; shared between event columns', ...
  'eventWindowValidity','full window must have finite dF/F, forward, yaw and saved valid behavior, with no time gaps');
-settings.flatPath=struct('rendering','scatter','markerSize',14,'colorPercentiles',[5 95],'drawOrder','ascending original dF/F; higher values last','samplesRemovedForColor',false);
+settings.flatPath=struct('rendering','scatter','markerSize',25,'colorPercentiles',[5 95],'drawOrder','chronological sample order','samplesRemovedForColor',false,'colormap','parula');
 settings.folderLayout='bar and gratings in subfolders; dark and odor in parent';
 fid=fopen(fullfile(out,'analysis_settings.json'),'w');assert(fid>=0);fprintf(fid,'%s\n',jsonencode(settings,PrettyPrint=true));fclose(fid);
 rows=cell(0,13);

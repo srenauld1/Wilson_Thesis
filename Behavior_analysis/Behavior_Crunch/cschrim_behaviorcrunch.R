@@ -8,7 +8,7 @@ savepath = "/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/Behavior_analysi
 
 # LOAD IN AND LABEL DATA --------------------------------------------------
 
-behavior_kin<- read.csv("/Users/sophiarenauld/Downloads/Chrimson Data(Included) (3).csv")
+behavior_kin<- read.csv("/Users/sophiarenauld/Downloads/Wilson Lab/final_ves041_cschrim_dataset.csv")
 
 # from blinding sheet
 # ves041_1_Chrim <- [2, 7, 16, 19, 21, 26, 53, 58, 65, 70, 72, 74, 77, 79, 81, 85, 119, 130]

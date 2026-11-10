@@ -1,4 +1,4 @@
-function pizza_ves041_render_eight_columns(X,rel,titleText,subtitleText,stem,isNormalized,flies,eventCounts)
+function pizza_ves041_render_eight_columns(X,rel,titleText,subtitleText,stem,isNormalized,flies,eventCounts,columnLabels)
 % X contains original event traces or fly-mean traces, one cell per column.
 if nargin<7,flies=strings(0,1);end
 if nargin<8,eventCounts=cellfun(@(x)size(x,2),X);end
@@ -7,6 +7,9 @@ fig=figure('Visible','off','Color','w','Position',[10 10 3300 1400]);cleanup=onC
 labels={{'VES041 peaks'},{'All slowdowns'},{'Slowdowns without turns'},{'Slowdowns with turns'}, ...
  {'Rotation peaks','Forward drop <1 mm/s'},{'Rotation peaks','Forward drop >=1 mm/s'}, ...
  {'Speed-ups','Without rotation (<15 deg)'},{'Speed-ups','With rotation (>=15 deg)'}};
+% Optional labels allow explicitly named filtered selections without changing
+% any existing eight-column callers or their data/normalization.
+if nargin>=9&&~isempty(columnLabels),assert(numel(columnLabels)==8);labels=columnLabels;end
 lims=cell(1,3);allZ=[];
 for v=1:3
  z=[];for c=1:8,q=X{c}(:,:,v);z=[z;q(:)];end;z=z(isfinite(z)); %#ok<AGROW>

@@ -19,7 +19,7 @@
 
 
 close all
-clear all
+clearvars -except master_behavior_config
 
 %% define initial variables
 minVel = 3; % minimum total velocity to be count as moving
@@ -33,6 +33,15 @@ baseFolder = '/Users/sophiarenauld/Documents/GitHub/Wilson_Thesis/round1 copy'; 
 % ---------------------------------------------------------------------
 pattern  = fullfile(baseFolder, '**', '*function1_pro.mat');
 fileList = dir(pattern);
+% Optional targeted rerun; defaults above retain the interactive workflow.
+if exist('master_behavior_config','var') && isfield(master_behavior_config,'files')
+    fileList = struct('folder',{},'name',{});
+    for j = 1:numel(master_behavior_config.files)
+        [folder,name,ext] = fileparts(master_behavior_config.files{j});
+        fileList(j).folder = folder;
+        fileList(j).name = [name ext];
+    end
+end
 
 if isempty(fileList)
     warning('No **_pro.mat files found under: %s', baseFolder);
@@ -57,9 +66,14 @@ fprintf('Found %d *_processed_final.mat files.\n', nFiles);
 % fullFilePath = fullfile(pathName, fileName);
 % load(fullFilePath);
 
-for k = 27:nFiles
+first_file = 27;
+if exist('master_behavior_config','var')
+    first_file = 1;
+end
+for k = first_file:nFiles
     fpath = fullfile(fileList(k).folder, fileList(k).name);
     fname = fileList(k).name;
+    clear exptData exptMeta
     load(fpath);
     fullFilePath = fpath;
     disp(['User selected "', fpath, '".']);
@@ -96,6 +110,9 @@ for k = 27:nFiles
     end
     % Define the directory for the stimulus
     stim_directory = fullfile(base_path, ['trial', trial_num,'stim', stim_number]);
+    if exist('master_behavior_config','var') && isfield(master_behavior_config,'output_root')
+        stim_directory = fullfile(master_behavior_config.output_root, trial_part, ['trial',trial_num,'stim',stim_number]);
+    end
     
     % Create the directory if it doesn't exist
     if ~exist(stim_directory, 'dir')
@@ -128,7 +145,7 @@ for k = 27:nFiles
     
     try
         save_filename = fullfile(savepath, [fname_parts{1}, '_processed_final.mat']);
-        save(save_filename, 'exptData', '-v7.3');
+        save(save_filename, 'exptData', 'exptMeta', '-v7.3');
         disp(['Saved processed data to: ', save_filename]);
     catch ME
         warning('Could not save processed data to %s.\nError: %s', ...
